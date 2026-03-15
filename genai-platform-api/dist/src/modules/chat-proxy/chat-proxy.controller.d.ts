@@ -15,8 +15,8 @@ export declare class ChatProxyController {
     }>;
     chat(botId: string, dto: ChatDto, res: Response): Promise<void>;
     getConversationMessages(botId: string, convId: string, endUserId?: string): Promise<{
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         content: string;
     }[]>;
     private extractHost;

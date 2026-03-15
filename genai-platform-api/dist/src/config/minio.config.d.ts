@@ -1,14 +1,14 @@
 declare const _default: (() => {
-    endpoint: string;
+    serviceUrl: string;
     accessKey: string;
     secretKey: string;
-    bucket: string;
+    folderName: string;
     region: string;
 }) & import("@nestjs/config").ConfigFactoryKeyHost<{
-    endpoint: string;
+    serviceUrl: string;
     accessKey: string;
     secretKey: string;
-    bucket: string;
+    folderName: string;
     region: string;
 }>;
 export default _default;

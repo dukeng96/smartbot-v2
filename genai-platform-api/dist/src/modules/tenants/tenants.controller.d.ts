@@ -44,54 +44,54 @@ export declare class TenantsController {
     }>;
     listMembers(id: string): Promise<({
         user: {
+            id: string;
             email: string;
             fullName: string | null;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
-        status: string;
-        createdAt: Date;
         tenantId: string;
         userId: string;
         role: string;
         invitedAt: Date;
         joinedAt: Date | null;
+        status: string;
+        createdAt: Date;
     })[]>;
     inviteMember(id: string, dto: InviteMemberDto, req: any): Promise<{
         user: {
+            id: string;
             email: string;
             fullName: string | null;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
-        status: string;
-        createdAt: Date;
         tenantId: string;
         userId: string;
         role: string;
         invitedAt: Date;
         joinedAt: Date | null;
+        status: string;
+        createdAt: Date;
     }>;
     updateMemberRole(id: string, userId: string, dto: UpdateMemberRoleDto, req: any): Promise<{
         user: {
+            id: string;
             email: string;
             fullName: string | null;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
-        status: string;
-        createdAt: Date;
         tenantId: string;
         userId: string;
         role: string;
         invitedAt: Date;
         joinedAt: Date | null;
+        status: string;
+        createdAt: Date;
     }>;
     removeMember(id: string, userId: string, req: any): Promise<{
         message: string;

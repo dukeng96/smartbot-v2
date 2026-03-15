@@ -4,28 +4,28 @@ export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     getProfile(userId: string): Promise<{
+        id: string;
+        status: string;
+        createdAt: Date;
         email: string;
         fullName: string | null;
-        id: string;
         avatarUrl: string | null;
         phone: string | null;
         emailVerified: boolean;
         authProvider: string;
         lastLoginAt: Date | null;
-        status: string;
-        createdAt: Date;
         updatedAt: Date;
     }>;
     updateProfile(userId: string, dto: UpdateUserDto): Promise<{
+        id: string;
+        status: string;
+        createdAt: Date;
         email: string;
         fullName: string | null;
-        id: string;
         avatarUrl: string | null;
         phone: string | null;
         emailVerified: boolean;
         authProvider: string;
-        status: string;
-        createdAt: Date;
         updatedAt: Date;
     }>;
 }

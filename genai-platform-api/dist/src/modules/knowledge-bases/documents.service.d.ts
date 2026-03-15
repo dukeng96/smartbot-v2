@@ -15,10 +15,10 @@ export declare class DocumentsService {
     uploadFile(tenantId: string, kbId: string, file: Express.Multer.File): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;
@@ -40,10 +40,10 @@ export declare class DocumentsService {
     createFromUrl(tenantId: string, kbId: string, url: string): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;
@@ -65,10 +65,10 @@ export declare class DocumentsService {
     createFromText(tenantId: string, kbId: string, content: string, name?: string): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;
@@ -106,10 +106,10 @@ export declare class DocumentsService {
     findOne(tenantId: string, kbId: string, docId: string): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;
@@ -131,10 +131,10 @@ export declare class DocumentsService {
     update(tenantId: string, kbId: string, docId: string, dto: UpdateDocumentDto): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;

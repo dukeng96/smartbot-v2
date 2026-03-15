@@ -4,7 +4,7 @@ import { UpdateBotDto } from './dto/update-bot.dto';
 import { UpdatePersonalityDto } from './dto/update-personality.dto';
 import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { AttachKnowledgeBaseDto } from './dto/attach-knowledge-base.dto';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ListBotsQueryDto } from './dto/list-bots-query.dto';
 export declare class BotsController {
     private readonly botsService;
     constructor(botsService: BotsService);
@@ -12,11 +12,11 @@ export declare class BotsController {
         description: string | null;
         name: string;
         id: string;
-        avatarUrl: string | null;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        avatarUrl: string | null;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         topK: number;
         memoryTurns: number;
@@ -31,9 +31,7 @@ export declare class BotsController {
         apiKeyHash: string | null;
         apiKeyPrefix: string | null;
     }>;
-    findAll(tenantId: string, query: PaginationDto & {
-        status?: string;
-    }): Promise<import("../../common/dto/pagination.dto").PaginatedResult<{
+    findAll(tenantId: string, query: ListBotsQueryDto): Promise<import("../../common/dto/pagination.dto").PaginatedResult<{
         _count: {
             knowledgeBases: number;
             conversations: number;
@@ -43,11 +41,11 @@ export declare class BotsController {
         description: string | null;
         name: string;
         id: string;
-        avatarUrl: string | null;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        avatarUrl: string | null;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         topK: number;
         memoryTurns: number;
@@ -85,11 +83,11 @@ export declare class BotsController {
         description: string | null;
         name: string;
         id: string;
-        avatarUrl: string | null;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        avatarUrl: string | null;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         topK: number;
         memoryTurns: number;
@@ -108,11 +106,11 @@ export declare class BotsController {
         description: string | null;
         name: string;
         id: string;
-        avatarUrl: string | null;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        avatarUrl: string | null;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         topK: number;
         memoryTurns: number;
@@ -131,11 +129,11 @@ export declare class BotsController {
         description: string | null;
         name: string;
         id: string;
-        avatarUrl: string | null;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        avatarUrl: string | null;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         topK: number;
         memoryTurns: number;
@@ -154,11 +152,11 @@ export declare class BotsController {
         description: string | null;
         name: string;
         id: string;
-        avatarUrl: string | null;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        avatarUrl: string | null;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         topK: number;
         memoryTurns: number;

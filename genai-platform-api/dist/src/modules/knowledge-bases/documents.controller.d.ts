@@ -9,10 +9,10 @@ export declare class DocumentsController {
     uploadFile(tenantId: string, kbId: string, file: Express.Multer.File): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;
@@ -34,10 +34,10 @@ export declare class DocumentsController {
     createFromUrl(tenantId: string, kbId: string, dto: CreateDocumentUrlDto): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;
@@ -59,10 +59,10 @@ export declare class DocumentsController {
     createFromText(tenantId: string, kbId: string, dto: CreateDocumentTextDto): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;
@@ -100,10 +100,10 @@ export declare class DocumentsController {
     findOne(tenantId: string, kbId: string, docId: string): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;
@@ -125,10 +125,10 @@ export declare class DocumentsController {
     update(tenantId: string, kbId: string, docId: string, dto: UpdateDocumentDto): Promise<{
         metadata: import("@prisma/client/runtime/client").JsonValue;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         deletedAt: Date | null;
         charCount: bigint;
         fileSize: bigint | null;

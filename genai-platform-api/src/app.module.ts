@@ -19,6 +19,7 @@ import { StorageModule } from './modules/storage/storage.module';
 
 // Guards
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { TenantGuard } from './common/guards/tenant.guard';
 
 // Interceptors & Filters
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -73,6 +74,8 @@ import { AppController } from './app.controller';
   providers: [
     // Global JWT guard — @Public() decorator opts out
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    // Global tenant guard — resolves membership role after JWT
+    { provide: APP_GUARD, useClass: TenantGuard },
     // Wrap all responses in { data } envelope
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     // Global exception handler

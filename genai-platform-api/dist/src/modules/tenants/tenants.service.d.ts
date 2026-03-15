@@ -44,54 +44,54 @@ export declare class TenantsService {
     }>;
     listMembers(tenantId: string): Promise<({
         user: {
+            id: string;
             email: string;
             fullName: string | null;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
-        status: string;
-        createdAt: Date;
         tenantId: string;
         userId: string;
         role: string;
         invitedAt: Date;
         joinedAt: Date | null;
+        status: string;
+        createdAt: Date;
     })[]>;
     inviteMember(tenantId: string, tenantRole: string, dto: InviteMemberDto): Promise<{
         user: {
+            id: string;
             email: string;
             fullName: string | null;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
-        status: string;
-        createdAt: Date;
         tenantId: string;
         userId: string;
         role: string;
         invitedAt: Date;
         joinedAt: Date | null;
+        status: string;
+        createdAt: Date;
     }>;
     updateMemberRole(tenantId: string, targetUserId: string, tenantRole: string, dto: UpdateMemberRoleDto): Promise<{
         user: {
+            id: string;
             email: string;
             fullName: string | null;
-            id: string;
             avatarUrl: string | null;
         };
     } & {
         id: string;
-        status: string;
-        createdAt: Date;
         tenantId: string;
         userId: string;
         role: string;
         invitedAt: Date;
         joinedAt: Date | null;
+        status: string;
+        createdAt: Date;
     }>;
     removeMember(tenantId: string, targetUserId: string, tenantRole: string): Promise<{
         message: string;

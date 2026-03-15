@@ -32,8 +32,8 @@ export declare class ChatProxyService {
         widgetConfig: import("@prisma/client/runtime/client").JsonValue;
     }>;
     getConversationHistory(botId: string, conversationId: string, endUserId?: string): Promise<{
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         content: string;
     }[]>;
     processChat(req: ChatRequest): AsyncGenerator<SseEvent>;

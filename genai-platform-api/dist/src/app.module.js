@@ -15,6 +15,7 @@ const config_2 = require("./config");
 const prisma_module_1 = require("./common/prisma/prisma.module");
 const storage_module_1 = require("./modules/storage/storage.module");
 const jwt_auth_guard_1 = require("./common/guards/jwt-auth.guard");
+const tenant_guard_1 = require("./common/guards/tenant.guard");
 const transform_interceptor_1 = require("./common/interceptors/transform.interceptor");
 const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 const auth_module_1 = require("./modules/auth/auth.module");
@@ -36,7 +37,7 @@ exports.AppModule = AppModule = __decorate([
         imports: [
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
-                load: [config_2.appConfig, config_2.databaseConfig, config_2.redisConfig, config_2.s3Config, config_2.jwtConfig, config_2.aiEngineConfig],
+                load: [config_2.appConfig, config_2.databaseConfig, config_2.redisConfig, config_2.minioConfig, config_2.jwtConfig, config_2.aiEngineConfig],
             }),
             bullmq_1.BullModule.forRoot({
                 connection: {
@@ -60,6 +61,7 @@ exports.AppModule = AppModule = __decorate([
         controllers: [app_controller_1.AppController],
         providers: [
             { provide: core_1.APP_GUARD, useClass: jwt_auth_guard_1.JwtAuthGuard },
+            { provide: core_1.APP_GUARD, useClass: tenant_guard_1.TenantGuard },
             { provide: core_1.APP_INTERCEPTOR, useClass: transform_interceptor_1.TransformInterceptor },
             { provide: core_1.APP_FILTER, useClass: http_exception_filter_1.AllExceptionsFilter },
         ],

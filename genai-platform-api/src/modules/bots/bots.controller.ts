@@ -20,7 +20,7 @@ import { UpdateBotDto } from './dto/update-bot.dto';
 import { UpdatePersonalityDto } from './dto/update-personality.dto';
 import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { AttachKnowledgeBaseDto } from './dto/attach-knowledge-base.dto';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { ListBotsQueryDto } from './dto/list-bots-query.dto';
 
 @ApiTags('Bots')
 @ApiBearerAuth()
@@ -38,10 +38,9 @@ export class BotsController {
 
   @Get()
   @ApiOperation({ summary: 'List bots' })
-  @ApiQuery({ name: 'status', required: false, enum: ['draft', 'active', 'paused', 'archived'] })
   findAll(
     @CurrentTenant() tenantId: string,
-    @Query() query: PaginationDto & { status?: string },
+    @Query() query: ListBotsQueryDto,
   ) {
     return this.botsService.findAll(tenantId, query);
   }

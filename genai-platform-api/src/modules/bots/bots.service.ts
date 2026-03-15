@@ -9,7 +9,8 @@ import { UpdateBotDto } from './dto/update-bot.dto';
 import { UpdatePersonalityDto } from './dto/update-personality.dto';
 import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { AttachKnowledgeBaseDto } from './dto/attach-knowledge-base.dto';
-import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import { PaginatedResult } from '../../common/dto/pagination.dto';
+import { ListBotsQueryDto } from './dto/list-bots-query.dto';
 import { generateApiKey, hashApiKey, getApiKeyPrefix } from '../../common/utils/crypto';
 
 @Injectable()
@@ -27,7 +28,7 @@ export class BotsService {
     });
   }
 
-  async findAll(tenantId: string, query: PaginationDto & { status?: string }) {
+  async findAll(tenantId: string, query: ListBotsQueryDto) {
     const where: any = { tenantId, deletedAt: null };
     if (query.status) where.status = query.status;
 

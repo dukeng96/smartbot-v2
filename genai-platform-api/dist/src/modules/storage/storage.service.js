@@ -24,15 +24,15 @@ let StorageService = StorageService_1 = class StorageService {
     constructor(configService) {
         this.configService = configService;
         this.s3 = new client_s3_1.S3Client({
-            endpoint: this.configService.get('s3.endpoint', 'http://localhost:9000'),
-            region: this.configService.get('s3.region', 'us-east-1'),
+            endpoint: this.configService.get('minio.serviceUrl', 'https://voice-storage.vnpt.vn'),
+            region: this.configService.get('minio.region', 'us-east-1'),
             credentials: {
-                accessKeyId: this.configService.get('s3.accessKey', 'minioadmin'),
-                secretAccessKey: this.configService.get('s3.secretKey', 'minioadmin'),
+                accessKeyId: this.configService.get('minio.accessKey', 'texttospeech'),
+                secretAccessKey: this.configService.get('minio.secretKey', 'Text2speechVnptAI@2024'),
             },
             forcePathStyle: true,
         });
-        this.bucket = this.configService.get('s3.bucket', 'smartbot-docs');
+        this.bucket = this.configService.get('minio.folderName', 'smartbot-v2');
     }
     async upload(file, folder = 'documents') {
         const key = `${folder}/${(0, uuid_1.v4)()}/${file.originalname}`;

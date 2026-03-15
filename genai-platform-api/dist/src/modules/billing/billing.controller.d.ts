@@ -46,10 +46,10 @@ export declare class BillingController {
             };
         } & {
             id: string;
+            tenantId: string;
             status: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             planId: string;
             billingCycle: string;
             currentPeriodStart: Date;
@@ -60,9 +60,9 @@ export declare class BillingController {
         }) | null;
         creditUsage: {
             id: string;
+            tenantId: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             periodStart: Date;
             periodEnd: Date;
             creditsAllocated: number;
@@ -91,10 +91,10 @@ export declare class BillingController {
         };
     } & {
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         planId: string;
         billingCycle: string;
         currentPeriodStart: Date;
@@ -124,10 +124,10 @@ export declare class BillingController {
         };
     } & {
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         planId: string;
         billingCycle: string;
         currentPeriodStart: Date;
@@ -138,10 +138,10 @@ export declare class BillingController {
     }>;
     cancelSubscription(tenantId: string): Promise<{
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         planId: string;
         billingCycle: string;
         currentPeriodStart: Date;
@@ -156,9 +156,9 @@ export declare class BillingController {
     }>;
     getCreditUsage(tenantId: string): Promise<{
         id: string;
+        tenantId: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         periodStart: Date;
         periodEnd: Date;
         creditsAllocated: number;
@@ -167,11 +167,11 @@ export declare class BillingController {
     }>;
     getPayments(tenantId: string, query: PaginationDto): Promise<import("../../common/dto/pagination.dto").PaginatedResult<{
         description: string | null;
-        type: string;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
-        tenantId: string;
+        type: string;
         paymentMethod: string | null;
         amount: bigint;
         subscriptionId: string | null;

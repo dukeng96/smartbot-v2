@@ -49,10 +49,10 @@ export declare class BillingService {
             };
         } & {
             id: string;
+            tenantId: string;
             status: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             planId: string;
             billingCycle: string;
             currentPeriodStart: Date;
@@ -63,9 +63,9 @@ export declare class BillingService {
         }) | null;
         creditUsage: {
             id: string;
+            tenantId: string;
             createdAt: Date;
             updatedAt: Date;
-            tenantId: string;
             periodStart: Date;
             periodEnd: Date;
             creditsAllocated: number;
@@ -94,10 +94,10 @@ export declare class BillingService {
         };
     } & {
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         planId: string;
         billingCycle: string;
         currentPeriodStart: Date;
@@ -127,10 +127,10 @@ export declare class BillingService {
         };
     } & {
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         planId: string;
         billingCycle: string;
         currentPeriodStart: Date;
@@ -141,10 +141,10 @@ export declare class BillingService {
     }>;
     cancelSubscription(tenantId: string): Promise<{
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         planId: string;
         billingCycle: string;
         currentPeriodStart: Date;
@@ -159,9 +159,9 @@ export declare class BillingService {
     }>;
     getCreditUsage(tenantId: string): Promise<{
         id: string;
+        tenantId: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         periodStart: Date;
         periodEnd: Date;
         creditsAllocated: number;
@@ -170,11 +170,11 @@ export declare class BillingService {
     }>;
     getPaymentHistory(tenantId: string, query: PaginationDto): Promise<PaginatedResult<{
         description: string | null;
-        type: string;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
-        tenantId: string;
+        type: string;
         paymentMethod: string | null;
         amount: bigint;
         subscriptionId: string | null;

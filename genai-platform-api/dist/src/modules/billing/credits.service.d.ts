@@ -5,9 +5,9 @@ export declare class CreditsService {
     constructor(prisma: PrismaService);
     getCurrentUsage(tenantId: string): Promise<{
         id: string;
+        tenantId: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         periodStart: Date;
         periodEnd: Date;
         creditsAllocated: number;

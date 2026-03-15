@@ -24,6 +24,7 @@ const update_bot_dto_1 = require("./dto/update-bot.dto");
 const update_personality_dto_1 = require("./dto/update-personality.dto");
 const update_widget_dto_1 = require("./dto/update-widget.dto");
 const attach_knowledge_base_dto_1 = require("./dto/attach-knowledge-base.dto");
+const list_bots_query_dto_1 = require("./dto/list-bots-query.dto");
 let BotsController = class BotsController {
     botsService;
     constructor(botsService) {
@@ -93,11 +94,10 @@ __decorate([
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'List bots' }),
-    (0, swagger_1.ApiQuery)({ name: 'status', required: false, enum: ['draft', 'active', 'paused', 'archived'] }),
     __param(0, (0, current_tenant_decorator_1.CurrentTenant)()),
     __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, list_bots_query_dto_1.ListBotsQueryDto]),
     __metadata("design:returntype", void 0)
 ], BotsController.prototype, "findAll", null);
 __decorate([

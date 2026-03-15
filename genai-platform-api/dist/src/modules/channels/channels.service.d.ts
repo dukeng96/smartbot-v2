@@ -7,36 +7,36 @@ export declare class ChannelsService {
     private readonly logger;
     constructor(prisma: PrismaService);
     create(tenantId: string, botId: string, dto: CreateChannelDto): Promise<{
-        type: string;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        type: string;
         updatedAt: Date;
-        tenantId: string;
         botId: string;
         config: import("@prisma/client/runtime/client").JsonValue;
         connectedAt: Date | null;
         lastActiveAt: Date | null;
     }>;
     findAll(tenantId: string, botId: string): Promise<{
-        type: string;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        type: string;
         updatedAt: Date;
-        tenantId: string;
         botId: string;
         config: import("@prisma/client/runtime/client").JsonValue;
         connectedAt: Date | null;
         lastActiveAt: Date | null;
     }[]>;
     update(tenantId: string, botId: string, channelId: string, dto: UpdateChannelDto): Promise<{
-        type: string;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        type: string;
         updatedAt: Date;
-        tenantId: string;
         botId: string;
         config: import("@prisma/client/runtime/client").JsonValue;
         connectedAt: Date | null;
@@ -46,12 +46,12 @@ export declare class ChannelsService {
         message: string;
     }>;
     connectFacebook(tenantId: string, botId: string, dto: FacebookConnectDto): Promise<{
-        type: string;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
+        type: string;
         updatedAt: Date;
-        tenantId: string;
         botId: string;
         config: import("@prisma/client/runtime/client").JsonValue;
         connectedAt: Date | null;

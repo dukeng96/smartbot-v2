@@ -27,10 +27,10 @@ export declare class ConversationsService {
     } & {
         channel: string;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         botId: string;
         rating: number | null;
         feedbackText: string | null;
@@ -44,8 +44,8 @@ export declare class ConversationsService {
     }>;
     getMessages(tenantId: string, convId: string, query: PaginationDto): Promise<PaginatedResult<{
         id: string;
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         creditsUsed: Prisma.Decimal;
         content: string;
         inputTokens: number | null;
@@ -66,18 +66,18 @@ export declare class ConversationsService {
     }>;
     searchMessages(tenantId: string, botId: string, q: string, page: number, limit: number): Promise<PaginatedResult<{
         id: string;
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         content: string;
         conversationId: string;
     }>>;
     getOrCreate(botId: string, tenantId: string, conversationId?: string, endUserId?: string, endUserName?: string, channel?: string): Promise<{
         channel: string;
         id: string;
+        tenantId: string;
         status: string;
         createdAt: Date;
         updatedAt: Date;
-        tenantId: string;
         botId: string;
         rating: number | null;
         feedbackText: string | null;

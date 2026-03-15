@@ -19,9 +19,9 @@ export declare class MessagesService {
     constructor(prisma: PrismaService);
     create(input: CreateMessageInput): Promise<{
         id: string;
-        createdAt: Date;
         tenantId: string;
         role: string;
+        createdAt: Date;
         creditsUsed: import("@prisma/client-runtime-utils").Decimal;
         botId: string;
         content: string;
@@ -36,8 +36,8 @@ export declare class MessagesService {
         feedback: string | null;
     }>;
     getRecent(conversationId: string, limit: number): Promise<{
-        createdAt: Date;
         role: string;
+        createdAt: Date;
         content: string;
     }[]>;
 }
