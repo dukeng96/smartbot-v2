@@ -12,10 +12,10 @@
 | Platform API - Unit Tests (Jest) | 141 | 141 | 0 | 0 | **100%** |
 | Platform API - API Route Tests | 106 | 105 | 1 | 4 | **99.1%** |
 | AI Engine - Unit Tests (pytest) | 11 | 11 | 0 | 0 | **100%** |
-| AI Engine - API Route Tests | 14 | 14 | 0 | 10 | **100%** |
-| **TOTAL** | **272** | **271** | **1** | **14** | **99.6%** |
+| AI Engine - API Integration Tests | 24 | 24 | 0 | 0 | **100%** |
+| **TOTAL** | **282** | **281** | **1** | **4** | **99.6%** |
 
-**Overall Result: PASS** - 1 failure is a known infrastructure limitation (MinIO not running).
+**Overall Result: PASS** - 1 failure is a known infrastructure limitation (MinIO not running in NestJS test env).
 
 ---
 
@@ -75,7 +75,7 @@
 | 14. Cross-Cutting | 26 | 23 | Auth, pagination, validation, soft-delete |
 
 ### Known Failure
-- **TC-DOC-01** (Upload file): Returns 500 - MinIO/S3 storage not running in test env. The `StorageService` expects MinIO endpoint configured via `MINIO_ENDPOINT`. Not a code bug.
+- **TC-DOC-01** (Upload file): Returns 500 - MinIO/S3 storage not running in test env. Not a code bug.
 
 ### Skipped Tests (4)
 - CC-05: Requires second user with member role
@@ -108,45 +108,59 @@
 
 ---
 
-## 4. genai-engine - API Route Tests (14/14, 10 skipped)
+## 4. genai-engine - API Integration Tests (24/24)
 
 **Command:** `python tests/test_api.py`
-**Duration:** ~3.5min (includes 60s health timeout + 8s Celery wait + chat timeouts)
-**Server:** localhost:8000 (FastAPI + Celery + Redis)
+**Duration:** ~90s (includes Celery polling + LLM response time)
+**Server:** localhost:8000 (FastAPI + Celery + Redis), native conda env311
+**Connectivity:** All external services reachable via VPN (Triton, Qdrant, LLM, MinIO)
 
 ### Section Results
-| Section | Tests | Passed | Skipped | Notes |
-|---------|-------|--------|---------|-------|
-| 1. Health Check | 1 | 1 | 0 | Triton/Qdrant unreachable but status=ok |
-| 2. KB CRUD | 2 | 2 | 2 | Qdrant unreachable, cleanup passes |
-| 3. Doc Processing (text) | 1 | 1 | 0 | Celery queues successfully |
-| 4. Celery + Chunks | 0 | 0 | 1 | Qdrant unreachable |
-| 5. Chat/RAG | 0 | 0 | 1 | LLM endpoint unreachable |
-| 6. Delete Vectors | 0 | 0 | 1 | Qdrant unreachable |
-| 7. Input Validation | 8 | 8 | 5 | Chat validation skipped (Depends() hangs) |
-| 8. Doc Processing (extra) | 2 | 2 | 0 | Reprocess + url_crawl queued |
-| 9. Cleanup | 0 | 0 | 0 | |
+| Section | Tests | Passed | Notes |
+|---------|-------|--------|-------|
+| 1. Health Check | 1 | 1 | triton=connected, qdrant=connected |
+| 2. KB CRUD | 3 | 3 | Create, idempotent, pre-cleanup |
+| 3. Doc Processing (text_input) | 1 | 1 | Celery queues successfully |
+| 4. Celery + Chunks | 1 | 1 | 4 chunks after 10s polling |
+| 5. Chat/RAG | 1 | 1 | Vietnamese RAG response via LLM |
+| 6. Delete Vectors | 1 | 1 | Vectors deleted from Qdrant |
+| 7. Input Validation | 13 | 13 | All validation rules enforced |
+| 8. Doc Processing (extra) | 2 | 2 | Reprocess + url_crawl queued |
+| 9. Cleanup | 1 | 1 | Test KB deleted |
 
-### Skipped Tests (10) - External Service Dependencies
-| Test | Reason |
-|------|--------|
-| POST /knowledge-bases (create) | Qdrant at 10.159.19.59:32500 unreachable |
-| POST /knowledge-bases (idempotent) | Depends on KB creation |
-| GET /documents/{id}/chunks | Qdrant unreachable |
-| POST /chat/test (valid request) | LLM at assistant-stream.vnpt.vn unreachable |
-| DELETE /documents/{id}/vectors | Qdrant unreachable |
-| POST /chat/test (empty body validation) | FastAPI Depends(get_rag_chat) hangs before validation |
-| POST /chat/test (empty message) | Same as above |
-| POST /chat/completions (empty body) | Same as above |
-| POST /chat/test (empty kb_id) | Same as above |
-| POST /chat/test (top_k=100) | Same as above |
-
-### Architectural Finding
-FastAPI's dependency injection (`Depends(get_rag_chat)`) resolves **before** Pydantic body validation. When the LLM service is unreachable, `get_rag_chat` hangs during initialization, preventing validation from returning 422. **Recommendation:** Make `get_rag_chat` lazy or add connection timeout to the dependency factory.
+### Full RAG Pipeline Verified
+- Query rewriting via LLM
+- Hybrid search (dense 1024-dim + sparse via Triton BAAI/bge-m3)
+- Reciprocal Rank Fusion (RRF) scoring
+- LLM answer generation with retrieved context
+- SSE streaming and non-streaming responses
 
 ---
 
-## 5. Bugs Fixed During Testing
+## 5. Critical Bugs Fixed During Testing
+
+### genai-engine (Python/FastAPI)
+
+| # | Severity | Bug | File | Root Cause | Fix |
+|---|----------|-----|------|------------|-----|
+| 1 | **CRITICAL** | Deadlock freezes entire server | `app/dependencies.py` | `threading.Lock()` is non-reentrant; nested `_get_or_create()` calls from factory functions (e.g. `get_rag_chat` → `get_embedding_service`) caused deadlock on same lock | Changed to `threading.RLock()` (reentrant lock) |
+| 2 | **HIGH** | Health check crashes with greenlet error | `app/api/health.py` | `tritonclient.http` uses gevent greenlets; calling from asyncio event loop causes "Cannot switch to a different thread" | Wrapped triton calls with `asyncio.to_thread()` |
+| 3 | **HIGH** | Chat endpoints hang on asyncio thread | `app/api/chat.py` | `rag_chat.chat()` is synchronous (uses tritonclient internally); running on event loop blocks all requests | Wrapped with `asyncio.to_thread()` |
+| 4 | **LOW** | Test output crashes on Windows | `tests/test_api.py` | Vietnamese UTF-8 chars in LLM response can't be encoded by Windows cp1252 charmap codec | Added `sys.stdout.reconfigure(encoding='utf-8')` |
+
+### Bug #1 Detail: Threading Deadlock
+
+The deadlock was the root cause of all chat endpoint timeouts across multiple debugging sessions. The call chain:
+
+```
+get_rag_chat() → _get_or_create("rag_chat", factory)
+  └─ acquires _lock (threading.Lock)
+  └─ factory() calls get_embedding_service()
+       └─ _get_or_create("embedding", factory)
+            └─ tries to acquire same _lock → DEADLOCK
+```
+
+Once deadlocked, the asyncio event loop thread was permanently blocked, causing ALL subsequent HTTP requests (including `/health` and `/openapi.json`) to hang indefinitely.
 
 ### genai-platform-api (NestJS)
 
@@ -157,38 +171,32 @@ FastAPI's dependency injection (`Depends(get_rag_chat)`) resolves **before** Pyd
 | 3 | ListBotsQueryDto missing status field | `list-bots-query.dto.ts` | Added `@IsOptional() @IsString() status` field |
 | 4 | Billing planSlug vs planId mismatch | `billing.service.ts` | Changed `planSlug` to `planId` in Prisma call |
 
-### genai-engine (Python/FastAPI)
-
-| # | Bug | File | Fix |
-|---|-----|------|-----|
-| 1 | Unicode chars crash on Windows cp1252 | `tests/test_api.py` | Replaced emoji/arrows/box-drawing with ASCII |
-
 ---
 
 ## 6. Test Infrastructure
 
 ### Test Files Created
 - `genai-platform-api/tests/api/` - 15 Python test modules (test_config.py + 14 test_XX_*.py + run_all_tests.py)
-- `genai-engine/tests/test_api.py` - API integration test script (enhanced from scaffold)
+- `genai-engine/tests/test_api.py` - API integration test script (25 test assertions across 9 sections)
 - `genai-engine/tests/test_chunker.py` - Unit tests for chunking + RRF (pre-existing, verified)
 
-### External Dependencies (Not Available in Test Env)
-| Service | Expected Location | Status |
-|---------|-------------------|--------|
-| MinIO (S3) | localhost:9000 | Not running |
-| Qdrant (Vector DB) | 10.159.19.59:32500 | Unreachable |
-| Triton (Embeddings) | 10.159.19.40:31831 | Unreachable |
-| LLM API | assistant-stream.vnpt.vn | Unreachable |
+### External Service Connectivity
+| Service | Location | Status |
+|---------|----------|--------|
+| Triton (Embeddings) | 10.159.19.40:31831 | Connected (via VPN) |
+| Qdrant (Vector DB) | 10.159.19.59:32500 | Connected (via VPN) |
+| LLM API | assistant-stream.vnpt.vn | Connected (via VPN) |
+| MinIO (S3) | 10.159.19.59:31121 | Connected (via VPN) |
 | PostgreSQL | localhost:5432 | Running |
-| Redis | localhost:6379 | Running |
-| Celery Worker | via Redis | Running |
+| Redis | localhost:6379 | Running (Docker) |
+| Celery Worker | via Redis broker | Running (native) |
 
 ---
 
 ## 7. Recommendations
 
-1. **MinIO in dev docker-compose** - Add MinIO service to docker-compose.dev.yml for file upload testing
-2. **FastAPI dependency timeout** - Add connection timeout to `get_rag_chat` and `get_embedding_service` factories so validation errors return before external services hang
-3. **Mock external services** - Add pytest fixtures that mock Qdrant/Triton/LLM for CI/CD where external services are unavailable
+1. **MinIO in dev docker-compose** - Add MinIO service to docker-compose.dev.yml for NestJS file upload testing
+2. **CI/CD external mocks** - Add pytest fixtures that mock Qdrant/Triton/LLM for CI/CD where VPN services are unavailable
+3. **Connection timeouts in DI** - Add timeout to `get_rag_chat` factory so startup failures surface as errors instead of silent hangs
 4. **E2E test coverage** - The NestJS scaffold e2e-spec is unused; the Python API route tests serve as comprehensive E2E tests
-5. **CI/CD integration** - Jest + pytest unit tests can run in any CI pipeline; API route tests require running services
+5. **CI integration** - Jest + pytest unit tests can run in any CI pipeline; API integration tests require VPN connectivity

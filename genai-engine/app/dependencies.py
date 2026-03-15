@@ -17,7 +17,7 @@ from app.services.rag_chat import RAGChat
 from app.services.storage import StorageService
 from app.services.text_extractor import TextExtractor
 
-_lock = threading.Lock()
+_lock = threading.RLock()
 _instances: dict = {}
 
 

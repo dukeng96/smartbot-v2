@@ -16,6 +16,10 @@ TENANT_ID = "tenant-test-01"
 
 import os
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+# Force UTF-8 stdout on Windows (charmap codec can't encode Vietnamese chars)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 GREEN = "\033[92m"
 RED   = "\033[91m"
@@ -178,28 +182,43 @@ except Exception as e:
 # --------------------------------------------------------------
 section("4. Wait for Celery Processing -> Check Chunks")
 
-print(f"  Waiting 8s for Celery to process...")
-time.sleep(8)
+MAX_WAIT = 60
+POLL_INTERVAL = 5
+print(f"  Polling for chunks (max {MAX_WAIT}s, every {POLL_INTERVAL}s)...")
+total = 0
+data = {}
+elapsed = 0
+last_status = None
 
 try:
-    r = requests.get(
-        f"{API_PREFIX}/documents/{DOC_ID}/chunks",
-        params={"knowledge_base_id": KB_ID},
-        timeout=15,
-    )
-    try:
-        data = r.json()
-    except Exception:
-        data = {"raw": r.text[:300]}
-    total = data.get("total", 0) if isinstance(data, dict) else 0
-    if r.status_code == 200 and total > 0:
-        ok(f"GET /documents/{DOC_ID}/chunks", f"total_chunks={total}")
-        if data.get("chunks"):
-            print(f"          Sample: {data['chunks'][0]['content'][:150]}...")
-    elif r.status_code == 500:
-        skip(f"GET /documents/{DOC_ID}/chunks", "Qdrant unreachable")
-    else:
-        fail(f"GET /documents/{DOC_ID}/chunks", f"status={r.status_code}  total={total}")
+    while elapsed < MAX_WAIT:
+        time.sleep(POLL_INTERVAL)
+        elapsed += POLL_INTERVAL
+        r = requests.get(
+            f"{API_PREFIX}/documents/{DOC_ID}/chunks",
+            params={"knowledge_base_id": KB_ID},
+            timeout=15,
+        )
+        last_status = r.status_code
+        try:
+            data = r.json()
+        except Exception:
+            data = {"raw": r.text[:300]}
+        total = data.get("total", 0) if isinstance(data, dict) else 0
+        if r.status_code == 500:
+            skip(f"GET /documents/{DOC_ID}/chunks", "Qdrant unreachable")
+            break
+        if total > 0:
+            break
+        print(f"    ...{elapsed}s elapsed, total={total}")
+
+    if last_status != 500:
+        if total > 0:
+            ok(f"GET /documents/{DOC_ID}/chunks", f"total_chunks={total} (after {elapsed}s)")
+            if data.get("chunks"):
+                print(f"          Sample: {data['chunks'][0]['content'][:150]}...")
+        else:
+            fail(f"GET /documents/{DOC_ID}/chunks", f"total=0 after {MAX_WAIT}s wait")
 except Exception as e:
     fail(f"GET /documents/{DOC_ID}/chunks", str(e))
 

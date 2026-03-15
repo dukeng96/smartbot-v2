@@ -1,6 +1,11 @@
 """
 Health check endpoint — verifies Triton and Qdrant connectivity.
+
+Triton calls are offloaded to asyncio.to_thread() to avoid
+gevent-greenlet / asyncio thread-mismatch errors.
 """
+
+import asyncio
 
 import structlog
 from fastapi import APIRouter, Depends
@@ -14,7 +19,7 @@ router = APIRouter()
 
 
 @router.get("/health")
-def health_check(
+async def health_check(
     triton: TritonClient = Depends(get_triton_client),
     qdrant: QdrantHandler = Depends(get_qdrant_handler),
 ):
@@ -22,10 +27,8 @@ def health_check(
     qdrant_status = "unknown"
 
     try:
-        if triton.triton_client.is_server_ready():
-            triton_status = "connected"
-        else:
-            triton_status = "not_ready"
+        ready = await asyncio.to_thread(triton.triton_client.is_server_ready)
+        triton_status = "connected" if ready else "not_ready"
     except Exception as e:
         triton_status = f"error: {e}"
         logger.warning("triton_health_check_failed", error=str(e))

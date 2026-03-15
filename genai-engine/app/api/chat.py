@@ -3,8 +3,14 @@ Chat API routes with SSE streaming support.
 
 POST /engine/v1/chat/completions — full RAG chat (SSE or JSON)
 POST /engine/v1/chat/test — quick test without conversation logic
+
+Note: rag_chat.chat() is synchronous and uses tritonclient.http which relies
+on gevent greenlets.  Running it directly on the asyncio event-loop thread
+causes a greenlet/thread mismatch.  We therefore offload every call to
+asyncio.to_thread() so it executes in a plain OS thread.
 """
 
+import asyncio
 import json
 import uuid
 
@@ -28,7 +34,8 @@ async def chat_completions(
     rag_chat: RAGChat = Depends(get_rag_chat),
 ):
     """Full RAG chat endpoint. Supports SSE streaming and JSON response."""
-    response, search_query, retrieval_context = rag_chat.chat(
+    response, search_query, retrieval_context = await asyncio.to_thread(
+        rag_chat.chat,
         message=body.message,
         system_prompt=body.system_prompt,
         knowledge_base_ids=body.knowledge_base_ids,
@@ -63,7 +70,8 @@ async def chat_test(
     rag_chat: RAGChat = Depends(get_rag_chat),
 ):
     """Quick test endpoint — no conversation history, no streaming."""
-    response, search_query, retrieval_context = rag_chat.chat(
+    response, search_query, retrieval_context = await asyncio.to_thread(
+        rag_chat.chat,
         message=body.message,
         system_prompt=body.system_prompt,
         knowledge_base_ids=body.knowledge_base_ids,
