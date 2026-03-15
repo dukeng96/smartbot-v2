@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  engine:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+
+  worker:
+    build: .
+    env_file: .env
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=2
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+# NOTE: Qdrant and Triton run on separate infrastructure (already deployed)
+# Not included in this docker-compose

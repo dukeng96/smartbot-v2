@@ -1,0 +1,367 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== AUTH & USERS ====================
+
+model User {
+  id             String    @id @default(uuid()) @db.Uuid
+  email          String    @unique @db.VarChar(255)
+  passwordHash   String?   @map("password_hash") @db.VarChar(255)
+  fullName       String?   @map("full_name") @db.VarChar(255)
+  avatarUrl      String?   @map("avatar_url")
+  phone          String?   @db.VarChar(20)
+  emailVerified  Boolean   @default(false) @map("email_verified")
+  authProvider   String    @default("email") @map("auth_provider") @db.VarChar(20)
+  authProviderId String?   @map("auth_provider_id") @db.VarChar(255)
+  lastLoginAt    DateTime? @map("last_login_at")
+  status         String    @default("active") @db.VarChar(20)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  ownedTenants  Tenant[]        @relation("TenantOwner")
+  memberships   TenantMember[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ==================== TENANTS ====================
+
+model Tenant {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @db.VarChar(255)
+  slug      String    @unique @db.VarChar(100)
+  ownerId   String    @map("owner_id") @db.Uuid
+  logoUrl   String?   @map("logo_url")
+  planId    String?   @map("plan_id") @db.Uuid
+  status    String    @default("active") @db.VarChar(20)
+  settings  Json      @default("{}")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  owner          User              @relation("TenantOwner", fields: [ownerId], references: [id])
+  plan           Plan?             @relation(fields: [planId], references: [id])
+  members        TenantMember[]
+  bots           Bot[]
+  knowledgeBases KnowledgeBase[]
+  documents      Document[]
+  conversations  Conversation[]
+  messages       Message[]
+  channels       Channel[]
+  subscriptions  Subscription[]
+  creditUsages   CreditUsage[]
+  payments       PaymentHistory[]
+
+  @@index([slug])
+  @@index([ownerId])
+  @@map("tenants")
+}
+
+model TenantMember {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  role      String    @default("member") @db.VarChar(20)
+  invitedAt DateTime  @default(now()) @map("invited_at")
+  joinedAt  DateTime? @map("joined_at")
+  status    String    @default("active") @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@index([userId])
+  @@map("tenant_members")
+}
+
+// ==================== BOTS ====================
+
+model Bot {
+  id                    String    @id @default(uuid()) @db.Uuid
+  tenantId              String    @map("tenant_id") @db.Uuid
+  name                  String    @db.VarChar(255)
+  description           String?
+  avatarUrl             String?   @map("avatar_url")
+  status                String    @default("draft") @db.VarChar(20)
+  systemPrompt          String?   @map("system_prompt")
+  greetingMessage       String?   @map("greeting_message")
+  suggestedQuestions    Json      @default("[]") @map("suggested_questions")
+  personality           Json      @default("{}")
+  fallbackMessage       String?   @map("fallback_message")
+  topK                  Int       @default(5) @map("top_k")
+  memoryTurns           Int       @default(5) @map("memory_turns")
+  widgetConfig          Json      @default("{}") @map("widget_config")
+  maxKnowledgeChars     BigInt?   @map("max_knowledge_chars")
+  currentKnowledgeChars BigInt    @default(0) @map("current_knowledge_chars")
+  apiKeyHash            String?   @map("api_key_hash") @db.VarChar(255)
+  apiKeyPrefix          String?   @map("api_key_prefix") @db.VarChar(10)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  knowledgeBases BotKnowledgeBase[]
+  conversations  Conversation[]
+  messages       Message[]
+  channels       Channel[]
+
+  @@index([tenantId])
+  @@map("bots")
+}
+
+model BotKnowledgeBase {
+  botId           String   @map("bot_id") @db.Uuid
+  knowledgeBaseId String   @map("knowledge_base_id") @db.Uuid
+  priority        Int      @default(0)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  bot           Bot           @relation(fields: [botId], references: [id], onDelete: Cascade)
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+
+  @@id([botId, knowledgeBaseId])
+  @@map("bot_knowledge_bases")
+}
+
+// ==================== KNOWLEDGE BASE & DOCUMENTS ====================
+
+model KnowledgeBase {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  name             String    @db.VarChar(255)
+  description      String?
+  vectorCollection String?   @map("vector_collection") @db.VarChar(100)
+  embeddingModel   String    @default("vnpt-bge-m3") @map("embedding_model") @db.VarChar(100)
+  chunkSize        Int       @default(500) @map("chunk_size")
+  chunkOverlap     Int       @default(50) @map("chunk_overlap")
+  totalDocuments   Int       @default(0) @map("total_documents")
+  totalChars       BigInt    @default(0) @map("total_chars")
+  status           String    @default("active") @db.VarChar(20)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documents Document[]
+  bots      BotKnowledgeBase[]
+
+  @@index([tenantId])
+  @@map("knowledge_bases")
+}
+
+model Document {
+  id                    String    @id @default(uuid()) @db.Uuid
+  knowledgeBaseId       String    @map("knowledge_base_id") @db.Uuid
+  tenantId              String    @map("tenant_id") @db.Uuid
+  sourceType            String    @map("source_type") @db.VarChar(20)
+  originalName          String?   @map("original_name") @db.VarChar(500)
+  mimeType              String?   @map("mime_type") @db.VarChar(100)
+  fileSize              BigInt?   @map("file_size")
+  storagePath           String?   @map("storage_path")
+  sourceUrl             String?   @map("source_url")
+  markdownStoragePath   String?   @map("markdown_storage_path")
+  status                String    @default("pending") @db.VarChar(20)
+  processingStep        String?   @map("processing_step") @db.VarChar(30)
+  processingProgress    Int       @default(0) @map("processing_progress")
+  errorMessage          String?   @map("error_message")
+  charCount             BigInt    @default(0) @map("char_count")
+  chunkCount            Int       @default(0) @map("chunk_count")
+  processingStartedAt   DateTime? @map("processing_started_at")
+  processingCompletedAt DateTime? @map("processing_completed_at")
+  metadata              Json      @default("{}")
+  enabled               Boolean   @default(true)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  deletedAt             DateTime? @map("deleted_at")
+
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeBaseId])
+  @@index([tenantId])
+  @@map("documents")
+}
+
+// ==================== CONVERSATIONS & MESSAGES ====================
+
+model Conversation {
+  id                    String    @id @default(uuid()) @db.Uuid
+  botId                 String    @map("bot_id") @db.Uuid
+  tenantId              String    @map("tenant_id") @db.Uuid
+  endUserId             String?   @map("end_user_id") @db.VarChar(255)
+  endUserName           String?   @map("end_user_name") @db.VarChar(255)
+  endUserEmail          String?   @map("end_user_email") @db.VarChar(255)
+  endUserMetadata       Json      @default("{}") @map("end_user_metadata")
+  channel               String    @default("web_widget") @db.VarChar(20)
+  channelConversationId String?   @map("channel_conversation_id") @db.VarChar(255)
+  status                String    @default("active") @db.VarChar(20)
+  messageCount          Int       @default(0) @map("message_count")
+  lastMessageAt         DateTime? @map("last_message_at")
+  rating                Int?      @db.SmallInt
+  feedbackText          String?   @map("feedback_text")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  bot      Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([botId])
+  @@index([tenantId])
+  @@index([botId, createdAt(sort: Desc)])
+  @@index([endUserId])
+  @@map("conversations")
+}
+
+model Message {
+  id               String   @id @default(uuid()) @db.Uuid
+  conversationId   String   @map("conversation_id") @db.Uuid
+  botId            String   @map("bot_id") @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  role             String   @db.VarChar(10)
+  content          String
+  inputTokens      Int?     @map("input_tokens")
+  outputTokens     Int?     @map("output_tokens")
+  totalTokens      Int?     @map("total_tokens")
+  creditsUsed      Decimal  @default(0) @map("credits_used") @db.Decimal(10, 4)
+  searchQuery      String?  @map("search_query")
+  retrievalContext Json?    @map("retrieval_context")
+  responseTimeMs   Int?     @map("response_time_ms")
+  modelUsed        String?  @map("model_used") @db.VarChar(100)
+  feedback         String?  @db.VarChar(10)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  bot          Bot          @relation(fields: [botId], references: [id], onDelete: Cascade)
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([botId, createdAt(sort: Desc)])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("messages")
+}
+
+// ==================== CHANNELS ====================
+
+model Channel {
+  id           String    @id @default(uuid()) @db.Uuid
+  botId        String    @map("bot_id") @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  type         String    @db.VarChar(30)
+  status       String    @default("active") @db.VarChar(20)
+  config       Json      @default("{}")
+  connectedAt  DateTime? @map("connected_at")
+  lastActiveAt DateTime? @map("last_active_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  bot    Bot    @relation(fields: [botId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([botId])
+  @@map("channels")
+}
+
+// ==================== BILLING ====================
+
+model Plan {
+  id                      String   @id @default(uuid()) @db.Uuid
+  name                    String   @db.VarChar(100)
+  slug                    String   @unique @db.VarChar(50)
+  description             String?
+  isActive                Boolean  @default(true) @map("is_active")
+  maxBots                 Int      @map("max_bots")
+  maxCreditsPerMonth      Int      @map("max_credits_per_month")
+  maxKnowledgeCharsPerBot BigInt   @map("max_knowledge_chars_per_bot")
+  maxTeamMembers          Int      @default(1) @map("max_team_members")
+  features                Json     @default("{}")
+  priceMonthly            BigInt   @default(0) @map("price_monthly")
+  priceYearly             BigInt   @default(0) @map("price_yearly")
+  priceWeekly             BigInt   @default(0) @map("price_weekly")
+  sortOrder               Int      @default(0) @map("sort_order")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  tenants       Tenant[]
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                     String   @id @default(uuid()) @db.Uuid
+  tenantId               String   @map("tenant_id") @db.Uuid
+  planId                 String   @map("plan_id") @db.Uuid
+  status                 String   @default("active") @db.VarChar(20)
+  billingCycle           String   @map("billing_cycle") @db.VarChar(10)
+  currentPeriodStart     DateTime @map("current_period_start")
+  currentPeriodEnd       DateTime @map("current_period_end")
+  cancelAtPeriodEnd      Boolean  @default(false) @map("cancel_at_period_end")
+  paymentMethod          String?  @map("payment_method") @db.VarChar(30)
+  externalSubscriptionId String?  @map("external_subscription_id") @db.VarChar(255)
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  @@index([tenantId])
+  @@map("subscriptions")
+}
+
+model CreditUsage {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  periodStart      DateTime @map("period_start") @db.Date
+  periodEnd        DateTime @map("period_end") @db.Date
+  creditsAllocated Int      @map("credits_allocated")
+  creditsUsed      Int      @default(0) @map("credits_used")
+  topUpCredits     Int      @default(0) @map("top_up_credits")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, periodStart])
+  @@map("credit_usage")
+}
+
+model PaymentHistory {
+  id                   String   @id @default(uuid()) @db.Uuid
+  tenantId             String   @map("tenant_id") @db.Uuid
+  subscriptionId       String?  @map("subscription_id") @db.Uuid
+  type                 String   @db.VarChar(20)
+  amount               BigInt
+  currency             String   @default("VND") @db.VarChar(3)
+  status               String   @default("pending") @db.VarChar(20)
+  paymentMethod        String?  @map("payment_method") @db.VarChar(30)
+  gatewayTransactionId String?  @map("gateway_transaction_id") @db.VarChar(255)
+  gatewayResponse      Json?    @map("gateway_response")
+  description          String?
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("payment_history")
+}

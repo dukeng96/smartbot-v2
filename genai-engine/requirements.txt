@@ -1,0 +1,45 @@
+# Core
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# Async
+httpx==0.28.1
+
+# SSE streaming
+sse-starlette==2.2.1
+
+# Task queue
+celery[redis]==5.4.0
+redis==5.2.1
+
+# Embedding / Triton
+tritonclient[http]
+transformers[tokenizers]==4.29.2
+numpy
+onnxruntime==1.17.3
+requests
+
+# Vector DB
+qdrant-client==1.9.1
+
+# LLM
+openai==1.58.1
+
+# Document extraction
+datalab-python-sdk
+trafilatura==2.0.0
+
+# Text chunking (only splitter module)
+langchain-text-splitters==0.3.4
+
+# Object storage
+boto3==1.35.86
+
+# Logging
+structlog==24.4.0
+
+# Tokenizer
+sentencepiece==0.2.0
+protobuf==5.29.3
