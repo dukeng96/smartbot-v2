@@ -171,7 +171,7 @@ describe('ChatProxyService', () => {
         events.push(event);
       }
 
-      expect(mockConversationsService.updateStats).toHaveBeenCalledWith('conv-1');
+      expect(mockConversationsService.updateStats).toHaveBeenCalledWith('conv-1', expect.any(String));
     });
   });
 });

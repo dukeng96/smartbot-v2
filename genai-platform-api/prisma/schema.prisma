@@ -217,6 +217,7 @@ model Conversation {
   status                String    @default("active") @db.VarChar(20)
   messageCount          Int       @default(0) @map("message_count")
   lastMessageAt         DateTime? @map("last_message_at")
+  lastMessagePreview    String?   @map("last_message_preview") @db.VarChar(200)
   rating                Int?      @db.SmallInt
   feedbackText          String?   @map("feedback_text")
   createdAt             DateTime  @default(now()) @map("created_at")

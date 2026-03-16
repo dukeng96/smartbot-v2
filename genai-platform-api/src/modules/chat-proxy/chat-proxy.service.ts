@@ -139,7 +139,7 @@ export class ChatProxyService {
     await this.creditsService.increment(bot.tenantId, 1);
 
     // 11. Update conversation stats
-    await this.conversationsService.updateStats(conv.id);
+    await this.conversationsService.updateStats(conv.id, fullContent);
 
     // Final event
     yield {

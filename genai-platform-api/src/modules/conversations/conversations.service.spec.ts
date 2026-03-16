@@ -256,5 +256,38 @@ describe('ConversationsService', () => {
         data: { messageCount: 15, lastMessageAt: expect.any(Date) },
       });
     });
+
+    it('should update lastMessagePreview when content is provided', async () => {
+      prisma.message.count.mockResolvedValue(5);
+      prisma.conversation.update.mockResolvedValue({});
+
+      await service.updateStats(convId, 'Hello, I need help with pricing');
+
+      expect(prisma.conversation.update).toHaveBeenCalledWith({
+        where: { id: convId },
+        data: {
+          messageCount: 5,
+          lastMessageAt: expect.any(Date),
+          lastMessagePreview: 'Hello, I need help with pricing',
+        },
+      });
+    });
+
+    it('should truncate lastMessagePreview to 200 characters', async () => {
+      prisma.message.count.mockResolvedValue(3);
+      prisma.conversation.update.mockResolvedValue({});
+      const longContent = 'A'.repeat(300);
+
+      await service.updateStats(convId, longContent);
+
+      expect(prisma.conversation.update).toHaveBeenCalledWith({
+        where: { id: convId },
+        data: {
+          messageCount: 3,
+          lastMessageAt: expect.any(Date),
+          lastMessagePreview: 'A'.repeat(200),
+        },
+      });
+    });
   });
 });

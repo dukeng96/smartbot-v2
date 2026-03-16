@@ -36,6 +36,7 @@ export class ConversationsService {
           status: true,
           messageCount: true,
           lastMessageAt: true,
+          lastMessagePreview: true,
           rating: true,
           createdAt: true,
         },
@@ -181,14 +182,22 @@ export class ConversationsService {
   }
 
   /** Update conversation stats after new message */
-  async updateStats(convId: string) {
+  async updateStats(convId: string, lastMessageContent?: string) {
     const count = await this.prisma.message.count({
       where: { conversationId: convId },
     });
 
+    const data: Prisma.ConversationUpdateInput = {
+      messageCount: count,
+      lastMessageAt: new Date(),
+    };
+    if (lastMessageContent) {
+      data.lastMessagePreview = lastMessageContent.substring(0, 200);
+    }
+
     await this.prisma.conversation.update({
       where: { id: convId },
-      data: { messageCount: count, lastMessageAt: new Date() },
+      data,
     });
   }
 
