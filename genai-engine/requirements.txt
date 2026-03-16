@@ -1,8 +1,8 @@
 # Core
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
-pydantic==2.10.4
-pydantic-settings>=2.7.1
+pydantic
+pydantic-settings
 
 # Async
 httpx==0.28.1
@@ -13,6 +13,7 @@ sse-starlette==2.2.1
 # Task queue
 celery[redis]==5.4.0
 redis==5.2.1
+nest-asyncio  # Required for Windows --pool=solo: allows nested event loops in Celery tasks
 
 # Embedding / Triton
 tritonclient[http]

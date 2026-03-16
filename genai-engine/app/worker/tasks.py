@@ -49,12 +49,18 @@ def _get_processor() -> DocumentProcessor:
 
 
 def _run_async(coro):
-    """Run an async coroutine in a dedicated event loop.
+    """Run an async coroutine from a sync Celery task.
 
-    Uses a single shared loop per thread to avoid creating/destroying
-    event loops on every task invocation.
+    Celery --pool=solo on Windows runs inside a running event loop, so
+    asyncio.new_event_loop().run_until_complete() raises 'cannot be called
+    from a running event loop'. We patch the loop with nest_asyncio which
+    allows nested run_until_complete calls.
     """
+    import nest_asyncio
+    nest_asyncio.apply()
+
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         return loop.run_until_complete(coro)
     finally:
