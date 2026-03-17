@@ -85,10 +85,14 @@ export async function apiGet<T>(url: string, searchParams?: Record<string, strin
 }
 
 /**
- * Typed POST helper.
+ * Typed POST helper. Handles 204 No Content gracefully.
  */
 export async function apiPost<T>(url: string, json?: unknown): Promise<T> {
-  const res = await apiClient.post(url, { json }).json<ApiResponse<T>>()
+  const response = await apiClient.post(url, { json })
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    return undefined as T
+  }
+  const res = await response.json<ApiResponse<T>>()
   return res.data
 }
 
@@ -101,9 +105,13 @@ export async function apiPatch<T>(url: string, json?: unknown): Promise<T> {
 }
 
 /**
- * Typed DELETE helper.
+ * Typed DELETE helper. Handles 204 No Content gracefully.
  */
 export async function apiDelete<T = void>(url: string): Promise<T> {
-  const res = await apiClient.delete(url).json<ApiResponse<T>>()
+  const response = await apiClient.delete(url)
+  if (response.status === 204 || response.headers.get("content-length") === "0") {
+    return undefined as T
+  }
+  const res = await response.json<ApiResponse<T>>()
   return res.data
 }
