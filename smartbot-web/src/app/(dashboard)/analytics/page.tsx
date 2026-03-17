@@ -18,15 +18,16 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Phân tích"
-        description="Theo dõi hiệu suất của các bot"
+        description="Theo dõi hiệu suất của các assistant"
         actions={<PeriodFilter value={period} onChange={setPeriod} />}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard label="Tổng hội thoại" value={0} icon={BarChart3} />
         <KpiCard label="Tổng tin nhắn" value={0} icon={BarChart3} />
         <KpiCard label="Credits sử dụng" value={0} icon={BarChart3} />
         <KpiCard label="Đánh giá TB" value="--" icon={BarChart3} />
+        <KpiCard label="Tài liệu" value={0} icon={BarChart3} />
       </div>
 
       {/* TODO: Recharts line/bar charts for conversations, messages, credits over time */}

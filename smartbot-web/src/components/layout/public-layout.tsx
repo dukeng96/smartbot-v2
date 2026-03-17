@@ -13,7 +13,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       {/* Logo + tagline */}
       <div className="mb-8 text-center">
-        <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary">
           <span className="text-lg font-bold text-primary-foreground">S</span>
         </div>
         <h1 className="mt-3 text-xl font-semibold text-foreground">Smartbot</h1>

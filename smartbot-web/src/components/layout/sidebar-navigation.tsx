@@ -16,7 +16,7 @@ export function SidebarNavigation() {
           <div className="flex size-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">S</span>
           </div>
-          <span className="text-[15px] font-semibold text-foreground">Smartbot</span>
+          <span className="text-[16px] font-semibold text-foreground">Smartbot</span>
         </Link>
       </div>
 

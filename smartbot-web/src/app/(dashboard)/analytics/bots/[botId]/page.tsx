@@ -17,7 +17,7 @@ export default function BotAnalyticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Phân tích Bot"
+        title="Phân tích Assistant"
         actions={<PeriodFilter value={period} onChange={setPeriod} />}
       />
 

@@ -27,7 +27,7 @@ export default function DocumentsPage() {
       <EmptyState
         icon={FileText}
         title="Chưa có tài liệu"
-        description="Upload tài liệu PDF, DOCX, TXT để bot có thể tham khảo"
+        description="Upload tài liệu PDF, DOCX, TXT để assistant có thể tham khảo"
       />
     </div>
   )

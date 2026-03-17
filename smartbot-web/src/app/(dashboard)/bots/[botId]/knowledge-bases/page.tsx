@@ -16,7 +16,7 @@ export default function BotKnowledgeBasesPage() {
       <EmptyState
         icon={Database}
         title="Chưa gắn Knowledge Base"
-        description="Gắn Knowledge Base để bot có thể trả lời dựa trên tài liệu của bạn"
+        description="Gắn Knowledge Base để assistant có thể trả lời dựa trên tài liệu của bạn"
       />
     </div>
   )

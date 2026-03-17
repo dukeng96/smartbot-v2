@@ -9,26 +9,39 @@ import { EmptyState } from "@/components/shared/empty-state"
  * Data: GET /api/v1/bots
  */
 export default function BotsPage() {
+  // TODO: Replace with actual data fetching via useSuspenseQuery
+  const bots: unknown[] = []
+  const isEmpty = bots.length === 0
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Bots"
-        description="Quản lý các AI assistant của bạn"
-        actions={
-          <Button>
+      {isEmpty ? (
+        <EmptyState
+          icon={Bot}
+          title="Chưa có assistant nào"
+          description="Tạo assistant đầu tiên để bắt đầu"
+        >
+          <Button className="mt-4">
             <Plus className="mr-1.5 size-4" />
-            Tạo bot mới
+            Tạo Assistant mới
           </Button>
-        }
-      />
+        </EmptyState>
+      ) : (
+        <>
+          <PageHeader
+            title="Assistants"
+            description="Quản lý các AI assistant của bạn"
+            actions={
+              <Button>
+                <Plus className="mr-1.5 size-4" />
+                Tạo Assistant mới
+              </Button>
+            }
+          />
 
-      {/* TODO: DataTableToolbar + DataTable + DataTablePagination */}
-
-      <EmptyState
-        icon={Bot}
-        title="Chưa có bot nào"
-        description="Tạo bot đầu tiên để bắt đầu"
-      />
+          {/* TODO: DataTableToolbar + BotCardGrid + DataTablePagination */}
+        </>
+      )}
     </div>
   )
 }

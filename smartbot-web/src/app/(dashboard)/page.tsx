@@ -15,7 +15,7 @@ export default function DashboardPage() {
         description="Tổng quan hoạt động hôm nay"
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard
           label="Cuộc hội thoại"
           value={0}
@@ -33,13 +33,10 @@ export default function DashboardPage() {
           progress={{ value: 0, max: 100 }}
         />
         <KpiCard
-          label="Bot đang hoạt động"
+          label="Assistant đang hoạt động"
           value={0}
           icon={Bot}
         />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
         <KpiCard
           label="Tài liệu đã upload"
           value={0}

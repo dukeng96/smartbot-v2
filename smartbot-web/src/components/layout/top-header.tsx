@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Menu } from "lucide-react"
+import { ChevronDown, LogOut, Menu } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -44,10 +44,14 @@ export function TopHeader() {
           </span>
         )}
         <Separator orientation="vertical" className="h-5" />
+        <span className="text-[13px] font-medium text-foreground">
+          {user?.fullName ?? "User"}
+        </span>
         <Avatar size="sm">
           {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.fullName ?? ""} />}
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
+        <ChevronDown className="size-4 text-text-muted" />
         <Button variant="ghost" size="icon-sm" aria-label="Đăng xuất">
           <LogOut className="size-4" />
         </Button>

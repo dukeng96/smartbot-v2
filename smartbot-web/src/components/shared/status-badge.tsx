@@ -53,7 +53,7 @@ export function StatusBadge({ status, label, className }: StatusBadgeProps) {
     <Badge
       variant="outline"
       className={cn(
-        "border-0 text-[12px] font-normal px-2.5 py-0.5 rounded-full",
+        "border-0 text-[12px] font-normal px-2.5 py-1 rounded-full",
         style.bg,
         style.text,
         className,

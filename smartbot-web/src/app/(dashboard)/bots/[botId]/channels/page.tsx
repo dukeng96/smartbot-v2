@@ -16,7 +16,7 @@ export default function BotChannelsPage() {
       <EmptyState
         icon={Link2}
         title="Chưa kết nối kênh nào"
-        description="Kết nối bot với các nền tảng để phục vụ khách hàng"
+        description="Kết nối assistant với các nền tảng để phục vụ khách hàng"
       />
     </div>
   )

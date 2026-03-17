@@ -1,10 +1,11 @@
 "use client"
 
 import type { ReactNode } from "react"
+import Link from "next/link"
 import { useParams, usePathname, useRouter } from "next/navigation"
+import { ArrowLeft } from "lucide-react"
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PageHeader } from "@/components/layout/page-header"
 
 const BOT_TABS = [
   { value: "config", label: "Cấu hình", segment: "config" },
@@ -27,7 +28,18 @@ export default function BotDetailLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Chi tiết Bot" description={`Bot ID: ${params.botId}`} />
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-[14px]">
+        <Link
+          href="/bots"
+          className="flex items-center gap-1 font-medium text-[#6D28D9] hover:underline"
+        >
+          <ArrowLeft className="size-4" />
+          Assistants
+        </Link>
+        <span className="text-text-muted">/</span>
+        <span className="font-semibold text-foreground">{params.botId}</span>
+      </div>
 
       <Tabs value={activeSegment}>
         <TabsList>

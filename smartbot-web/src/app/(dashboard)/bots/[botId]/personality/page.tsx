@@ -8,7 +8,7 @@ export default function BotPersonalityPage() {
   return (
     <div className="space-y-6">
       <h2 className="text-[var(--font-size-section-heading)] font-semibold text-foreground">
-        Tính cách Bot
+        Tính cách Assistant
       </h2>
       {/* TODO: Personality form (system prompt textarea, etc.) */}
       <LoadingSkeleton variant="form" />

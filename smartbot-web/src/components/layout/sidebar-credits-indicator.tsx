@@ -15,20 +15,20 @@ export function SidebarCreditsIndicator() {
   return (
     <div className="px-4 py-3">
       <div className="flex items-center justify-between text-[10px] text-text-muted">
-        <span>Credits</span>
+        <span>CREDITS USED</span>
         <span className="tabular-nums">
           {used} / {total}
         </span>
       </div>
       <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-primary transition-all"
+          className="h-full rounded-full bg-[#059669] transition-all"
           style={{ width: `${percentage}%` }}
         />
       </div>
       <Link
         href="/billing"
-        className="mt-2 block text-[10px] font-medium text-primary hover:underline"
+        className="mt-2 block text-xs font-medium text-primary hover:underline"
       >
         Upgrade plan
       </Link>
