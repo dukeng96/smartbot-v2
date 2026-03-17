@@ -65,7 +65,6 @@ cd smartbot-v2
 Create `docker-compose.dev.yml` at project root (or use inline):
 
 ```yaml
-version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
@@ -140,7 +139,7 @@ Open MinIO Console at http://localhost:9001 (login: `minioadmin` / `minioadmin12
 Or via CLI:
 
 ```bash
-docker run --rm --net=host minio/mc:latest sh -c "
+docker run --rm --net=host --entrypoint sh minio/mc:latest -c "
   mc alias set local http://localhost:9000 minioadmin minioadmin123 &&
   mc mb local/smartbot-v2 --ignore-existing &&
   mc anonymous set download local/smartbot-v2
@@ -214,6 +213,8 @@ The API has internal endpoints to seed billing plans. After starting the server 
 
 ```bash
 curl -X POST http://localhost:3000/api/internal/plans/seed
+# On Windows PowerShell, use:
+# cmd /c "curl -X POST http://localhost:3000/api/internal/plans/seed"
 ```
 
 ### 4.5 Start the API
@@ -244,10 +245,11 @@ Swagger docs: http://localhost:3000/api/docs
 
 ## Step 5: Deploy genai-engine (Python/FastAPI)
 
-### 5.1 Create Conda Environment
+### 5.1 Create/Activate Conda Environment
 
 ```bash
-conda create -n env311 python=3.11 -y
+# Check if env exists first; if yes, activate it. Otherwise, create it.
+conda activate env311 || conda create -n env311 python=3.11 -y
 conda activate env311
 ```
 
@@ -255,61 +257,17 @@ conda activate env311
 
 ```bash
 cd genai-engine
+# On Windows PowerShell, avoid chaining with &&. Run separately:
+conda activate env311
 pip install -r requirements.txt
 ```
 
+> **Troubleshooting Pip:** If you encounter a dependency conflict between `datalab-python-sdk` and `pydantic-settings`, relax the version requirements in `requirements.txt`. Change `pydantic==2.10.4` and `pydantic-settings>=2.10.1` to just `pydantic` and `pydantic-settings`.
+
 ### 5.3 Configure Environment
+Use the existing `.env` file in the `genai-engine` folder. You must update the following sections:
 
-```bash
-copy .env.example .env
-```
-
-Edit `.env`:
-
-```env
-# Triton Inference Server (VPN required)
-TRITON_HOST=10.159.19.40
-TRITON_PORT=31831
-TRITON_BATCH_SIZE=32
-TRITON_MODEL_NAME=my_onnx_model
-TOKENIZER_NAME=BAAI/bge-m3
-
-# Qdrant Vector DB (VPN required)
-QDRANT_URL=http://10.159.19.59:32500
-QDRANT_API_KEY=<your-qdrant-api-key>
-QDRANT_ON_DISK=true
-
-# LLM — OpenAI-compatible (VPN required)
-LLM_BASE_URL=https://assistant-stream.vnpt.vn/v1/
-LLM_API_KEY=<your-llm-api-key>
-LLM_MODEL_SMALL=llm-small-v4
-LLM_MODEL_MEDIUM=llm-medium-v4
-
-# Marker Cloud (Datalab) for OCR
-DATALAB_API_KEY=<your-datalab-api-key>
-
-# MinIO — LOCAL (same as platform-api)
-MINIO_SERVICE_URL=http://localhost:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin123
-MINIO_FOLDER_NAME=smartbot-v2
-MINIO_PUBLIC_HOST=http://localhost:9000
-MINIO_EXPIRE_TIME=168
-
-# Redis (Celery broker) — use db 1 to avoid collision with platform-api
-REDIS_URL=redis://localhost:6379/1
-
-# Web Backend callback
-WEB_BACKEND_URL=http://localhost:3000
-WEB_BACKEND_INTERNAL_KEY=internal-secret-key-change-me
-
-# Server
-HOST=0.0.0.0
-PORT=8000
-DEBUG=true
-```
-
-> **Important:** `MINIO_SERVICE_URL` and `MINIO_PUBLIC_HOST` MUST point to `http://localhost:9000` (local MinIO), NOT `https://voice-storage.vnpt.vn`.
+> **Important:** By default, the `.env` might point to production VNPT storage. `MINIO_SERVICE_URL` and `MINIO_PUBLIC_HOST` MUST point to `http://localhost:9000` (local MinIO). Also, update `MINIO_ACCESS_KEY` to `minioadmin` and `MINIO_SECRET_KEY` to `minioadmin123`.
 
 > **Important:** `WEB_BACKEND_INTERNAL_KEY` must match `INTERNAL_API_KEY` in the platform-api `.env`.
 
@@ -428,6 +386,10 @@ curl -X POST http://localhost:8000/engine/v1/chat/test \
 ### Windows-specific: Unicode/encoding errors
 - Set environment variable: `PYTHONIOENCODING=utf-8`
 - Or run: `chcp 65001` in terminal before starting services
+
+### Windows-specific: PowerShell curl parameter errors
+- PowerShell maps `curl` to `Invoke-WebRequest`, which doesn't support the `-X` flag out of the box.
+- Prepend your commands with `cmd /c` (e.g., `cmd /c "curl -X POST ..."`).
 
 ---
 

@@ -7,7 +7,7 @@
 
 ## Tổng quan
 
-- **Tổng số màn hình:** 25 màn chính + 1 embed widget + các modal/dialog phụ
+- **Tổng số màn hình:** 30 màn chính (see Section J for breakdown)
 - **Kiến trúc:** SaaS multi-tenant, mỗi user thuộc 1+ workspace (tenant)
 - **Auth:** JWT, hỗ trợ email + Google OAuth
 - **Phân quyền:** owner > admin > member > viewer (trong mỗi tenant)
@@ -303,13 +303,15 @@
   - endUserName hoặc endUserId
   - channel
   - messageCount
-  - lastMessageAt
+  - lastMessageAt (timestamp only - e.g., "2 hours ago", "Yesterday")
   - status
   - rating (1-5 sao, nếu có)
+- **Note:** UI chỉ hiển thị timestamp (lastMessageAt), không hiển thị message preview content
 - Nút tìm kiếm tin nhắn (`GET /api/v1/bots/:botId/messages/search?q=`)
 - Nút archive conversation (`DELETE /api/v1/conversations/:convId`)
 
-**Data model Conversation:** `{id, botId, endUserId, endUserName, endUserEmail, endUserMetadata, channel, status, messageCount, lastMessageAt, rating, feedbackText}`
+**Data model Conversation:** `{id, botId, endUserId, endUserName, endUserEmail, endUserMetadata, channel, status, messageCount, lastMessageAt, lastMessagePreview, rating, feedbackText}`
+**Note:** Backend có field `lastMessagePreview` (VarChar 200) nhưng UI hiện tại không sử dụng - chỉ hiển thị timestamp.
 
 ---
 
