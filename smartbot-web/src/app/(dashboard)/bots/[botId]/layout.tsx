@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useParams, usePathname, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
+import { useBot } from "@/lib/hooks/use-bots"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const BOT_TABS = [
@@ -26,6 +27,9 @@ export default function BotDetailLayout({ children }: { children: ReactNode }) {
   const router = useRouter()
   const activeSegment = pathname.split("/").pop() ?? "config"
 
+  const { data: bot } = useBot(params.botId)
+  const displayName = bot?.name ?? params.botId
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -38,7 +42,7 @@ export default function BotDetailLayout({ children }: { children: ReactNode }) {
           Assistants
         </Link>
         <span className="text-text-muted">/</span>
-        <span className="font-semibold text-foreground">{params.botId}</span>
+        <span className="font-semibold text-foreground">{displayName}</span>
       </div>
 
       <Tabs value={activeSegment}>
