@@ -53,10 +53,10 @@ __decorate([
     __metadata("design:type", String)
 ], PaginationDto.prototype, "order", void 0);
 class PaginatedResult {
-    data;
+    items;
     meta;
-    constructor(data, total, page, limit) {
-        this.data = data;
+    constructor(items, total, page, limit) {
+        this.items = items;
         this.meta = {
             total,
             page,

@@ -62,7 +62,7 @@ describe('ConversationsService', () => {
         get skip() { return 0; },
       });
 
-      expect(result.data).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
 
@@ -125,7 +125,7 @@ describe('ConversationsService', () => {
         get skip() { return 0; },
       });
 
-      expect(result.data).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
     });
 
     it('should throw NotFoundException for non-existent conversation', async () => {
@@ -198,7 +198,7 @@ describe('ConversationsService', () => {
 
       const result = await service.searchMessages(tenantId, botId, 'hello', 1, 20);
 
-      expect(result.data).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
       expect(prisma.message.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({

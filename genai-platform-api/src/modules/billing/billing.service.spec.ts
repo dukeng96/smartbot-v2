@@ -217,7 +217,7 @@ describe('BillingService', () => {
         get skip() { return 0; },
       });
 
-      expect(result.data).toHaveLength(0);
+      expect(result.items).toHaveLength(0);
       expect(result.meta.total).toBe(0);
     });
   });

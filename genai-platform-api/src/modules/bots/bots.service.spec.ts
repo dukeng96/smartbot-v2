@@ -84,7 +84,7 @@ describe('BotsService', () => {
         get skip() { return 0; },
       });
 
-      expect(result.data).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
       expect(result.meta.total).toBe(1);
     });
 

@@ -98,7 +98,7 @@ smartbot-web/
 │   │   │
 │   │   ├── (dashboard)/                  # Auth route group (AppShell)
 │   │   │   ├── layout.tsx                # AppShell: sidebar + header + main
-│   │   │   ├── page.tsx                  # Dashboard (B2)
+│   │   │   ├── page.tsx                  # Dashboard (B2) renders correctly at /
 │   │   │   ├── bots/
 │   │   │   │   ├── page.tsx              # Bot list (C1)
 │   │   │   │   └── [botId]/
@@ -151,6 +151,10 @@ smartbot-web/
 │   │   ├── layout.tsx                    # Root layout (providers)
 │   │   ├── not-found.tsx                 # 404
 │   │   └── error.tsx                     # Global error boundary
+│   │
+│   ├── lib/
+│   │   └── providers/
+│   │       └── auth-provider.tsx         # AuthProvider wraps root layout
 │   │
 │   ├── components/
 │   │   ├── ui/                           # shadcn/ui primitives
@@ -446,9 +450,9 @@ const apiClient = ky.create({
 
 **Interceptor chain:**
 1. `beforeRequest` — Attach `Authorization: Bearer {accessToken}` header
-2. `afterResponse` — On 401, call `/auth/refresh`, store new token, retry original request
+2. `afterResponse` — On 401 (skips `/api/v1/auth/*` endpoints), call `/auth/refresh`, store new token, retry original request
 3. `afterResponse` — Unwrap API envelope: `{statusCode, message, data}` → return `data`
-4. Error transform — Map backend error format to consistent `ApiError` type
+4. Error transform — `handleMutationError` maps HTTP status to Vietnamese user-facing toast (401→"Email hoặc mật khẩu không đúng", 403→"Không có quyền truy cập", 429→rate limit)
 
 ### 6.2. API Module Pattern
 
@@ -508,7 +512,7 @@ function useSseChat(botId: string) {
 All list endpoints return paginated data. Frontend uses consistent pattern:
 
 - Query params: `?page=1&limit=50&sortBy=createdAt&sortOrder=desc`
-- Response: `{ data: T[], meta: { total, page, limit, totalPages } }`
+- Response: `{ items: T[], meta: { total, page, limit, totalPages } }`
 - UI: `DataTable` + `DataTablePagination` components handle display
 
 ---
@@ -566,9 +570,12 @@ All list endpoints return paginated data. Frontend uses consistent pattern:
 - Redirect unauthenticated users to `/login`
 - Redirect authenticated users away from `/login`, `/register`
 
-### 7.4. Auth Context
+### 7.4. Auth Context & Session Restoration
 
-`AuthProvider` wraps the root layout:
+`AuthProvider` (`lib/providers/auth-provider.tsx`) wraps the root layout:
+- Restores session on app mount: reads refresh token from httpOnly cookie, calls `refreshSession()` to get new access token
+- Stores access token in `auth-store` (Zustand)
+- Renders null during hydration to prevent flash of unauthenticated content
 - Provides: `user`, `tenant`, `isAuthenticated`, `role`
 - Sources from: `/api/v1/users/me` on initial load (TanStack Query, staleTime: 5min)
 - Updates on: login, register, profile edit
