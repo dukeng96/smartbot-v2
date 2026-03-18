@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 
 import { SidebarNavigation } from "./sidebar-navigation"
+import { MobileSidebarOverlay } from "./mobile-sidebar-overlay"
 import { TopHeader } from "./top-header"
 
 interface AppShellProps {
@@ -16,10 +17,13 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar — desktop fixed, mobile overlay (future) */}
+      {/* Sidebar — desktop fixed */}
       <div className="hidden lg:block">
         <SidebarNavigation />
       </div>
+
+      {/* Mobile sidebar overlay */}
+      <MobileSidebarOverlay />
 
       {/* Main area — offset by sidebar width on desktop */}
       <div className="flex flex-1 flex-col lg:ml-[var(--width-sidebar)]">

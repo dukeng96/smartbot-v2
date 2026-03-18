@@ -111,11 +111,8 @@ export class AuthService {
 
     return {
       user: this.sanitizeUser(result.user),
-      tenant: {
-        id: result.tenant.id,
-        name: result.tenant.name,
-        slug: result.tenant.slug,
-      },
+      tenant: this.sanitizeTenant(result.tenant),
+      role: 'owner' as const,
       ...tokens,
     };
   }
@@ -165,6 +162,8 @@ export class AuthService {
 
     return {
       user: this.sanitizeUser(user),
+      tenant: this.sanitizeTenant(membership.tenant),
+      role: membership.role,
       ...tokens,
     };
   }
@@ -184,6 +183,7 @@ export class AuthService {
           include: {
             memberships: {
               where: { status: 'active' },
+              include: { tenant: true },
               take: 1,
               orderBy: { createdAt: 'asc' },
             },
@@ -216,11 +216,18 @@ export class AuthService {
       throw new UnauthorizedException('No active tenant membership');
     }
 
-    return this.generateTokens(
+    const tokens = await this.generateTokens(
       stored.user.id,
       membership.tenantId,
       membership.role,
     );
+
+    return {
+      user: this.sanitizeUser(stored.user),
+      tenant: this.sanitizeTenant(membership.tenant),
+      role: membership.role,
+      ...tokens,
+    };
   }
 
   async forgotPassword(email: string) {
@@ -301,6 +308,16 @@ export class AuthService {
       authProvider: user.authProvider,
       status: user.status,
       createdAt: user.createdAt,
+    };
+  }
+
+  private sanitizeTenant(tenant: any) {
+    return {
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      logoUrl: tenant.logoUrl ?? null,
+      planId: tenant.planId ?? null,
     };
   }
 }

@@ -25,8 +25,8 @@ export const authApi = {
   register: (fullName: string, email: string, password: string) =>
     apiPost<RegisterResponse>("api/v1/auth/register", { fullName, email, password }),
 
-  logout: () =>
-    apiPost<void>("api/v1/auth/logout"),
+  logout: (refreshToken: string) =>
+    apiPost<void>("api/v1/auth/logout", { refreshToken }),
 
   forgotPassword: (email: string) =>
     apiPost<void>("api/v1/auth/forgot-password", { email }),

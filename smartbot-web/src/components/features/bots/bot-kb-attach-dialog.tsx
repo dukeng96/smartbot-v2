@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
 
 import { attachKbSchema, type AttachKbInput } from "@/lib/validations/bot-schemas"
-import { knowledgeBasesApi } from "@/lib/api/knowledge-bases-api"
+import { listKnowledgeBases } from "@/lib/api/knowledge-bases-api"
 import { useAttachKb } from "@/lib/hooks/use-bot-integrations"
 import {
   Dialog,
@@ -36,7 +36,7 @@ export function BotKbAttachDialog({ botId, open, onOpenChange }: BotKbAttachDial
 
   const { data: kbList } = useQuery({
     queryKey: ["knowledge-bases", { limit: 100 }],
-    queryFn: () => knowledgeBasesApi.list({ limit: 100 }),
+    queryFn: () => listKnowledgeBases({ limit: 100 }),
     enabled: open,
   })
 

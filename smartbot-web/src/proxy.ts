@@ -25,21 +25,19 @@ function isPublicRoute(pathname: string): boolean {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const refreshToken = request.cookies.get("refreshToken")?.value
-
-  const hasAuth = !!refreshToken
+  const hasSession = request.cookies.get("sb_authenticated")?.value === "1"
   const isPublic = isPublicRoute(pathname)
 
   // Unauthenticated user accessing protected route → redirect to login
-  if (!hasAuth && !isPublic) {
+  if (!hasSession && !isPublic) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
   // Authenticated user accessing auth pages → redirect to dashboard
-  if (hasAuth && isPublic) {
-    return NextResponse.redirect(new URL("/", request.url))
+  if (hasSession && isPublic) {
+    return NextResponse.redirect(new URL("/bots", request.url))
   }
 
   return NextResponse.next()

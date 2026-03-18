@@ -1,6 +1,6 @@
 # Frontend Architecture — Smartbot v2 Platform (`smartbot-web`)
 
-**Last Updated:** 2026-03-17
+**Last Updated:** 2026-03-18
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Concern | Choice | Rationale |
 |---------|--------|-----------|
-| Framework | **Next.js 15 (App Router)** | SSR for public/auth pages, RSC for dashboard, file-based routing |
+| Framework | **Next.js 16 (App Router, Turbopack)** | SSR for public/auth pages, RSC for dashboard, file-based routing |
 | Language | **TypeScript (strict)** | Matches backend TS, catches type errors at compile time |
 | UI Library | **shadcn/ui + Tailwind CSS v4** | Composable primitives, full control, no heavy runtime |
 | Server State | **TanStack Query v5** | Cache, refetch, optimistic updates, SSE integration |
@@ -175,6 +175,7 @@ smartbot-web/
 │   │   │   ├── sidebar-navigation.tsx    # Nav items + icons + active state
 │   │   │   ├── sidebar-nav-item.tsx      # Single nav link
 │   │   │   ├── top-header.tsx            # User avatar + workspace name + logout
+│   │   │   ├── mobile-sidebar-overlay.tsx # Mobile drawer (<lg breakpoint)
 │   │   │   ├── page-header.tsx           # Page title + breadcrumb + actions slot
 │   │   │   └── public-layout.tsx         # Centered card for auth pages
 │   │   │
@@ -374,10 +375,16 @@ From Figma B1. Every dashboard page lives inside this shell.
 
 ### Layout Behavior
 
-- **Desktop (>=1024px):** Sidebar fixed 220px wide, always visible
-- **Tablet (768-1023px):** Sidebar collapsible, toggle button in header
-- **Mobile (<768px):** Sidebar hidden, hamburger menu opens overlay drawer
-- Sidebar collapse state persisted in `ui-store` (Zustand)
+- **Desktop (>=1024px `lg`):** Sidebar fixed 220px wide (`--width-sidebar`), always visible
+- **Mobile/Tablet (<1024px):** Sidebar hidden; hamburger (`Menu` icon) in `TopHeader` opens `MobileSidebarOverlay` — a slide-in drawer with backdrop, auto-close on route change, and body scroll lock
+- Sidebar state: `sidebarCollapsed` and `sidebarMobileOpen` in `ui-store` (Zustand)
+
+### Route Protection
+
+Uses `proxy.ts` (Next.js 16 replacement for deprecated `middleware.ts`):
+- Public routes: `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`
+- Protected routes: everything else — redirects unauthenticated users to `/login`
+- Authenticated users redirected away from public auth routes
 
 ---
 
@@ -551,7 +558,7 @@ All list endpoints return paginated data. Frontend uses consistent pattern:
 
 ### 7.3. Route Protection
 
-**Next.js Middleware (`middleware.ts`):**
+**Next.js 16 Proxy (`proxy.ts`, replaces deprecated `middleware.ts`):**
 - Runs on edge for every request
 - Check for valid access token (or refresh token cookie)
 - Public routes: `/login`, `/register`, `/forgot-password`, `/reset-password`, `/verify-email`
@@ -641,7 +648,7 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=xxx
 
 | Decision | Choice | Alternatives Considered | Reason |
 |----------|--------|-------------------------|--------|
-| Framework | Next.js App Router | Vite + React Router, Remix | SSR for auth pages, RSC for performance, industry standard |
+| Framework | Next.js 16 App Router + Turbopack | Vite + React Router, Remix | SSR for auth pages, RSC for performance, proxy.ts for route protection |
 | UI | shadcn/ui + Tailwind | MUI, Ant Design, Chakra | Full control, no runtime CSS, copy-paste composable |
 | State | TanStack Query + Zustand | Redux Toolkit, SWR + Context | TQ handles server cache; Zustand minimal for UI state |
 | Forms | RHF + Zod | Formik + Yup | Better perf (uncontrolled), Zod type inference |

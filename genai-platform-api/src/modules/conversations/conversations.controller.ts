@@ -23,6 +23,15 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) {}
 
+  @Get('conversations')
+  @ApiOperation({ summary: 'List all conversations for tenant' })
+  findAll(
+    @CurrentTenant() tenantId: string,
+    @Query() query: ListConversationsDto,
+  ) {
+    return this.conversationsService.findAll(tenantId, query);
+  }
+
   @Get('bots/:botId/conversations')
   @ApiOperation({ summary: 'List conversations for bot' })
   findAllByBot(

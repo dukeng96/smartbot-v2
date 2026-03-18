@@ -2,7 +2,7 @@
 
 import { create } from "zustand"
 
-import { setAccessToken } from "@/lib/api/client"
+import { setAccessToken, setRefreshToken } from "@/lib/api/client"
 
 export interface AuthUser {
   id: string
@@ -32,7 +32,7 @@ interface AuthState {
 }
 
 interface AuthActions {
-  setAuth: (user: AuthUser, tenant: AuthTenant, role: UserRole, accessToken: string) => void
+  setAuth: (user: AuthUser, tenant: AuthTenant, role: UserRole, accessToken: string, refreshToken: string) => void
   clearAuth: () => void
   updateUser: (partial: Partial<AuthUser>) => void
   updateTenant: (partial: Partial<AuthTenant>) => void
@@ -44,13 +44,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   role: null,
   isAuthenticated: false,
 
-  setAuth: (user, tenant, role, accessToken) => {
+  setAuth: (user, tenant, role, accessToken, refreshToken) => {
     setAccessToken(accessToken)
+    setRefreshToken(refreshToken)
     set({ user, tenant, role, isAuthenticated: true })
   },
 
   clearAuth: () => {
     setAccessToken(null)
+    setRefreshToken(null)
     set({ user: null, tenant: null, role: null, isAuthenticated: false })
   },
 

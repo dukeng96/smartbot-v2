@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Toaster } from "sonner"
 
+import { AuthProvider } from "@/lib/providers/auth-provider"
 import { QueryProvider } from "@/lib/providers/query-provider"
 
 import "./globals.css"
@@ -25,10 +26,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi" className={inter.variable}>
+    <html lang="vi" className={inter.variable} suppressHydrationWarning>
       <body className="antialiased">
         <QueryProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
           <Toaster position="top-right" richColors closeButton />
         </QueryProvider>
       </body>

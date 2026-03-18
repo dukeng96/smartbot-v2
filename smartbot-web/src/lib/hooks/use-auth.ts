@@ -1,23 +1,26 @@
 "use client"
 
 import { useMutation } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 
 import { authApi } from "@/lib/api/auth-api"
+import { getRefreshToken } from "@/lib/api/client"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { handleMutationError } from "@/lib/utils/handle-mutation-error"
 
 export function useLogin() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const setAuth = useAuthStore((s) => s.setAuth)
 
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       authApi.login(email, password),
     onSuccess: (data) => {
-      setAuth(data.user, data.tenant, data.role, data.accessToken)
-      router.push("/")
+      setAuth(data.user, data.tenant, data.role, data.accessToken, data.refreshToken)
+      const redirectTo = searchParams.get("redirect") || "/bots"
+      router.push(redirectTo)
     },
     onError: handleMutationError,
   })
@@ -31,8 +34,8 @@ export function useRegister() {
     mutationFn: ({ fullName, email, password }: { fullName: string; email: string; password: string }) =>
       authApi.register(fullName, email, password),
     onSuccess: (data) => {
-      setAuth(data.user, data.tenant, data.role, data.accessToken)
-      router.push("/")
+      setAuth(data.user, data.tenant, data.role, data.accessToken, data.refreshToken)
+      router.push("/bots")
     },
     onError: handleMutationError,
   })
@@ -43,7 +46,11 @@ export function useLogout() {
   const clearAuth = useAuthStore((s) => s.clearAuth)
 
   return useMutation({
-    mutationFn: () => authApi.logout(),
+    mutationFn: () => {
+      const refreshToken = getRefreshToken()
+      if (!refreshToken) return Promise.resolve()
+      return authApi.logout(refreshToken)
+    },
     onSuccess: () => {
       clearAuth()
       router.push("/login")
