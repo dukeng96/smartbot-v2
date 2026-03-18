@@ -82,6 +82,10 @@ async function handleTokenRefresh(
 ) {
   if (response.status !== 401) return response
 
+  // Don't intercept 401 from auth endpoints — those are expected business errors
+  const url = new URL(request.url)
+  if (url.pathname.startsWith("/api/v1/auth/")) return response
+
   const result = await refreshSession()
   if (!result) {
     if (typeof window !== "undefined") {

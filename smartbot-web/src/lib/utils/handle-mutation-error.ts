@@ -10,6 +10,10 @@ export async function handleMutationError(error: unknown) {
   if (error instanceof HTTPError) {
     const status = error.response.status
 
+    if (status === 401) {
+      toast.error("Email hoặc mật khẩu không đúng")
+      return
+    }
     if (status === 403) {
       toast.error("Không có quyền truy cập")
       return
