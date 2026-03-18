@@ -7,6 +7,23 @@ export declare class ConversationsService {
     private readonly prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
+    findAll(tenantId: string, query: ListConversationsDto): Promise<PaginatedResult<{
+        bot: {
+            name: string;
+            id: string;
+        };
+        channel: string;
+        id: string;
+        status: string;
+        createdAt: Date;
+        botId: string;
+        rating: number | null;
+        endUserId: string | null;
+        endUserName: string | null;
+        messageCount: number;
+        lastMessageAt: Date | null;
+        lastMessagePreview: string | null;
+    }>>;
     findAllByBot(tenantId: string, botId: string, query: ListConversationsDto): Promise<PaginatedResult<{
         channel: string;
         id: string;
@@ -17,6 +34,7 @@ export declare class ConversationsService {
         endUserName: string | null;
         messageCount: number;
         lastMessageAt: Date | null;
+        lastMessagePreview: string | null;
     }>>;
     findOne(tenantId: string, convId: string): Promise<{
         bot: {
@@ -41,6 +59,7 @@ export declare class ConversationsService {
         channelConversationId: string | null;
         messageCount: number;
         lastMessageAt: Date | null;
+        lastMessagePreview: string | null;
     }>;
     getMessages(tenantId: string, convId: string, query: PaginationDto): Promise<PaginatedResult<{
         id: string;
@@ -88,7 +107,8 @@ export declare class ConversationsService {
         channelConversationId: string | null;
         messageCount: number;
         lastMessageAt: Date | null;
+        lastMessagePreview: string | null;
     }>;
-    updateStats(convId: string): Promise<void>;
+    updateStats(convId: string, lastMessageContent?: string): Promise<void>;
     private ensureConvExists;
 }

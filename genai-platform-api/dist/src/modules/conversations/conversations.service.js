@@ -20,6 +20,44 @@ let ConversationsService = ConversationsService_1 = class ConversationsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async findAll(tenantId, query) {
+        const where = { tenantId };
+        if (query.channel)
+            where.channel = query.channel;
+        if (query.status)
+            where.status = query.status;
+        if (query.dateFrom || query.dateTo) {
+            where.createdAt = {};
+            if (query.dateFrom)
+                where.createdAt.gte = new Date(query.dateFrom);
+            if (query.dateTo)
+                where.createdAt.lte = new Date(query.dateTo);
+        }
+        const [data, total] = await Promise.all([
+            this.prisma.conversation.findMany({
+                where,
+                orderBy: { [query.sort || 'createdAt']: query.order || 'desc' },
+                skip: query.skip,
+                take: query.limit,
+                select: {
+                    id: true,
+                    botId: true,
+                    endUserId: true,
+                    endUserName: true,
+                    channel: true,
+                    status: true,
+                    messageCount: true,
+                    lastMessageAt: true,
+                    lastMessagePreview: true,
+                    rating: true,
+                    createdAt: true,
+                    bot: { select: { id: true, name: true } },
+                },
+            }),
+            this.prisma.conversation.count({ where }),
+        ]);
+        return new pagination_dto_1.PaginatedResult(data, total, query.page, query.limit);
+    }
     async findAllByBot(tenantId, botId, query) {
         const where = { botId, tenantId };
         if (query.channel)
@@ -47,6 +85,7 @@ let ConversationsService = ConversationsService_1 = class ConversationsService {
                     status: true,
                     messageCount: true,
                     lastMessageAt: true,
+                    lastMessagePreview: true,
                     rating: true,
                     createdAt: true,
                 },
@@ -163,13 +202,20 @@ let ConversationsService = ConversationsService_1 = class ConversationsService {
             },
         });
     }
-    async updateStats(convId) {
+    async updateStats(convId, lastMessageContent) {
         const count = await this.prisma.message.count({
             where: { conversationId: convId },
         });
+        const data = {
+            messageCount: count,
+            lastMessageAt: new Date(),
+        };
+        if (lastMessageContent) {
+            data.lastMessagePreview = lastMessageContent.substring(0, 200);
+        }
         await this.prisma.conversation.update({
             where: { id: convId },
-            data: { messageCount: count, lastMessageAt: new Date() },
+            data,
         });
     }
     async ensureConvExists(tenantId, convId) {

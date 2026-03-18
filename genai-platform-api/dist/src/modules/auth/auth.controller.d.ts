@@ -27,7 +27,10 @@ export declare class AuthController {
             id: any;
             name: any;
             slug: any;
+            logoUrl: any;
+            planId: any;
         };
+        role: "owner";
     }>;
     login(dto: LoginDto): Promise<{
         accessToken: string;
@@ -43,6 +46,14 @@ export declare class AuthController {
             status: any;
             createdAt: any;
         };
+        tenant: {
+            id: any;
+            name: any;
+            slug: any;
+            logoUrl: any;
+            planId: any;
+        };
+        role: string;
     }>;
     logout(dto: RefreshTokenDto): Promise<{
         message: string;
@@ -50,6 +61,25 @@ export declare class AuthController {
     refresh(dto: RefreshTokenDto): Promise<{
         accessToken: string;
         refreshToken: string;
+        user: {
+            id: any;
+            email: any;
+            fullName: any;
+            avatarUrl: any;
+            phone: any;
+            emailVerified: any;
+            authProvider: any;
+            status: any;
+            createdAt: any;
+        };
+        tenant: {
+            id: any;
+            name: any;
+            slug: any;
+            logoUrl: any;
+            planId: any;
+        };
+        role: string;
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{
         message: string;

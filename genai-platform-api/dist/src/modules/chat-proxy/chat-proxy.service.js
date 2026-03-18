@@ -96,7 +96,7 @@ let ChatProxyService = ChatProxyService_1 = class ChatProxyService {
             modelUsed: 'mock-gpt-4',
         });
         await this.creditsService.increment(bot.tenantId, 1);
-        await this.conversationsService.updateStats(conv.id);
+        await this.conversationsService.updateStats(conv.id, fullContent);
         yield {
             event: 'done',
             data: JSON.stringify({

@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import type { ListParams } from "@/lib/types/api-responses"
 import type { CreateDocumentUrlInput, CreateDocumentTextInput } from "@/lib/types/document"
+import type { KBDocument } from "@/lib/types/document"
 import {
   listDocuments,
   getDocument,
@@ -15,6 +16,13 @@ import {
   deleteDocument,
   reprocessDocument,
 } from "@/lib/api/documents-api"
+
+/** Polling interval when documents are being processed (5s) */
+const PROCESSING_POLL_INTERVAL = 5_000
+
+function hasProcessingDocs(items?: KBDocument[]): boolean {
+  return !!items?.some((d) => d.status === "pending" || d.status === "processing")
+}
 
 const KEYS = {
   all: (kbId: string) => ["documents", kbId] as const,
@@ -27,6 +35,8 @@ export function useDocuments(kbId: string, params?: ListParams) {
     queryKey: KEYS.list(kbId, params),
     queryFn: () => listDocuments(kbId, params),
     enabled: !!kbId,
+    refetchInterval: (query) =>
+      hasProcessingDocs(query.state.data?.items) ? PROCESSING_POLL_INTERVAL : false,
   })
 }
 
@@ -35,6 +45,10 @@ export function useDocument(kbId: string, docId: string) {
     queryKey: KEYS.detail(kbId, docId),
     queryFn: () => getDocument(kbId, docId),
     enabled: !!kbId && !!docId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status
+      return status === "pending" || status === "processing" ? PROCESSING_POLL_INTERVAL : false
+    },
   })
 }
 

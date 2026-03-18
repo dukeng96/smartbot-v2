@@ -127,11 +127,8 @@ let AuthService = AuthService_1 = class AuthService {
         const tokens = await this.generateTokens(result.user.id, result.tenant.id, 'owner');
         return {
             user: this.sanitizeUser(result.user),
-            tenant: {
-                id: result.tenant.id,
-                name: result.tenant.name,
-                slug: result.tenant.slug,
-            },
+            tenant: this.sanitizeTenant(result.tenant),
+            role: 'owner',
             ...tokens,
         };
     }
@@ -168,6 +165,8 @@ let AuthService = AuthService_1 = class AuthService {
         const tokens = await this.generateTokens(user.id, membership.tenantId, membership.role);
         return {
             user: this.sanitizeUser(user),
+            tenant: this.sanitizeTenant(membership.tenant),
+            role: membership.role,
             ...tokens,
         };
     }
@@ -185,6 +184,7 @@ let AuthService = AuthService_1 = class AuthService {
                     include: {
                         memberships: {
                             where: { status: 'active' },
+                            include: { tenant: true },
                             take: 1,
                             orderBy: { createdAt: 'asc' },
                         },
@@ -212,7 +212,13 @@ let AuthService = AuthService_1 = class AuthService {
         if (!membership) {
             throw new common_1.UnauthorizedException('No active tenant membership');
         }
-        return this.generateTokens(stored.user.id, membership.tenantId, membership.role);
+        const tokens = await this.generateTokens(stored.user.id, membership.tenantId, membership.role);
+        return {
+            user: this.sanitizeUser(stored.user),
+            tenant: this.sanitizeTenant(membership.tenant),
+            role: membership.role,
+            ...tokens,
+        };
     }
     async forgotPassword(email) {
         const user = await this.prisma.user.findUnique({
@@ -264,6 +270,15 @@ let AuthService = AuthService_1 = class AuthService {
             authProvider: user.authProvider,
             status: user.status,
             createdAt: user.createdAt,
+        };
+    }
+    sanitizeTenant(tenant) {
+        return {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+            logoUrl: tenant.logoUrl ?? null,
+            planId: tenant.planId ?? null,
         };
     }
 };

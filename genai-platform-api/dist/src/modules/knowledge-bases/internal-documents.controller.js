@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const internal_api_key_guard_1 = require("../../common/guards/internal-api-key.guard");
 const public_decorator_1 = require("../../common/decorators/public.decorator");
+const snake_to_camel_interceptor_1 = require("../../common/interceptors/snake-to-camel.interceptor");
 const documents_service_1 = require("./documents.service");
 const update_document_status_dto_1 = require("./dto/update-document-status.dto");
 let InternalDocumentsController = class InternalDocumentsController {
@@ -43,6 +44,7 @@ exports.InternalDocumentsController = InternalDocumentsController = __decorate([
     (0, common_1.Controller)('api/v1/internal/documents'),
     (0, public_decorator_1.Public)(),
     (0, common_1.UseGuards)(internal_api_key_guard_1.InternalApiKeyGuard),
+    (0, common_1.UseInterceptors)(snake_to_camel_interceptor_1.SnakeToCamelInterceptor),
     (0, swagger_1.ApiHeader)({ name: 'X-Internal-Key', required: true }),
     __metadata("design:paramtypes", [documents_service_1.DocumentsService])
 ], InternalDocumentsController);

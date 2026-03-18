@@ -18,19 +18,55 @@ let DocumentProcessingWorker = DocumentProcessingWorker_1 = class DocumentProces
     configService;
     logger = new common_1.Logger(DocumentProcessingWorker_1.name);
     aiEngineUrl;
+    internalApiKey;
     constructor(configService) {
         super();
         this.configService = configService;
-        this.aiEngineUrl = this.configService.get('aiEngine.url') || 'http://localhost:8000';
+        this.aiEngineUrl =
+            this.configService.get('aiEngine.url') || 'http://localhost:8000';
+        this.internalApiKey =
+            this.configService.get('aiEngine.internalApiKey') || 'internal-secret-key';
     }
     async process(job) {
         const { documentId, knowledgeBaseId, tenantId, ...params } = job.data;
         this.logger.log(`Processing document ${documentId} for KB ${knowledgeBaseId} (job ${job.id})`);
         try {
-            this.logger.log(`[MOCK] POST ${this.aiEngineUrl}/engine/v1/documents/process — ` +
-                `documentId=${documentId}, knowledgeBaseId=${knowledgeBaseId}, ` +
-                `tenantId=${tenantId}, params=${JSON.stringify(params)}`);
-            this.logger.log(`Document ${documentId} sent to AI Engine. Awaiting callback for status updates.`);
+            const url = `${this.aiEngineUrl}/engine/v1/documents/process`;
+            const body = {
+                document_id: documentId,
+                knowledge_base_id: knowledgeBaseId,
+                tenant_id: tenantId,
+                source_type: params.sourceType,
+                storage_path: params.storagePath,
+                source_url: params.sourceUrl,
+                raw_text: params.textContent,
+                mime_type: params.mimeType,
+                chunk_size: params.chunkSize,
+                chunk_overlap: params.chunkOverlap,
+                reprocess: params.reprocess,
+            };
+            this.logger.log(`POST ${url} — documentId=${documentId}`);
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30_000);
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Internal-Key': this.internalApiKey,
+                    },
+                    body: JSON.stringify(body),
+                    signal: controller.signal,
+                });
+                if (!response.ok) {
+                    const text = await response.text().catch(() => '');
+                    throw new Error(`AI Engine responded ${response.status}: ${text}`);
+                }
+                this.logger.log(`Document ${documentId} accepted by AI Engine. Awaiting callback for status updates.`);
+            }
+            finally {
+                clearTimeout(timeout);
+            }
         }
         catch (error) {
             this.logger.error(`Failed to process document ${documentId}: ${error.message}`, error.stack);

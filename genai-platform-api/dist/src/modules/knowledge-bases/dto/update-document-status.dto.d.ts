@@ -6,4 +6,5 @@ export declare class UpdateDocumentStatusDto {
     charCount?: number;
     chunkCount?: number;
     markdownStoragePath?: string;
+    metadata?: Record<string, any>;
 }

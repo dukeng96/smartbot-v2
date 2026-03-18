@@ -27,7 +27,10 @@ export declare class AuthService {
             id: any;
             name: any;
             slug: any;
+            logoUrl: any;
+            planId: any;
         };
+        role: "owner";
     }>;
     login(dto: LoginDto): Promise<{
         accessToken: string;
@@ -43,6 +46,14 @@ export declare class AuthService {
             status: any;
             createdAt: any;
         };
+        tenant: {
+            id: any;
+            name: any;
+            slug: any;
+            logoUrl: any;
+            planId: any;
+        };
+        role: string;
     }>;
     logout(refreshToken: string): Promise<{
         message: string;
@@ -50,6 +61,25 @@ export declare class AuthService {
     refreshTokens(refreshToken: string): Promise<{
         accessToken: string;
         refreshToken: string;
+        user: {
+            id: any;
+            email: any;
+            fullName: any;
+            avatarUrl: any;
+            phone: any;
+            emailVerified: any;
+            authProvider: any;
+            status: any;
+            createdAt: any;
+        };
+        tenant: {
+            id: any;
+            name: any;
+            slug: any;
+            logoUrl: any;
+            planId: any;
+        };
+        role: string;
     }>;
     forgotPassword(email: string): Promise<{
         message: string;
@@ -59,4 +89,5 @@ export declare class AuthService {
     googleOAuth(idToken: string): Promise<void>;
     private generateTokens;
     private sanitizeUser;
+    private sanitizeTenant;
 }

@@ -23,10 +23,10 @@ export declare class TenantsController {
         createdAt: Date;
         updatedAt: Date;
         slug: string;
-        logoUrl: string | null;
-        settings: import("@prisma/client/runtime/client").JsonValue;
         ownerId: string;
+        logoUrl: string | null;
         planId: string | null;
+        settings: import("@prisma/client/runtime/client").JsonValue;
         deletedAt: Date | null;
     }>;
     updateTenant(id: string, dto: UpdateTenantDto, req: any): Promise<{
@@ -36,10 +36,10 @@ export declare class TenantsController {
         createdAt: Date;
         updatedAt: Date;
         slug: string;
-        logoUrl: string | null;
-        settings: import("@prisma/client/runtime/client").JsonValue;
         ownerId: string;
+        logoUrl: string | null;
         planId: string | null;
+        settings: import("@prisma/client/runtime/client").JsonValue;
         deletedAt: Date | null;
     }>;
     listMembers(id: string): Promise<({

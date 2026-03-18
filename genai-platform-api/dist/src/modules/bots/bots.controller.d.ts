@@ -61,10 +61,6 @@ export declare class BotsController {
         apiKeyPrefix: string | null;
     }>>;
     findOne(tenantId: string, id: string): Promise<{
-        _count: {
-            conversations: number;
-            channels: number;
-        };
         knowledgeBases: ({
             knowledgeBase: {
                 name: string;
@@ -79,6 +75,10 @@ export declare class BotsController {
             priority: number;
             botId: string;
         })[];
+        _count: {
+            conversations: number;
+            channels: number;
+        };
     } & {
         description: string | null;
         name: string;

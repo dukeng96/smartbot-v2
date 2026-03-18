@@ -27,6 +27,9 @@ let ConversationsController = class ConversationsController {
     constructor(conversationsService) {
         this.conversationsService = conversationsService;
     }
+    findAll(tenantId, query) {
+        return this.conversationsService.findAll(tenantId, query);
+    }
     findAllByBot(tenantId, botId, query) {
         return this.conversationsService.findAllByBot(tenantId, botId, query);
     }
@@ -50,6 +53,15 @@ let ConversationsController = class ConversationsController {
     }
 };
 exports.ConversationsController = ConversationsController;
+__decorate([
+    (0, common_1.Get)('conversations'),
+    (0, swagger_1.ApiOperation)({ summary: 'List all conversations for tenant' }),
+    __param(0, (0, current_tenant_decorator_1.CurrentTenant)()),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, list_conversations_dto_1.ListConversationsDto]),
+    __metadata("design:returntype", void 0)
+], ConversationsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)('bots/:botId/conversations'),
     (0, swagger_1.ApiOperation)({ summary: 'List conversations for bot' }),

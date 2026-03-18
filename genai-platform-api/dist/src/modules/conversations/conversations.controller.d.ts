@@ -7,6 +7,23 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 export declare class ConversationsController {
     private readonly conversationsService;
     constructor(conversationsService: ConversationsService);
+    findAll(tenantId: string, query: ListConversationsDto): Promise<import("../../common/dto/pagination.dto").PaginatedResult<{
+        bot: {
+            name: string;
+            id: string;
+        };
+        channel: string;
+        id: string;
+        status: string;
+        createdAt: Date;
+        botId: string;
+        rating: number | null;
+        endUserId: string | null;
+        endUserName: string | null;
+        messageCount: number;
+        lastMessageAt: Date | null;
+        lastMessagePreview: string | null;
+    }>>;
     findAllByBot(tenantId: string, botId: string, query: ListConversationsDto): Promise<import("../../common/dto/pagination.dto").PaginatedResult<{
         channel: string;
         id: string;
@@ -17,6 +34,7 @@ export declare class ConversationsController {
         endUserName: string | null;
         messageCount: number;
         lastMessageAt: Date | null;
+        lastMessagePreview: string | null;
     }>>;
     findOne(tenantId: string, convId: string): Promise<{
         bot: {
@@ -41,6 +59,7 @@ export declare class ConversationsController {
         channelConversationId: string | null;
         messageCount: number;
         lastMessageAt: Date | null;
+        lastMessagePreview: string | null;
     }>;
     getMessages(tenantId: string, convId: string, query: PaginationDto): Promise<import("../../common/dto/pagination.dto").PaginatedResult<{
         id: string;

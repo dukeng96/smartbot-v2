@@ -1,6 +1,6 @@
 # GenAI Assistant Platform — System Architecture
 
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-18
 
 ---
 
@@ -221,19 +221,26 @@
    └─> Backend creates Document entity (status=pending)
    └─> Backend queues BullMQ job
 
-2. Backend worker picks up job
-   └─> Calls Celery: process_document(doc_id, kb_id)
+2. BullMQ worker picks up job
+   └─> POST /engine/v1/documents/process (snake_case payload)
+   └─> Headers: X-Internal-Key for auth
+   └─> 30s timeout, 3 retries with exponential backoff
 
-3. Celery Worker (AI Engine) processes
+3. AI Engine processes (async)
    ├─> TextExtractor: S3 → OCR (Marker Cloud) → markdown
    ├─> Chunker: text → chunks (512 tokens, 100 overlap)
    ├─> EmbeddingService: chunks → embeddings (Triton)
    ├─> QdrantHandler: store vectors with metadata
-   └─> Update Document.status = completed
+   └─> Callbacks: PATCH /api/v1/internal/documents/:id/status
+        ├─> status: processing → completed | error
+        ├─> processingStep: extracting | chunking | embedding
+        ├─> processingProgress: 0-100
+        └─> charCount, chunkCount on completion
 
-4. Backend polls/webhook: Document ready
-   └─> Update Analytics
-   └─> Notify frontend
+4. Frontend polls for status updates
+   └─> React Query refetchInterval: 5s when docs are pending/processing
+   └─> Auto-stops polling when all docs are completed/error
+   └─> Document list + detail pages both poll independently
 ```
 
 **Error Handling:**
@@ -241,6 +248,7 @@
 - Embedding fails → Retry 3x with backoff
 - Qdrant upsert fails → Retry 3x with backoff
 - Max retries exceeded → Document.status = error with message
+- AI Engine unreachable → BullMQ retries 3x (5s exponential backoff)
 
 **Estimated Duration:** 5-30 seconds per document (depends on file size)
 
@@ -310,17 +318,34 @@ Request: {
 Response: Server-Sent Events stream
 ```
 
-#### Backend → Engine (Asynchronous via Queue)
+#### Backend → Engine (Asynchronous via BullMQ)
 
 **Document Processing Job:**
 ```
-BullMQ Job → Celery Task
+BullMQ Worker → POST /engine/v1/documents/process
+Headers: X-Internal-Key, Content-Type: application/json
+
+Request (snake_case for FastAPI/Pydantic):
 {
-  "documentId": "doc-456",
-  "knowledgeBaseId": "kb-123",
-  "filePath": "documents/tenant/kb/doc-456"
+  "document_id": "doc-456",
+  "knowledge_base_id": "kb-123",
+  "tenant_id": "tenant-789",
+  "source_type": "file_upload|url_crawl|text_input",
+  "storage_path": "documents/<uuid>/file.pdf",
+  "source_url": "https://example.com/page",
+  "raw_text": "Direct text content...",
+  "mime_type": "application/pdf",
+  "chunk_size": 500,
+  "chunk_overlap": 50
 }
-Celery processes → updates Document.status → (future) webhook back
+
+AI Engine callbacks → PATCH /api/v1/internal/documents/:id/status
+Headers: X-Internal-Key (timing-safe comparison)
+Body (snake_case → camelCase via SnakeToCamelInterceptor):
+  status: extracting|chunking|embedding → mapped to "processing"
+  status: completed|error → passed through
+  processing_step, processing_progress, char_count, chunk_count,
+  markdown_storage_path, error_message, metadata
 ```
 
 #### Backend ↔ Backend (Internal)
@@ -456,23 +481,39 @@ data: {}
 **POST /engine/v1/documents/process**
 ```json
 Request: {
+  "document_id": "doc-456",
   "knowledge_base_id": "kb-123",
-  "file": "<binary>",
-  "source_type": "file_upload|url_crawl|text_input"
+  "tenant_id": "tenant-789",
+  "source_type": "file_upload|url_crawl|text_input",
+  "storage_path": "documents/<uuid>/file.pdf",
+  "source_url": null,
+  "text_content": null,
+  "mime_type": "application/pdf",
+  "chunk_size": 500,
+  "chunk_overlap": 50,
+  "reprocess": false
 }
 
-Response: {
-  "id": "doc-456",
-  "knowledge_base_id": "kb-123",
-  "status": "pending",
-  "created_at": "2026-03-14T10:30:00Z"
+Response: { "status": "accepted" }
+```
+
+**Callback: PATCH /api/v1/internal/documents/:id/status**
+```json
+Request: {
+  "status": "processing|completed|error",
+  "processingStep": "extracting|chunking|embedding",
+  "processingProgress": 0-100,
+  "charCount": 5200,
+  "chunkCount": 12,
+  "errorMessage": null,
+  "markdownStoragePath": "documents/<uuid>/file.md"
 }
 ```
 
-**Status Codes:**
-- 202: Processing started (async)
-- 400: Invalid KB ID
-- 413: File too large
+**Status Codes (POST):**
+- 200: Processing accepted (async)
+- 400: Invalid payload
+- 422: Missing required fields
 - 500: Storage error
 
 ---

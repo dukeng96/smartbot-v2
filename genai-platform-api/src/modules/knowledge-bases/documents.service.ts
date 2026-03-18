@@ -41,6 +41,7 @@ export class DocumentsService {
     });
 
     await this.enqueueProcessing(doc.id, kbId, tenantId, {
+      sourceType: 'file_upload',
       storagePath,
       mimeType: file.mimetype,
       chunkSize: kb.chunkSize,
@@ -65,6 +66,7 @@ export class DocumentsService {
     });
 
     await this.enqueueProcessing(doc.id, kbId, tenantId, {
+      sourceType: 'url_crawl',
       sourceUrl: url,
       chunkSize: kb.chunkSize,
       chunkOverlap: kb.chunkOverlap,
@@ -93,6 +95,7 @@ export class DocumentsService {
     });
 
     await this.enqueueProcessing(doc.id, kbId, tenantId, {
+      sourceType: 'text_input',
       textContent: content,
       chunkSize: kb.chunkSize,
       chunkOverlap: kb.chunkOverlap,
@@ -183,6 +186,7 @@ export class DocumentsService {
     });
 
     await this.enqueueProcessing(docId, kbId, tenantId, {
+      sourceType: doc.sourceType,
       storagePath: doc.storagePath,
       sourceUrl: doc.sourceUrl,
       mimeType: doc.mimeType,
@@ -208,6 +212,7 @@ export class DocumentsService {
       });
 
       await this.enqueueProcessing(doc.id, kbId, tenantId, {
+        sourceType: doc.sourceType,
         storagePath: doc.storagePath,
         sourceUrl: doc.sourceUrl,
         mimeType: doc.mimeType,
@@ -233,6 +238,7 @@ export class DocumentsService {
       ...(dto.charCount !== undefined && { charCount: BigInt(dto.charCount) }),
       ...(dto.chunkCount !== undefined && { chunkCount: dto.chunkCount }),
       ...(dto.markdownStoragePath !== undefined && { markdownStoragePath: dto.markdownStoragePath }),
+      ...(dto.metadata !== undefined && { metadata: dto.metadata }),
     };
 
     if (dto.status === 'processing' && !doc.processingStartedAt) {
