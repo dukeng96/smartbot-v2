@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-03-22
 > **Branch:** main
-> **Latest commit:** `8319084` fix: connect document processing pipeline between backend and AI Engine
+> **Latest commit:** `1a9d5ba` docs: add Phase 3 frontend implementation plan
 
 ---
 
@@ -13,7 +13,9 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
 2. **genai-engine** (FastAPI) - AI engine with RAG chat, document processing, 9 API routes
 3. **smartbot-web** (Next.js 16) - Admin SaaS frontend with 24 implemented pages
 
-**Overall Progress: ~85% complete** (backend 95%, AI engine 90%, frontend 80%)
+4. **smartbot-widget** (TBD) - Embeddable chat widget for third-party websites
+
+**Overall Progress: ~70% complete** (backend 95%, AI engine 90%, frontend platform 80%, widget 0%)
 
 ---
 
@@ -93,7 +95,7 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
 
 ---
 
-## Phase 3: Frontend (Next.js 16) - IN PROGRESS
+## Phase 3: Admin Platform Frontend (Next.js 16) - Track A - IN PROGRESS
 
 **Status:** ~80% COMPLETE | **Start:** 2026-03-17 | **Latest:** 2026-03-18
 
@@ -125,9 +127,77 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
 ### Remaining Items
 1. **No tests** - Zero test infrastructure (no Jest/Vitest/Playwright)
 2. **Empty `/assistants` directory** - Status unclear (duplicate of `/bots`?)
-3. **No smartbot-widget** - Embeddable chat widget not started
-4. **Hardcoded Vietnamese strings** - No i18n system
-5. **No error tracking** - No Sentry or monitoring
+3. **Hardcoded Vietnamese strings** - No i18n system
+4. **No error tracking** - No Sentry or monitoring
+
+---
+
+## Phase 4: Embeddable Chat Widget - Track B - NOT STARTED
+
+**Status:** NOT STARTED | **Spec:** `docs/PHASE3-FRONTEND-PLAN.md` sections W1-W3
+
+### Overview
+Standalone embeddable chat widget (`smartbot-widget/`) for third-party websites. Independent from admin platform — separate app/package in same monorepo.
+
+### Key Requirements
+- CSS/JS isolation (Shadow DOM or equivalent)
+- Lightweight bundle, no host framework assumptions
+- Public token auth (not JWT), domain validation
+- SSE streaming chat via AI Engine
+- Theming support configurable from admin platform
+- Session persistence
+
+### Widget Components
+- Launcher bubble (floating button)
+- Chat panel (open/close)
+- Header with branding
+- Message thread (user + bot messages)
+- Composer (text input + send)
+- Suggestion chips
+- Loading/streaming/error states
+
+### Phases (from spec)
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| W1 — Architecture docs | UX Architect + UI Designer: widget-architecture.md, widget-design-system.md | NOT STARTED |
+| W2 — Scaffold & MVP | Scaffold app, implement shell/launcher/chat panel, mock chat flow | NOT STARTED |
+| W3 — Production hardening | Real backend integration, streaming, theming, session persistence, embed API | NOT STARTED |
+
+### Planned Tech Stack (TBD during W1)
+- Standalone build (Vite or similar)
+- Shadow DOM for CSS isolation
+- Minimal dependencies for small bundle
+- Public initialization API: `SmartbotWidget.init({ botId, token, theme })`
+
+### Shared Packages (planned)
+```
+packages/
+  api-types/       # shared API/generated types
+  ui-core/         # tiny shared tokens/icons only
+  widget-sdk/      # embed loader/init contract
+```
+
+---
+
+## Phase 5: Platform + Widget Integration - NOT STARTED
+
+**Status:** NOT STARTED | **Spec:** `docs/PHASE3-FRONTEND-PLAN.md` section I1
+
+### Goals
+- Platform widget config pages map correctly to widget runtime behavior
+- Preview in platform reflects actual widget capabilities
+- Embed code generator flow works end-to-end
+- Theming fields in platform are compatible with widget runtime
+- Public config API contract is stable
+
+### Phases
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| I1.1 — Integration pass | Align platform config ↔ widget runtime | NOT STARTED |
+| I1.2 — Integration QA | Evidence Collector review | NOT STARTED |
+| I1.3 — Final release gate | Reality Checker: platform + widget + integration verdict | NOT STARTED |
 
 ---
 
@@ -193,13 +263,17 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
 ### P0 - Critical
 - [ ] Fix document processing callback payload alignment (backend <> engine)
 - [ ] Add frontend test infrastructure (Vitest + Playwright)
-- [ ] Implement smartbot-widget (embeddable chat widget)
+- [ ] **Phase 4: Widget** — W1: architecture docs (widget-architecture.md, widget-design-system.md)
+- [ ] **Phase 4: Widget** — W2: scaffold & MVP (launcher, chat panel, mock chat)
+- [ ] **Phase 4: Widget** — W3: production hardening (streaming, theming, session, embed API)
+- [ ] **Phase 5: Integration** — align platform config ↔ widget runtime + final release gate
 
 ### P1 - High
 - [ ] Resolve empty `/assistants` directory (implement or remove)
 - [ ] Add tests for analytics, channels, storage backend modules
 - [ ] Add error tracking (Sentry) to frontend
 - [ ] Implement channel webhook features (Telegram, Zalo)
+- [ ] Create shared packages: `packages/api-types`, `packages/ui-core`, `packages/widget-sdk`
 
 ### P2 - Medium
 - [ ] Centralize Zod validation schemas
@@ -214,13 +288,14 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
 ## Architecture Overview
 
 ```
-                         +------------------+
-                         |   smartbot-web   |
-                         |   (Next.js 16)   |
-                         +--------+---------+
-                                  |
-                                  | REST API (JWT auth)
-                                  v
+  +------------------+                    +-------------------+
+  |   smartbot-web   |                    | smartbot-widget   |
+  |   (Next.js 16)   |                    | (embeddable chat) |
+  |  Admin Platform   |                    | 3rd-party sites   |
+  +--------+---------+                    +--------+----------+
+           |                                       |
+           | REST API (JWT auth)                   | REST API (public token)
+           v                                       v
                     +----------------------------+
                     |   genai-platform-api        |
                     |   (NestJS, 84 routes)       |
@@ -245,6 +320,8 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
                          +--------+
 
 Database: PostgreSQL 16 (Prisma ORM)
+
+Shared packages: packages/api-types, packages/ui-core, packages/widget-sdk
 ```
 
 ---
@@ -255,7 +332,7 @@ Database: PostgreSQL 16 (Prisma ORM)
 |------|---------|
 | `docs/PHASE1-WEB-BACKEND-PLAN.md` | Phase 1 spec (COMPLETE) |
 | `docs/PHASE2-AI-ENGINE-PLAN.md` | Phase 2 spec (COMPLETE) |
-| `docs/PHASE-3-FRONTEND-PLAN.md` | Phase 3 spec (IN PROGRESS) |
+| `docs/PHASE3-FRONTEND-PLAN.md` | Phase 3-5 spec: platform + widget + integration |
 | `docs/backend-api-reference.md` | All 93 API routes reference |
 | `docs/backend-codebase-summary.md` | Backend services summary |
 | `docs/frontend-architecture.md` | Frontend tech stack & routes |
@@ -273,5 +350,6 @@ Database: PostgreSQL 16 (Prisma ORM)
 ## Unresolved Questions
 
 1. What is the purpose of the empty `/assistants` directory — planned feature or deprecated duplicate of `/bots`?
-2. Should smartbot-widget be a separate app in this repo or a different repo?
-3. When is the target date for production deployment?
+2. Widget tech stack decision — finalize during W1 (Vite? Preact? vanilla TS?)
+3. Widget auth model — public token vs API key vs bot-scoped token?
+4. When is the target date for production deployment?
