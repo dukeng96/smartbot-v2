@@ -187,7 +187,8 @@ MINIO_FOLDER_NAME=smartbot-v2
 AI_ENGINE_URL=http://localhost:8000
 
 # Internal API Key (shared secret with AI Engine)
-INTERNAL_API_KEY=internal-secret-key-change-me
+# ⚠ MUST match WEB_BACKEND_INTERNAL_KEY in genai-engine/.env
+INTERNAL_API_KEY=internal-secret-key-change-in-production
 
 # App
 APP_URL=http://localhost:3000
@@ -235,11 +236,11 @@ npm run start:prod
 Verify:
 
 ```bash
-curl http://localhost:3000/api/health
-# {"status":"ok"}
+curl http://localhost:3000/
+# {"status":"ok","service":"genai-platform-api","timestamp":"..."}
 ```
 
-Swagger docs: http://localhost:3000/api/docs
+Swagger docs: http://localhost:3000/docs
 
 ---
 
@@ -269,7 +270,12 @@ Use the existing `.env` file in the `genai-engine` folder. You must update the f
 
 > **Important:** By default, the `.env` might point to production VNPT storage. `MINIO_SERVICE_URL` and `MINIO_PUBLIC_HOST` MUST point to `http://localhost:9000` (local MinIO). Also, update `MINIO_ACCESS_KEY` to `minioadmin` and `MINIO_SECRET_KEY` to `minioadmin123`.
 
-> **Important:** `WEB_BACKEND_INTERNAL_KEY` must match `INTERNAL_API_KEY` in the platform-api `.env`.
+> **CRITICAL — Internal API Key:** `WEB_BACKEND_INTERNAL_KEY` in `genai-engine/.env` **MUST be identical** to `INTERNAL_API_KEY` in `genai-platform-api/.env`. If these values differ, the AI Engine callback to update document status will receive `401 Unauthorized` and documents will stay stuck in "Pending" forever. Example:
+>
+> ```env
+> # In genai-engine/.env — must match INTERNAL_API_KEY in platform-api
+> WEB_BACKEND_INTERNAL_KEY=internal-secret-key-change-in-production
+> ```
 
 ### 5.4 Start FastAPI Server
 
@@ -304,16 +310,46 @@ Verify Celery is running by checking the worker logs for:
 
 ---
 
-## Step 6: Verify Full Stack
+## Step 6: Deploy smartbot-web (Frontend)
+
+### 6.1 Install Dependencies
+
+```bash
+cd smartbot-web
+npm install
+```
+
+### 6.2 Configure Environment
+
+Create `.env.local` by copying the example:
+
+```bash
+copy .env.local.example .env.local
+```
+
+Ensure `NEXT_PUBLIC_API_URL` points to your Platform API (e.g., `http://localhost:3000`).
+
+### 6.3 Start Development Server
+
+```bash
+npm run dev
+```
+
+Verify the frontend is running:
+- Open http://localhost:3001/ in your browser.
+
+---
+
+## Step 7: Verify Full Stack
 
 ### Health Checks
 
 ```bash
 # Platform API
-curl http://localhost:3000/api/health
+curl http://localhost:3000/
 
 # AI Engine
-curl http://localhost:8000/engine/v1/health
+curl http://localhost:8000/health
 ```
 
 ### Quick Smoke Test
@@ -346,6 +382,7 @@ curl -X POST http://localhost:8000/engine/v1/chat/test \
 | Service | Port | Protocol | Location |
 |---------|------|----------|----------|
 | Platform API | 3000 | HTTP | Docker or native |
+| Platform Web | 3001 | HTTP | Native |
 | AI Engine | 8000 | HTTP | Native (host) |
 | PostgreSQL | 5432 | TCP | Docker |
 | Redis | 6379 | TCP | Docker |
@@ -373,6 +410,11 @@ curl -X POST http://localhost:8000/engine/v1/chat/test \
 - Check Redis is running: `docker compose -f docker-compose.dev.yml ps`
 - Verify `REDIS_URL` in engine `.env` uses `/1` (db 1)
 - Restart celery worker
+
+### Documents stuck in "Pending" after upload (401 callback)
+- Celery log shows `401 Unauthorized` on `PATCH .../internal/documents/.../status`
+- Root cause: `WEB_BACKEND_INTERNAL_KEY` in `genai-engine/.env` does not match `INTERNAL_API_KEY` in `genai-platform-api/.env`
+- Fix: copy the exact value from `genai-platform-api/.env` `INTERNAL_API_KEY` into `genai-engine/.env` `WEB_BACKEND_INTERNAL_KEY`, then restart Celery worker
 
 ### MinIO upload fails (500 error)
 - Verify MinIO is running: `curl http://localhost:9000/minio/health/live`
