@@ -50,9 +50,13 @@ export function BotWidgetConfig({ bot, onChange }: BotWidgetConfigProps) {
     })
   }, [wc, form])
 
-  // Notify parent on value changes for live preview
-  const values = form.watch()
-  useEffect(() => { onChange?.(values) }, [values, onChange])
+  // Notify parent on value changes for live preview (subscription avoids re-render loop)
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      onChange?.(values as UpdateWidgetInput)
+    })
+    return () => subscription.unsubscribe()
+  }, [form, onChange])
 
   const onSubmit = form.handleSubmit((data) => updateWidget.mutate(data))
 

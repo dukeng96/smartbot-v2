@@ -1,16 +1,27 @@
 "use client"
 
-import { ChevronDown, LogOut, Menu } from "lucide-react"
+import { LogOut, Menu, Settings } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useUiStore } from "@/lib/stores/ui-store"
+import { useLogout } from "@/lib/hooks/use-auth"
+import { useRouter } from "next/navigation"
 
 export function TopHeader() {
   const { user, tenant } = useAuthStore()
   const { setSidebarMobileOpen } = useUiStore()
+  const { mutate: logout, isPending: isLoggingOut } = useLogout()
+  const router = useRouter()
 
   const initials = user?.fullName
     ? user.fullName
@@ -44,17 +55,32 @@ export function TopHeader() {
           </span>
         )}
         <Separator orientation="vertical" className="h-5" />
-        <span className="text-[13px] font-medium text-foreground">
-          {user?.fullName ?? "User"}
-        </span>
-        <Avatar size="sm">
-          {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.fullName ?? ""} />}
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
-        <ChevronDown className="size-4 text-text-muted" />
-        <Button variant="ghost" size="icon-sm" aria-label="Đăng xuất">
-          <LogOut className="size-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center gap-2 rounded-sm px-2 py-1 hover:bg-muted outline-none">
+            <span className="text-[13px] font-medium text-foreground">
+              {user?.fullName ?? "User"}
+            </span>
+            <Avatar size="sm">
+              {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.fullName ?? ""} />}
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <Settings className="mr-2 size-4" />
+              Cài đặt
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => logout()}
+              disabled={isLoggingOut}
+              className="text-destructive focus:text-destructive"
+            >
+              <LogOut className="mr-2 size-4" />
+              {isLoggingOut ? "Đang đăng xuất..." : "Đăng xuất"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )
