@@ -1,8 +1,8 @@
 # Smartbot v2 - Project Status Tracker
 
-> **Last updated:** 2026-03-22
+> **Last updated:** 2026-03-23
 > **Branch:** main
-> **Latest commit:** `1a9d5ba` docs: add Phase 3 frontend implementation plan
+> **Latest commit:** `f1d5d8c` fix: widget config re-render loop and top header dropdown menu
 
 ---
 
@@ -15,7 +15,7 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
 
 4. **smartbot-widget** (TBD) - Embeddable chat widget for third-party websites
 
-**Overall Progress: ~70% complete** (backend 95%, AI engine 90%, frontend platform 80%, widget 0%)
+**Overall Progress: ~76% complete** (backend 95%, AI engine 90%, frontend platform 85%, widget/chat 40%)
 
 ---
 
@@ -111,7 +111,7 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
 |--------|---------|--------|-------|
 | Auth (A1-A5) | 5/5 | COMPLETE | Login, register, forgot/reset password, verify email |
 | Dashboard (B2) | 1/1 | COMPLETE | KPIs, quick actions, recent bots |
-| Bots (C1-C7) | 7/7 | COMPLETE | List, config, personality, widget, API/embed, KBs, channels |
+| Bots (C1-C7) | 7/7 | COMPLETE | List, config (ENHANCED), personality, widget (ENHANCED), API/embed (ENHANCED), KBs, channels |
 | Knowledge Bases (D1-D4) | 4/4 | COMPLETE | List, detail, documents, document detail |
 | Conversations (E1-E2) | 2/2 | COMPLETE | List with filters, detail with chat thread |
 | Analytics (F1-F2) | 2/2 | COMPLETE | Overview dashboard, bot-specific analytics |
@@ -132,51 +132,68 @@ Smartbot v2 is a multi-tenant AI assistant SaaS platform with 3 main services:
 
 ---
 
-## Phase 4: Embeddable Chat Widget - Track B - NOT STARTED
+## Phase 4A: Widget Admin UI Enhancement - Track B - Session 1 COMPLETE
 
-**Status:** NOT STARTED | **Spec:** `docs/PHASE3-FRONTEND-PLAN.md` sections W1-W3
+**Status:** SESSION 1 COMPLETE | **Latest:** 2026-03-23 | **Spec:** `docs/PHASE4-WIDGET-PLAN.md`
+
+### Session 1: Admin UI Enhancement (C4 + C5) ✓ COMPLETE
+
+**Completed:** 2026-03-23
+
+**Deliverables:**
+- Enhanced C4 Widget Styling page: 8 new config fields (displayName, logoUrl, fontColor, backgroundColor, userMessageColor, botMessageColor, fontFamily, fontSize)
+- Live preview reflects all styling changes
+- Polished C5 Embed Codes page with language labels
+- Zero compilation errors, code review 8.5/10
+
+**Files Modified:** 5
+- `src/lib/types/bot.ts` — BotWidgetConfig expansion
+- `src/lib/validations/bot-schemas.ts` — Zod schema update
+- `src/components/features/bots/bot-widget-config.tsx` — form UI enhancement
+- `src/components/features/bots/bot-widget-preview.tsx` — live preview updates
+- `src/components/features/bots/bot-embed-code-section.tsx` — polish & refinements
+
+---
+
+## Phase 4A Session 2: Direct Link Chat Page - COMPLETE
+
+**Status:** COMPLETE | **Date:** 2026-03-23 | **Spec:** `docs/PHASE4-WIDGET-PLAN.md` Section 4 Session 2
 
 ### Overview
-Standalone embeddable chat widget (`smartbot-widget/`) for third-party websites. Independent from admin platform — separate app/package in same monorepo.
+Direct link public chat page (`/chat/[botId]`) for bot conversations. Accessible as standalone page and via embed code generator. Foundation for Phase 4B embeddable widget package.
 
-### Key Requirements
-- CSS/JS isolation (Shadow DOM or equivalent)
-- Lightweight bundle, no host framework assumptions
-- Public token auth (not JWT), domain validation
-- SSE streaming chat via AI Engine
-- Theming support configurable from admin platform
+### Deliverables Completed
+- [x] Public route: `/chat/[botId]` (in `(chat)` route group — avoids auth card wrapper)
+- [x] Bot config loading via `GET /api/v1/chat/:botId/config` (no auth required)
+- [x] POST-based SSE streaming chat with `fetch()` + `ReadableStream`
+- [x] Session persistence via localStorage (endUserId + conversationId per bot)
+- [x] Widget styling applied (primaryColor, fontColor, backgroundColor, fontFamily, fontSize, etc.)
+- [x] Responsive mobile/desktop layout (`h-dvh` full viewport)
+- [x] 6 new UI components (container, header, message-list, message-bubble, input, suggested-questions)
+- [x] Custom SSE hook (`useChatStream`) + public API module (`chat-api.ts`)
+- [x] Proxy updated: `/chat` route accessible without auth (separated from auth-only routes)
+- [x] Code review: A– grade, 0 critical issues
+- [x] Build passes with 0 errors
+
+### Files Created/Modified
+- 10 new files (~550 LOC), 1 modified (`proxy.ts`)
+- See `docs/PHASE4-WIDGET-PLAN.md` Session 2 section for full file inventory
+
+### Phase 4B (Future)
+Standalone embeddable `smartbot-widget/` package for third-party websites (separate from Session 2 direct link).
+
+**4B Key Requirements:**
+- CSS/JS isolation (Shadow DOM)
+- Lightweight bundle (<60KB gzipped)
+- Public token auth, domain validation
+- SSE streaming via AI Engine
+- Theming from admin platform config
 - Session persistence
 
-### Widget Components
-- Launcher bubble (floating button)
-- Chat panel (open/close)
-- Header with branding
-- Message thread (user + bot messages)
-- Composer (text input + send)
-- Suggestion chips
-- Loading/streaming/error states
-
-### Phases (from spec)
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| W1 — Architecture docs | UX Architect + UI Designer: widget-architecture.md, widget-design-system.md | NOT STARTED |
-| W2 — Scaffold & MVP | Scaffold app, implement shell/launcher/chat panel, mock chat flow | NOT STARTED |
-| W3 — Production hardening | Real backend integration, streaming, theming, session persistence, embed API | NOT STARTED |
-
-### Planned Tech Stack (TBD during W1)
-- Standalone build (Vite or similar)
-- Shadow DOM for CSS isolation
-- Minimal dependencies for small bundle
-- Public initialization API: `SmartbotWidget.init({ botId, token, theme })`
-
-### Shared Packages (planned)
-```
-packages/
-  api-types/       # shared API/generated types
-  ui-core/         # tiny shared tokens/icons only
-  widget-sdk/      # embed loader/init contract
-```
+**4B Phases (from research):**
+- W1 — Architecture docs (widget-architecture.md, widget-design-system.md)
+- W2 — Scaffold & MVP (Vite IIFE, Shadow DOM, launcher/panel)
+- W3 — Production hardening (real backend, streaming, theming, embed API)
 
 ---
 
@@ -202,6 +219,11 @@ packages/
 ---
 
 ## Recent Git History (March 2026)
+
+### 2026-03-23 (Phase 4A Session 1 — Widget UI enhancement)
+| Commit | Type | Description |
+|--------|------|-------------|
+| `f1d5d8c` | fix | Widget config re-render loop and top header dropdown menu |
 
 ### 2026-03-18 (Bug fixes & integration)
 | Commit | Type | Description |
@@ -263,9 +285,9 @@ packages/
 ### P0 - Critical
 - [ ] Fix document processing callback payload alignment (backend <> engine)
 - [ ] Add frontend test infrastructure (Vitest + Playwright)
-- [ ] **Phase 4: Widget** — W1: architecture docs (widget-architecture.md, widget-design-system.md)
-- [ ] **Phase 4: Widget** — W2: scaffold & MVP (launcher, chat panel, mock chat)
-- [ ] **Phase 4: Widget** — W3: production hardening (streaming, theming, session, embed API)
+- [x] **Phase 4A Session 2** — Direct link chat page (`/chat/[botId]` + 6 components)
+- [ ] **Phase 4B** — Embeddable widget package (Vite IIFE, Shadow DOM, <60KB)
+- [ ] **Phase 4B** — W1: architecture docs (widget-architecture.md, widget-design-system.md)
 - [ ] **Phase 5: Integration** — align platform config ↔ widget runtime + final release gate
 
 ### P1 - High

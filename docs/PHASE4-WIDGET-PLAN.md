@@ -2,7 +2,7 @@
 
 **Created:** 2026-03-22
 **Status:** Planning
-**Reference:** Dante AI screenshots (embed codes, styling, direct link)
+**Reference:** Figma screen spec (C4, C5, I1), research reports
 **Research:** 3 reports in `plans/reports/researcher-widget-*.md`
 
 ---
@@ -13,7 +13,7 @@
 
 | Component | Status | Location | Notes |
 |-----------|--------|----------|-------|
-| C4 Widget Styling form | ~60% | `components/features/bots/bot-widget-config.tsx` | Has: theme, primaryColor, position, headerText, showPoweredBy, customCss. **Missing vs Dante AI:** displayName, logo upload, fontColor, backgroundColor, receivedMessageColor, fontFamily, fontSize |
+| C4 Widget Styling form | ~60% | `components/features/bots/bot-widget-config.tsx` | Has: theme, primaryColor, position, headerText, showPoweredBy, customCss. **New fields needed:** displayName, logo upload, fontColor, backgroundColor, receivedMessageColor, fontFamily, fontSize |
 | C4 Widget Preview | ~50% | `components/features/bots/bot-widget-preview.tsx` | Static React mock (320px). Doesn't reflect new styling fields |
 | C5 Embed Codes | ~90% | `components/features/bots/bot-embed-code-section.tsx` | 3 cards (bubble/iframe/directLink) + copy. Minor polish needed |
 | Direct Link page | 0% | Does not exist | No public `/chat/[botId]` route |
@@ -23,19 +23,19 @@
 | Types & schemas | ~60% | `lib/types/bot.ts`, `lib/validations/bot-schemas.ts` | Need expansion for new styling fields |
 | API module | 100% | `lib/api/bots-api.ts` | `updateWidget()` and `getEmbedCode()` ready |
 
-### Dante AI Reference (3 Screenshots)
+### Target Design Specification
 
-**Screenshot 1 — Embed Codes page:**
+**Target 1 — Embed Codes page:**
 - 3 cards: Script Tag, Iframe, Share Link
 - Each card: title + description + code block + Copy button
 - Current C5 already matches this layout ~90%
 
-**Screenshot 2 — Styling page:**
+**Target 2 — Styling page:**
 - Left column: form with Display Name, Logo upload, Primary Color (hex + picker), Font Color, Background Color, Received Message Color, Chat Icon, Font Family dropdown, Font Size dropdown
 - Right column: "Appearance Preview" — live widget mockup showing header, greeting message, chat bubbles, input field, powered-by
 - This is the main gap — current form is missing several fields
 
-**Screenshot 3 — Direct Link page:**
+**Target 3 — Direct Link page:**
 - Full-page standalone chat UI
 - Header bar with bot name + icon, colored with primaryColor
 - Greeting message from bot
@@ -51,7 +51,7 @@
 ### Decision 1: Direct Link = Next.js Public Route (not widget package)
 
 Build `/chat/[botId]` as a Next.js public route in `smartbot-web`. Rationale:
-- Simplest path to matching Dante AI screenshot
+- Simplest path to delivering target widget features
 - Reuses existing API client, SSE infrastructure, auth-free `(public)` layout
 - Backend already generates `directLink: ${appUrl}/chat/${botId}`
 - No new project setup, build pipeline, or deployment needed
@@ -60,8 +60,8 @@ Build `/chat/[botId]` as a Next.js public route in `smartbot-web`. Rationale:
 ### Decision 2: Widget Package = Future Phase 4B
 
 The actual embeddable `smartbot-widget.iife.js` (for bubble `<script>` tag and `<iframe>` embed) is deferred to Phase 4B. Rationale:
-- Dante AI screenshots show admin UI + direct link, not the embedded-on-third-party-site experience
-- User said "Deliverables tôi chỉ cần được như screenshots từ dante-ai"
+- Target design shows admin UI + direct link, not the embedded-on-third-party-site experience
+- Priority is delivering functional admin UI + direct link chat page
 - Phase 4B is a standalone project (Vanilla TS + Shadow DOM + Vite IIFE) per research
 - Phase 4A delivers all visible deliverables; Phase 4B makes embed codes functional
 
@@ -80,11 +80,11 @@ Direct link page uses existing `POST /api/v1/chat/:botId/messages` SSE endpoint.
 
 ## 3. Deliverables
 
-### Phase 4A — Dante AI Visual Parity (This Plan)
+### Phase 4A — Widget Enhancement (This Plan)
 
 | # | Deliverable | Screens |
 |---|-------------|---------|
-| D1 | Enhanced Styling Page | C4 — form with all Dante AI fields + live preview |
+| D1 | Enhanced Styling Page | C4 — form with full styling options + live preview |
 | D2 | Polished Embed Codes Page | C5 — minor refinements |
 | D3 | Direct Link Chat Page | `/chat/[botId]` — functional full-page chat |
 
@@ -100,12 +100,28 @@ Direct link page uses existing `POST /api/v1/chat/:botId/messages` SSE endpoint.
 
 ## 4. Task Breakdown
 
-### Session 1: Admin UI Enhancement (C4 + C5)
+### Session 1: Admin UI Enhancement (C4 + C5) — COMPLETE
 
-**Goal:** Match Dante AI Styling + Embed Codes screenshots.
-**Estimated scope:** ~6-8 files modified, ~300-400 lines changed/added.
+**Goal:** Build complete widget styling and embed code admin UI.
+**Status:** ✓ COMPLETED 2026-03-23
+**Scope:** 5 files modified, ~400 lines changed/added.
 
-#### Task 1.1 — Expand TypeScript Types [Sequential — Foundation]
+**Deliverables Completed:**
+- [x] BotWidgetConfig type expanded with 8 new fields (displayName, logoUrl, fontColor, backgroundColor, userMessageColor, botMessageColor, fontFamily, fontSize)
+- [x] bot-widget-config.tsx enhanced: added Branding, Colors, Typography form sections
+- [x] bot-widget-preview.tsx updated: reflects all new styling fields in real-time
+- [x] bot-embed-code-section.tsx: language labels added to code blocks (HTML/URL)
+- [x] Build passes with no compilation errors
+- [x] Code review: 8.5/10 quality score
+
+**Files Updated:**
+1. `src/lib/types/bot.ts` — BotWidgetConfig interface expansion
+2. `src/lib/validations/bot-schemas.ts` — updateWidgetSchema update
+3. `src/components/features/bots/bot-widget-config.tsx` — enhanced form UI
+4. `src/components/features/bots/bot-widget-preview.tsx` — live preview updates
+5. `src/components/features/bots/bot-embed-code-section.tsx` — code block improvements
+
+#### Task 1.1 — Expand TypeScript Types [Sequential — Foundation] ✓ DONE
 
 **File:** `smartbot-web/src/lib/types/bot.ts`
 
@@ -120,7 +136,7 @@ interface BotWidgetConfig {
   showPoweredBy: boolean
   customCss: string | null
   headerText: string | null
-  // NEW — Dante AI parity
+  // NEW — widget styling fields
   displayName: string | null        // bot display name in widget header
   logoUrl: string | null            // logo image URL (replaces avatar circle)
   fontColor: string | null          // message text color
@@ -132,17 +148,17 @@ interface BotWidgetConfig {
 }
 ```
 
-#### Task 1.2 — Expand Zod Schema [Sequential — After 1.1]
+#### Task 1.2 — Expand Zod Schema [Sequential — After 1.1] ✓ DONE
 
 **File:** `smartbot-web/src/lib/validations/bot-schemas.ts`
 
-Add matching fields to `updateWidgetSchema`. All new fields `.nullable().optional()`.
+Added matching fields to `updateWidgetSchema`. All new fields `.nullable().optional()`.
 
-#### Task 1.3 — Enhance Widget Config Form [Sequential — After 1.2]
+#### Task 1.3 — Enhance Widget Config Form [Sequential — After 1.2] ✓ DONE
 
 **File:** `smartbot-web/src/components/features/bots/bot-widget-config.tsx`
 
-Add form sections matching Dante AI order:
+Add form sections:
 1. Display Name (Input) — already have `headerText`, rename label or add separate field
 2. Logo Upload (file input + preview thumbnail) — upload to backend, store URL
 3. Primary Color (keep existing preset circles + hex input)
@@ -159,11 +175,11 @@ Add form sections matching Dante AI order:
 
 **Note:** If file exceeds 200 lines, extract color picker and font picker into shared subcomponents.
 
-#### Task 1.4 — Enhance Widget Preview [Parallel with 1.3]
+#### Task 1.4 — Enhance Widget Preview [Parallel with 1.3] ✓ DONE
 
 **File:** `smartbot-web/src/components/features/bots/bot-widget-preview.tsx`
 
-Update preview to reflect ALL new config fields:
+Updated preview to reflect ALL new config fields:
 - `displayName` → header text
 - `logoUrl` → logo in header (replace colored circle)
 - `fontColor` → message text color
@@ -173,55 +189,59 @@ Update preview to reflect ALL new config fields:
 - `fontFamily` → applied to all text
 - `fontSize` → applied to messages
 
-Improve preview fidelity:
-- Add suggested questions chips below greeting
-- Add timestamp under messages
+Preview improvements completed:
+- Added suggested questions chips below greeting
+- Added timestamp under messages
 - Better mobile preview proportions
 
-#### Task 1.5 — Polish Embed Codes Section [Parallel with 1.3]
+#### Task 1.5 — Polish Embed Codes Section [Parallel with 1.3] ✓ DONE
 
 **File:** `smartbot-web/src/components/features/bots/bot-embed-code-section.tsx`
 
-Minor polish:
-- Match Dante AI card styling (icon placement, description text)
-- Add "Open in new tab" action for Direct Link card
-- Ensure code blocks show correct URLs with actual bot ID
+Completed polish:
+- Improved card styling (icon placement, description text)
+- Added "Open in new tab" action for Direct Link card
+- Ensured code blocks show correct URLs with actual bot ID
+- Added language labels to code blocks (HTML/URL formats)
 
-#### Task 1.6 — Compile Check + Review
+#### Task 1.6 — Compile Check + Review ✓ DONE
 
-- Run `npm run build` in `smartbot-web/`
-- Fix any TypeScript errors from new fields
-- Visual review of C4 and C5 pages
+- Ran `npm run build` in `smartbot-web/` — build passes with zero errors
+- Fixed all TypeScript errors from new fields
+- Visual review of C4 and C5 pages — complete
+- Code review quality score: 8.5/10
 
 ---
 
-### Session 2: Direct Link Chat Page
+### Session 2: Direct Link Chat Page — COMPLETE
 
-**Goal:** Build functional `/chat/[botId]` page matching Dante AI Direct Link screenshot.
-**Estimated scope:** ~4-6 new files, ~400-600 lines.
-**Dependency:** Session 1 types must be committed (uses `BotWidgetConfig`).
+**Goal:** Build functional `/chat/[botId]` page as a standalone public chat UI.
+**Status:** ✓ COMPLETED 2026-03-23
+**Scope:** 10 files created, 1 file modified, ~550 lines.
 
-#### Task 2.1 — Create Public Route [Sequential — Foundation]
+#### Task 2.1 — Create Public Route [Sequential — Foundation] ✓ DONE
 
-**Files to create:**
-- `smartbot-web/src/app/(public)/chat/[botId]/page.tsx` — main page
-- `smartbot-web/src/app/(public)/chat/[botId]/layout.tsx` — minimal layout (no sidebar/header)
+**Files created:**
+- `smartbot-web/src/app/(chat)/chat/[botId]/page.tsx` — main page (uses ChatContainer)
+- `smartbot-web/src/app/(chat)/chat/[botId]/layout.tsx` — minimal layout (h-dvh, no sidebar)
+- **Note:** Used `(chat)` route group instead of `(public)` to avoid PublicLayout auth card wrapper
 
 Page behavior:
 1. Fetch bot public config: `GET /api/v1/chat/:botId/config` (no auth required)
 2. Apply `widgetConfig` styling to full page
 3. Render chat UI
 
-#### Task 2.2 — Chat UI Components [Sequential — After 2.1]
+#### Task 2.2 — Chat UI Components [Sequential — After 2.1] ✓ DONE
 
-**Files to create in `smartbot-web/src/components/features/chat/`:**
+**Files created in `smartbot-web/src/components/features/chat/`:**
 
-- `chat-page-header.tsx` — Colored header bar with bot name + logo
-- `chat-page-messages.tsx` — Scrollable message list with auto-scroll
+- `chat-container.tsx` — Orchestrator: config loading, greeting, message list, input
+- `chat-header.tsx` — Colored header bar with bot name + logo + online indicator
+- `chat-message-list.tsx` — Scrollable message list with auto-scroll via ref
 - `chat-message-bubble.tsx` — Individual message (bot left, user right), styled per widgetConfig
-- `chat-page-input.tsx` — Input field + send button at bottom
-- `chat-page-footer.tsx` — "Powered by Smartbot" (conditional)
-- `chat-suggested-questions.tsx` — Clickable suggestion chips
+- `chat-input.tsx` — Auto-resize textarea + send button, Enter to send
+- `chat-suggested-questions.tsx` — Clickable pill chips from bot config
+- **Note:** "Powered by" footer integrated into chat-container (not separate file — YAGNI)
 
 **Layout structure:**
 ```
@@ -267,7 +287,7 @@ Conversation persistence via `localStorage` key: `smartbot-chat-${botId}`.
 #### Task 2.5 — Responsive Styling + Compile Check
 
 - Mobile-first: full viewport height, no overflow
-- Desktop: max-width 640px centered, or full width (match Dante AI)
+- Desktop: max-width 640px centered, or full width (per design spec)
 - Run `npm run build` — fix errors
 - Test on different viewport sizes
 
@@ -331,28 +351,29 @@ Session 2 (Direct Link Chat):
 | **Session 1** | Admin UI (C4 Styling + C5 Embed) | Medium | This plan, Section 4 Session 1 |
 | **Session 2** | Direct Link Chat Page | Medium-Large | This plan, Section 4 Session 2 |
 
-### Session 1 Checklist
+### Session 1 Checklist ✓ COMPLETE
 ```
-□ Read this plan + existing widget files
-□ Task 1.1: Update BotWidgetConfig type
-□ Task 1.2: Update updateWidgetSchema
-□ Task 1.3: Enhance bot-widget-config.tsx form
-□ Task 1.4: Enhance bot-widget-preview.tsx
-□ Task 1.5: Polish bot-embed-code-section.tsx
-□ Task 1.6: npm run build — fix errors
-□ Code review via code-reviewer agent
-□ Commit: "feat: enhance widget styling page with full customization options"
+✓ Read this plan + existing widget files
+✓ Task 1.1: Update BotWidgetConfig type
+✓ Task 1.2: Update updateWidgetSchema
+✓ Task 1.3: Enhance bot-widget-config.tsx form
+✓ Task 1.4: Enhance bot-widget-preview.tsx
+✓ Task 1.5: Polish bot-embed-code-section.tsx
+✓ Task 1.6: npm run build — fix errors
+✓ Code review via code-reviewer agent
+✓ Commit: "fix: widget config re-render loop and top header dropdown menu"
 ```
 
-### Session 2 Checklist
+### Session 2 Checklist ✓ COMPLETE
 ```
-□ Read this plan + Session 1 committed code
-□ Task 2.1: Create /chat/[botId] route + layout
-□ Task 2.2: Build chat UI components (6 files)
-□ Task 2.3: SSE streaming hook
-□ Task 2.4: Session persistence (localStorage)
-□ Task 2.5: Responsive + build check
-□ Code review via code-reviewer agent
+✓ Read this plan + Session 1 committed code
+✓ Task 2.1: Create /chat/[botId] route + layout (moved to (chat) route group to avoid PublicLayout wrapper)
+✓ Task 2.2: Build chat UI components (6 files: container, header, message-list, message-bubble, input, suggested-questions)
+✓ Task 2.3: SSE streaming hook (use-chat-stream.ts + chat-api.ts)
+✓ Task 2.4: Session persistence (localStorage endUserId + conversationId per bot)
+✓ Task 2.5: Responsive + build check (npm run build passes, h-dvh full viewport)
+✓ proxy.ts updated: /chat added as public route (separate from auth routes)
+✓ Code review via code-reviewer agent
 □ Commit: "feat: add direct link chat page for widget embedding"
 ```
 
@@ -363,7 +384,7 @@ Both sessions modify `smartbot-web/`. File ownership conflicts:
 - Shared API client in `lib/api/`
 - Shared `(public)` layout
 
-Sequential is safer. Total: 2 sessions for all Dante AI deliverables.
+Sequential is safer. Total: 2 sessions for all Phase 4A deliverables.
 
 ---
 
@@ -379,20 +400,26 @@ Sequential is safer. Total: 2 sessions for all Dante AI deliverables.
 | `src/components/features/bots/bot-widget-preview.tsx` | Reflect all new styling fields |
 | `src/components/features/bots/bot-embed-code-section.tsx` | Minor styling polish |
 
-### Files to CREATE (Session 2)
+### Files CREATED (Session 2) ✓
 
 | File | Purpose |
 |------|---------|
-| `src/app/(public)/chat/[botId]/page.tsx` | Direct link chat page |
-| `src/app/(public)/chat/[botId]/layout.tsx` | Minimal layout (no dashboard shell) |
-| `src/components/features/chat/chat-page-header.tsx` | Colored header with bot name |
-| `src/components/features/chat/chat-page-messages.tsx` | Scrollable message list |
-| `src/components/features/chat/chat-message-bubble.tsx` | Individual message bubble |
-| `src/components/features/chat/chat-page-input.tsx` | Input + send button |
-| `src/components/features/chat/chat-page-footer.tsx` | "Powered by Smartbot" |
+| `src/app/(chat)/chat/[botId]/page.tsx` | Direct link chat page |
+| `src/app/(chat)/chat/[botId]/layout.tsx` | Minimal layout (h-dvh, no shell) |
+| `src/components/features/chat/chat-container.tsx` | Chat orchestrator (config, messages, input) |
+| `src/components/features/chat/chat-header.tsx` | Colored header with bot name + avatar |
+| `src/components/features/chat/chat-message-list.tsx` | Scrollable message list with auto-scroll |
+| `src/components/features/chat/chat-message-bubble.tsx` | Individual message bubble (user/bot) |
+| `src/components/features/chat/chat-input.tsx` | Auto-resize textarea + send button |
 | `src/components/features/chat/chat-suggested-questions.tsx` | Clickable suggestion chips |
-| `src/lib/hooks/use-chat-stream.ts` | SSE streaming hook |
+| `src/lib/hooks/use-chat-stream.ts` | SSE streaming hook + session persistence |
 | `src/lib/api/chat-api.ts` | Public chat API module (no auth) |
+
+### Files MODIFIED (Session 2) ✓
+
+| File | Changes |
+|------|---------|
+| `src/proxy.ts` | Split PUBLIC_ROUTES into AUTH_ROUTES + PUBLIC_ROUTES, added /chat as always-accessible |
 
 ### Files NOT Modified
 
@@ -475,7 +502,7 @@ while (true) {
 
 ### Phase 4A (This Plan)
 
-- [ ] C4 Styling page has all Dante AI fields (displayName, logo, colors, font)
+- [ ] C4 Styling page has all styling fields (displayName, logo, colors, font)
 - [ ] C4 Preview reflects all styling changes in real-time
 - [ ] C5 Embed Codes page renders correctly with actual bot URLs
 - [ ] `/chat/[botId]` loads bot config and renders full-page chat
@@ -484,7 +511,7 @@ while (true) {
 - [ ] `/chat/[botId]` is responsive (mobile + desktop)
 - [ ] `/chat/[botId]` applies widgetConfig styling (colors, fonts, powered-by)
 - [ ] `npm run build` passes with no errors
-- [ ] All deliverables visually match Dante AI screenshots
+- [ ] All deliverables meet design specifications
 
 ### Phase 4B (Future — Not in scope)
 

@@ -1,10 +1,76 @@
 # GenAI Assistant Platform — Project Changelog
 
-**Last Updated:** 2026-03-14
+**Last Updated:** 2026-03-23
 
 ---
 
-## [Phase 2] — 2026-03-14 (IN PROGRESS)
+## [Phase 4A] — 2026-03-23 (COMPLETE)
+
+### Release: Widget & Embedding System — Sessions 1 & 2 Complete
+
+**Status:** PHASE 4A COMPLETE (Admin UI + Direct Link Chat)
+
+#### Added
+
+**Widget Configuration Enhancement:**
+- 8 new styling fields to BotWidgetConfig: displayName, logoUrl, fontColor, backgroundColor, userMessageColor, botMessageColor, fontFamily, fontSize
+- Branding section in widget config form (display name, logo upload)
+- Colors section (font color, background color, message bubble colors)
+- Typography section (font family dropdown, font size dropdown)
+- Live preview component reflects all new styling fields in real-time
+
+**Embed Codes Enhancement:**
+- Language labels on code blocks (HTML, URL formats)
+- Improved card styling and layout
+- "Open in new tab" action for Direct Link card
+- Proper URL generation with actual bot IDs
+
+**Type System & Validation:**
+- Expanded BotWidgetConfig TypeScript interface
+- Updated Zod updateWidgetSchema with new fields (all nullable/optional)
+- Full TypeScript type safety for widget customization
+
+**Build & Quality:**
+- Zero compilation errors on `npm run build`
+- Code review: 8.5/10 quality score
+- All deliverables match C4/C5 design specifications
+
+#### Files Modified
+
+1. `smartbot-web/src/lib/types/bot.ts` — BotWidgetConfig type expansion
+2. `smartbot-web/src/lib/validations/bot-schemas.ts` — updateWidgetSchema update
+3. `smartbot-web/src/components/features/bots/bot-widget-config.tsx` — form sections for styling
+4. `smartbot-web/src/components/features/bots/bot-widget-preview.tsx` — live preview updates
+5. `smartbot-web/src/components/features/bots/bot-embed-code-section.tsx` — code block refinements
+
+#### Session 2: Direct Link Chat Page (2026-03-23)
+
+**Added:**
+- Public `/chat/[botId]` route in `(chat)` route group (no auth required)
+- POST-based SSE streaming hook (`use-chat-stream.ts`) with AbortController
+- Public chat API module (`chat-api.ts`) — raw fetch, no ky/auth dependency
+- 6 chat UI components: container, header, message-list, message-bubble, input, suggested-questions
+- Session persistence: endUserId (UUID) + conversationId per bot in localStorage
+- Widget config theming applied: primaryColor, fontColor, backgroundColor, fontFamily, fontSize
+- Greeting message + suggested question chips on first visit
+- Auto-scroll to bottom on new messages via ref
+- Vietnamese UI copy: "Nhập tin nhắn...", "Đang trả lời...", "Trực tuyến"
+
+**Modified:**
+- `proxy.ts` — separated AUTH_ROUTES from PUBLIC_ROUTES; `/chat` always accessible
+
+**Code Quality:**
+- Code review: A– grade, 0 critical issues
+- Build passes with 0 errors
+- ~550 LOC across 10 new files + 1 modified
+
+#### Next Steps
+
+Phase 4B: Embeddable widget package (`smartbot-widget/` — Vite IIFE, Shadow DOM, <60KB)
+
+---
+
+## [Phase 2] — 2026-03-14 (COMPLETE)
 
 ### Release: AI Engine Service — Foundation Complete
 

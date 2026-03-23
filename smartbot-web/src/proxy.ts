@@ -9,13 +9,25 @@ import type { NextRequest } from "next/server"
  * - Auth pages: redirect to / if already authenticated
  */
 
-const PUBLIC_ROUTES = [
+/** Auth pages — redirect away if already logged in */
+const AUTH_ROUTES = [
   "/login",
   "/register",
   "/forgot-password",
   "/reset-password",
   "/verify-email",
 ]
+
+/** Public routes accessible by anyone (no auth redirect) */
+const PUBLIC_ROUTES = [
+  "/chat",
+]
+
+function isAuthRoute(pathname: string): boolean {
+  return AUTH_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  )
+}
 
 function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some(
@@ -26,17 +38,23 @@ function isPublicRoute(pathname: string): boolean {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const hasSession = request.cookies.get("sb_authenticated")?.value === "1"
+  const isAuth = isAuthRoute(pathname)
   const isPublic = isPublicRoute(pathname)
 
+  // Public routes (e.g. /chat) — always accessible, no redirects
+  if (isPublic) {
+    return NextResponse.next()
+  }
+
   // Unauthenticated user accessing protected route → redirect to login
-  if (!hasSession && !isPublic) {
+  if (!hasSession && !isAuth) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)
   }
 
   // Authenticated user accessing auth pages → redirect to dashboard
-  if (hasSession && isPublic) {
+  if (hasSession && isAuth) {
     return NextResponse.redirect(new URL("/bots", request.url))
   }
 
