@@ -42,6 +42,14 @@ export const updateWidgetSchema = z.object({
   showPoweredBy: z.boolean().optional(),
   customCss: z.string().nullable().optional(),
   headerText: z.string().nullable().optional(),
+  displayName: z.string().nullable().optional(),
+  logoUrl: z.string().nullable().optional(),
+  fontColor: z.string().nullable().optional(),
+  backgroundColor: z.string().nullable().optional(),
+  userMessageColor: z.string().nullable().optional(),
+  botMessageColor: z.string().nullable().optional(),
+  fontFamily: z.string().nullable().optional(),
+  fontSize: z.enum(["small", "medium", "large"]).nullable().optional(),
 })
 
 export type UpdateWidgetInput = z.infer<typeof updateWidgetSchema>

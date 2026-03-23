@@ -16,6 +16,7 @@ const EMBED_CARDS = [
     key: "bubble" as const,
     icon: MessageCircle,
     title: "Chat Bubble Widget",
+    lang: "HTML",
     description: "Nút chat nổi ở góc trang web",
     bullets: ["Tự động hiển thị nút chat", "Mở rộng thành cửa sổ chat", "Tùy chỉnh vị trí và màu sắc"],
   },
@@ -23,6 +24,7 @@ const EMBED_CARDS = [
     key: "iframe" as const,
     icon: Code,
     title: "iFrame Embed",
+    lang: "HTML",
     description: "Nhúng trực tiếp vào trang web",
     bullets: ["Nhúng như một phần của trang", "Tùy chỉnh kích thước", "Phù hợp cho trang hỗ trợ"],
   },
@@ -30,6 +32,7 @@ const EMBED_CARDS = [
     key: "directLink" as const,
     icon: ExternalLink,
     title: "Direct Link",
+    lang: "URL",
     description: "Link trực tiếp đến giao diện chat",
     bullets: ["Chia sẻ qua email hoặc tin nhắn", "Không cần nhúng code", "Mở trong tab mới"],
   },
@@ -62,16 +65,17 @@ export function BotEmbedCodeSection({ embedCode, isLoading }: BotEmbedCodeSectio
                   ))}
                 </ul>
               </div>
-              {/* Code block */}
-              <div className="relative mt-auto rounded-b-xl bg-[#1E1E2E] p-3">
-                <pre className="overflow-x-auto text-[11px] leading-relaxed text-[#CDD6F4]">
+              {/* Code block with language label */}
+              <div className="relative mt-auto rounded-b-xl bg-[#1E1E2E]">
+                <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-[#CDD6F4]/60">
+                    {card.lang}
+                  </span>
+                  {code && <CopyButton text={code} />}
+                </div>
+                <pre className="overflow-x-auto p-3 text-[11px] leading-relaxed text-[#CDD6F4]">
                   <code>{code || "Chưa có mã nhúng"}</code>
                 </pre>
-                {code && (
-                  <div className="absolute right-2 top-2">
-                    <CopyButton text={code} />
-                  </div>
-                )}
               </div>
             </div>
           )

@@ -41,6 +41,14 @@ export interface BotWidgetConfig {
   showPoweredBy: boolean
   customCss: string | null
   headerText: string | null
+  displayName: string | null
+  logoUrl: string | null
+  fontColor: string | null
+  backgroundColor: string | null
+  userMessageColor: string | null
+  botMessageColor: string | null
+  fontFamily: string | null
+  fontSize: "small" | "medium" | "large" | null
 }
 
 export interface BotEmbedCode {

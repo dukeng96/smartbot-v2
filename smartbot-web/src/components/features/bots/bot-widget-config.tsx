@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
 const COLOR_PRESETS = ["#6D28D9", "#2563EB", "#059669", "#DC2626", "#D97706", "#0891B2"]
@@ -35,6 +36,14 @@ export function BotWidgetConfig({ bot, onChange }: BotWidgetConfigProps) {
       showPoweredBy: wc?.showPoweredBy ?? true,
       customCss: wc?.customCss ?? "",
       headerText: wc?.headerText ?? "",
+      displayName: wc?.displayName ?? "",
+      logoUrl: wc?.logoUrl ?? "",
+      fontColor: wc?.fontColor ?? null,
+      backgroundColor: wc?.backgroundColor ?? null,
+      userMessageColor: wc?.userMessageColor ?? null,
+      botMessageColor: wc?.botMessageColor ?? null,
+      fontFamily: wc?.fontFamily ?? null,
+      fontSize: wc?.fontSize ?? null,
     },
   })
 
@@ -47,6 +56,14 @@ export function BotWidgetConfig({ bot, onChange }: BotWidgetConfigProps) {
       showPoweredBy: wc?.showPoweredBy ?? true,
       customCss: wc?.customCss ?? "",
       headerText: wc?.headerText ?? "",
+      displayName: wc?.displayName ?? "",
+      logoUrl: wc?.logoUrl ?? "",
+      fontColor: wc?.fontColor ?? null,
+      backgroundColor: wc?.backgroundColor ?? null,
+      userMessageColor: wc?.userMessageColor ?? null,
+      botMessageColor: wc?.botMessageColor ?? null,
+      fontFamily: wc?.fontFamily ?? null,
+      fontSize: wc?.fontSize ?? null,
     })
   }, [wc, form])
 
@@ -120,6 +137,97 @@ export function BotWidgetConfig({ bot, onChange }: BotWidgetConfigProps) {
           <Switch checked={field.value} onCheckedChange={field.onChange} />
         </div>
       )} />
+
+      {/* Branding */}
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <h4 className="text-[14px] font-semibold text-foreground">Thương hiệu</h4>
+        <div className="space-y-1.5">
+          <label className="text-[12px] text-text-muted">Tên hiển thị</label>
+          <Input {...form.register("displayName")} className="max-w-sm text-[13px]" placeholder="Tên bot trên widget" />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[12px] text-text-muted">Logo URL</label>
+          <Input {...form.register("logoUrl")} className="max-w-sm text-[13px]" placeholder="https://example.com/logo.png" />
+        </div>
+      </section>
+
+      {/* Colors */}
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <h4 className="text-[14px] font-semibold text-foreground">Màu sắc</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <Controller control={form.control} name="fontColor" render={({ field }) => (
+            <div className="space-y-1.5">
+              <label className="text-[12px] text-text-muted">Màu chữ</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={field.value ?? "#111827"} onChange={(e) => field.onChange(e.target.value)} className="size-8 cursor-pointer rounded border border-border" />
+                <Input value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} className="w-28 text-[13px]" placeholder="#111827" />
+              </div>
+            </div>
+          )} />
+          <Controller control={form.control} name="backgroundColor" render={({ field }) => (
+            <div className="space-y-1.5">
+              <label className="text-[12px] text-text-muted">Màu nền</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={field.value ?? "#FFFFFF"} onChange={(e) => field.onChange(e.target.value)} className="size-8 cursor-pointer rounded border border-border" />
+                <Input value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} className="w-28 text-[13px]" placeholder="#FFFFFF" />
+              </div>
+            </div>
+          )} />
+          <Controller control={form.control} name="userMessageColor" render={({ field }) => (
+            <div className="space-y-1.5">
+              <label className="text-[12px] text-text-muted">Tin nhắn người dùng</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={field.value ?? "#6D28D9"} onChange={(e) => field.onChange(e.target.value)} className="size-8 cursor-pointer rounded border border-border" />
+                <Input value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} className="w-28 text-[13px]" placeholder="#6D28D9" />
+              </div>
+            </div>
+          )} />
+          <Controller control={form.control} name="botMessageColor" render={({ field }) => (
+            <div className="space-y-1.5">
+              <label className="text-[12px] text-text-muted">Tin nhắn bot</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={field.value ?? "#F3F4F6"} onChange={(e) => field.onChange(e.target.value)} className="size-8 cursor-pointer rounded border border-border" />
+                <Input value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value || null)} className="w-28 text-[13px]" placeholder="#F3F4F6" />
+              </div>
+            </div>
+          )} />
+        </div>
+      </section>
+
+      {/* Typography */}
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <h4 className="text-[14px] font-semibold text-foreground">Kiểu chữ</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[12px] text-text-muted">Font chữ</label>
+            <Controller control={form.control} name="fontFamily" render={({ field }) => (
+              <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v || null)}>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Mặc định" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Inter">Inter</SelectItem>
+                  <SelectItem value="Roboto">Roboto</SelectItem>
+                  <SelectItem value="Open Sans">Open Sans</SelectItem>
+                  <SelectItem value="Nunito">Nunito</SelectItem>
+                  <SelectItem value="Montserrat">Montserrat</SelectItem>
+                </SelectContent>
+              </Select>
+            )} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[12px] text-text-muted">Cỡ chữ</label>
+            <Controller control={form.control} name="fontSize" render={({ field }) => (
+              <Select value={field.value ?? ""} onValueChange={(v) => field.onChange(v || null)}>
+                <SelectTrigger className="w-full"><SelectValue placeholder="Trung bình" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Nhỏ</SelectItem>
+                  <SelectItem value="medium">Trung bình</SelectItem>
+                  <SelectItem value="large">Lớn</SelectItem>
+                </SelectContent>
+              </Select>
+            )} />
+          </div>
+        </div>
+      </section>
 
       {/* Custom CSS */}
       <div className="space-y-1.5">

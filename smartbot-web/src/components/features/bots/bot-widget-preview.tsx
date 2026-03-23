@@ -14,11 +14,19 @@ interface BotWidgetPreviewProps {
  * Widget preview — shows collapsed bubble + expanded chat widget.
  * Applies theme, primaryColor, headerText, showPoweredBy from config props.
  */
+const FONT_SIZE_MAP: Record<string, string> = { small: "12px", medium: "13px", large: "14px" }
+
 export function BotWidgetPreview({ config, botName }: BotWidgetPreviewProps) {
   const isDark = config.theme === "dark"
   const color = config.primaryColor || "#6D28D9"
   const isRight = config.position !== "bottom-left"
-  const headerText = config.headerText || botName || "Trợ lý AI"
+  const headerText = config.displayName || config.headerText || botName || "Trợ lý AI"
+  const fontColor = config.fontColor ?? (isDark ? "#F9FAFB" : "#111827")
+  const bgColor = config.backgroundColor ?? (isDark ? "#1F2937" : "#FFFFFF")
+  const userMsgColor = config.userMessageColor || color
+  const botMsgColor = config.botMessageColor ?? (isDark ? "#374151" : "#F3F4F6")
+  const family = config.fontFamily ?? undefined
+  const msgSize = FONT_SIZE_MAP[config.fontSize ?? ""] ?? "12px"
 
   return (
     <div className="sticky top-6 space-y-6">
@@ -30,9 +38,9 @@ export function BotWidgetPreview({ config, botName }: BotWidgetPreviewProps) {
         <div
           className={cn(
             "w-[320px] overflow-hidden rounded-2xl shadow-lg",
-            isDark ? "bg-[#1F2937] text-white" : "bg-white text-foreground",
             isRight ? "ml-auto" : "mr-auto",
           )}
+          style={{ backgroundColor: bgColor, color: fontColor, fontFamily: family }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: color }}>
@@ -44,12 +52,12 @@ export function BotWidgetPreview({ config, botName }: BotWidgetPreviewProps) {
           <div className="space-y-3 p-4" style={{ minHeight: 260 }}>
             <div className="flex gap-2">
               <div className="size-6 shrink-0 rounded-full" style={{ backgroundColor: color, opacity: 0.2 }} />
-              <div className={cn("max-w-[75%] rounded-xl rounded-tl-sm px-3 py-2 text-[12px]", isDark ? "bg-[#374151]" : "bg-[#F3F4F6]")}>
+              <div className="max-w-[75%] rounded-xl rounded-tl-sm px-3 py-2" style={{ backgroundColor: botMsgColor, fontSize: msgSize }}>
                 Xin chào! Tôi có thể giúp gì cho bạn?
               </div>
             </div>
             <div className="flex justify-end">
-              <div className="max-w-[75%] rounded-xl rounded-tr-sm px-3 py-2 text-[12px] text-white" style={{ backgroundColor: color }}>
+              <div className="max-w-[75%] rounded-xl rounded-tr-sm px-3 py-2 text-white" style={{ backgroundColor: userMsgColor, fontSize: msgSize }}>
                 Tôi muốn biết thêm
               </div>
             </div>
