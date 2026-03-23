@@ -36,4 +36,44 @@ export class UpdateWidgetDto {
   @IsOptional()
   @IsString()
   headerText?: string;
+
+  @ApiPropertyOptional({ example: 'Trợ lý AI' })
+  @IsOptional()
+  @IsString()
+  displayName?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
+  @IsOptional()
+  @IsString()
+  logoUrl?: string;
+
+  @ApiPropertyOptional({ example: '#111827' })
+  @IsOptional()
+  @IsString()
+  fontColor?: string;
+
+  @ApiPropertyOptional({ example: '#FFFFFF' })
+  @IsOptional()
+  @IsString()
+  backgroundColor?: string;
+
+  @ApiPropertyOptional({ example: '#6D28D9' })
+  @IsOptional()
+  @IsString()
+  userMessageColor?: string;
+
+  @ApiPropertyOptional({ example: '#F3F4F6' })
+  @IsOptional()
+  @IsString()
+  botMessageColor?: string;
+
+  @ApiPropertyOptional({ example: 'Inter' })
+  @IsOptional()
+  @IsString()
+  fontFamily?: string;
+
+  @ApiPropertyOptional({ enum: ['small', 'medium', 'large'] })
+  @IsOptional()
+  @IsString()
+  fontSize?: string;
 }

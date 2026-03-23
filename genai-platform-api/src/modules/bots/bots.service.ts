@@ -186,6 +186,14 @@ export class BotsService {
           ...(dto.showPoweredBy !== undefined && { showPoweredBy: dto.showPoweredBy }),
           ...(dto.customCss !== undefined && { customCss: dto.customCss }),
           ...(dto.headerText !== undefined && { headerText: dto.headerText }),
+          ...(dto.displayName !== undefined && { displayName: dto.displayName }),
+          ...(dto.logoUrl !== undefined && { logoUrl: dto.logoUrl }),
+          ...(dto.fontColor !== undefined && { fontColor: dto.fontColor }),
+          ...(dto.backgroundColor !== undefined && { backgroundColor: dto.backgroundColor }),
+          ...(dto.userMessageColor !== undefined && { userMessageColor: dto.userMessageColor }),
+          ...(dto.botMessageColor !== undefined && { botMessageColor: dto.botMessageColor }),
+          ...(dto.fontFamily !== undefined && { fontFamily: dto.fontFamily }),
+          ...(dto.fontSize !== undefined && { fontSize: dto.fontSize }),
         },
       },
       select: { id: true, widgetConfig: true },
@@ -248,11 +256,12 @@ export class BotsService {
     await this.ensureBotExists(tenantId, botId);
 
     const appUrl = process.env.APP_URL || 'https://platform.vn';
+    const frontendUrl = process.env.FRONTEND_URL || appUrl;
 
     return {
       iframe: `<iframe src="${appUrl}/widget/${botId}" width="400" height="600" frameborder="0"></iframe>`,
       bubble: `<script src="${appUrl}/widget/loader.js" data-bot-id="${botId}"></script>`,
-      directLink: `${appUrl}/chat/${botId}`,
+      directLink: `${frontendUrl}/chat/${botId}`,
     };
   }
 
