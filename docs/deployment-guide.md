@@ -148,16 +148,37 @@ docker run --rm --net=host --entrypoint sh minio/mc:latest -c "
 
 ---
 
-## Step 4: Deploy genai-platform-api (NestJS)
+## Step 4: Build smartbot-widget
 
-### 4.1 Install Dependencies
+The widget must be built **before** starting the Platform API, because the API serves widget assets from `smartbot-widget/dist/` via `ServeStaticModule` at `/widget/`.
+
+```bash
+cd smartbot-widget
+npm install
+npm run build
+```
+
+Verify output:
+
+```bash
+ls dist/
+# smartbot-widget.iife.js       (~25KB, main bundle)
+# smartbot-widget-loader.iife.js (~1KB, async loader)
+# iframe.html                    (iframe embed page)
+```
+
+---
+
+## Step 5: Deploy genai-platform-api (NestJS)
+
+### 5.1 Install Dependencies
 
 ```bash
 cd genai-platform-api
 npm install
 ```
 
-### 4.2 Configure Environment
+### 5.2 Configure Environment
 
 ```bash
 copy .env.example .env
@@ -197,7 +218,7 @@ PORT=3000
 NODE_ENV=development
 ```
 
-### 4.3 Run Database Migrations
+### 5.3 Run Database Migrations
 
 ```bash
 npx prisma migrate deploy
@@ -209,7 +230,7 @@ If this is a fresh database, generate the Prisma client first:
 npx prisma generate
 ```
 
-### 4.4 Seed Plans (Optional)
+### 5.4 Seed Plans (Optional)
 
 The API has internal endpoints to seed billing plans. After starting the server (step 4.5), call:
 
@@ -219,7 +240,7 @@ curl -X POST http://localhost:3000/api/internal/plans/seed
 # cmd /c "curl -X POST http://localhost:3000/api/internal/plans/seed"
 ```
 
-### 4.5 Start the API
+### 5.5 Start the API
 
 Development mode (hot-reload):
 
@@ -245,9 +266,9 @@ Swagger docs: http://localhost:3000/docs
 
 ---
 
-## Step 5: Deploy genai-engine (Python/FastAPI)
+## Step 6: Deploy genai-engine (Python/FastAPI)
 
-### 5.1 Create/Activate Conda Environment
+### 6.1 Create/Activate Conda Environment
 
 ```bash
 # Check if env exists first; if yes, activate it. Otherwise, create it.
@@ -255,7 +276,7 @@ conda activate env311 || conda create -n env311 python=3.11 -y
 conda activate env311
 ```
 
-### 5.2 Install Dependencies
+### 6.2 Install Dependencies
 
 ```bash
 cd genai-engine
@@ -266,7 +287,7 @@ pip install -r requirements.txt
 
 > **Troubleshooting Pip:** If you encounter a dependency conflict between `datalab-python-sdk` and `pydantic-settings`, relax the version requirements in `requirements.txt`. Change `pydantic==2.10.4` and `pydantic-settings>=2.10.1` to just `pydantic` and `pydantic-settings`.
 
-### 5.3 Configure Environment
+### 6.3 Configure Environment
 Use the existing `.env` file in the `genai-engine` folder. You must update the following sections:
 
 > **Important:** By default, the `.env` might point to production VNPT storage. `MINIO_SERVICE_URL` and `MINIO_PUBLIC_HOST` MUST point to `http://localhost:9000` (local MinIO). Also, update `MINIO_ACCESS_KEY` to `minioadmin` and `MINIO_SECRET_KEY` to `minioadmin123`.
@@ -278,7 +299,7 @@ Use the existing `.env` file in the `genai-engine` folder. You must update the f
 > WEB_BACKEND_INTERNAL_KEY=internal-secret-key-change-in-production
 > ```
 
-### 5.4 Start FastAPI Server
+### 6.4 Start FastAPI Server
 
 ```bash
 conda activate env311
@@ -292,7 +313,7 @@ curl http://localhost:8000/engine/v1/health
 # {"status":"ok","triton":"connected","qdrant":"connected"}
 ```
 
-### 5.5 Start Celery Worker
+### 6.5 Start Celery Worker
 
 Open a **second terminal**:
 
@@ -311,16 +332,16 @@ Verify Celery is running by checking the worker logs for:
 
 ---
 
-## Step 6: Deploy smartbot-web (Frontend)
+## Step 7: Deploy smartbot-web (Frontend)
 
-### 6.1 Install Dependencies
+### 7.1 Install Dependencies
 
 ```bash
 cd smartbot-web
 npm install
 ```
 
-### 6.2 Configure Environment
+### 7.2 Configure Environment
 
 Create `.env.local` by copying the example:
 
@@ -330,7 +351,7 @@ copy .env.local.example .env.local
 
 Ensure `NEXT_PUBLIC_API_URL` points to your Platform API (e.g., `http://localhost:3000`).
 
-### 6.3 Start Development Server
+### 7.3 Start Development Server
 
 ```bash
 npm run dev
@@ -341,7 +362,7 @@ Verify the frontend is running:
 
 ---
 
-## Step 7: Verify Full Stack
+## Step 8: Verify Full Stack
 
 ### Health Checks
 
@@ -351,6 +372,21 @@ curl http://localhost:3000/
 
 # AI Engine
 curl http://localhost:8000/health
+```
+
+### Widget Verification
+
+After starting the Platform API, verify widget assets are served:
+
+```bash
+curl -I http://localhost:3000/widget/smartbot-widget.iife.js
+# Should return 200 with Content-Type: application/javascript
+
+curl -I http://localhost:3000/widget/smartbot-widget-loader.iife.js
+# Should return 200
+
+curl -I http://localhost:3000/widget/iframe.html
+# Should return 200 with Content-Type: text/html
 ```
 
 ### Quick Smoke Test
@@ -383,6 +419,7 @@ curl -X POST http://localhost:8000/engine/v1/chat/test \
 | Service | Port | Protocol | Location |
 |---------|------|----------|----------|
 | Platform API | 3000 | HTTP | Docker or native |
+| Widget Assets | 3000/widget/ | HTTP | Served by Platform API |
 | Platform Web | 3001 | HTTP | Native |
 | AI Engine | 8000 | HTTP | Native (host) |
 | PostgreSQL | 5432 | TCP | Docker |
