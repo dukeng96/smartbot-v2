@@ -572,7 +572,7 @@ Load conversation history for returning users. Header: `x-end-user-id`.
 | `botMessageColor` | `--sb-bot-msg` | `#F3F4F6` |
 | `fontFamily` | `--sb-font-family` | `system-ui` |
 | `fontSize` | `--sb-font-size` | `14px` |
-| `position` | `.bubble { right\|left: 20px }` | `bottom-right` |
+| `position` | Sets CSS `right: 20px` (bottom-right) or `left: 20px` (bottom-left) | `bottom-right` |
 | `bubbleIcon` | `<img>` in bubble or default SVG | chat icon |
 | `showPoweredBy` | `.powered-by { display }` | `true` |
 | `customCss` | Injected `<style>` in Shadow DOM | `null` |

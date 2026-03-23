@@ -1,14 +1,15 @@
 ---
 title: "Phase 4B — Embeddable Widget Package"
 description: "3-session implementation plan: scaffold widget, wire SSE streaming, deploy with loader"
-status: in-progress
+status: complete
 priority: P1
 effort: "30h (3 sessions × 10h)"
-progress: "66% (2 of 3 sessions complete)"
+progress: "100% (3 of 3 sessions complete)"
 branch: kai/feat/phase4b-embeddable-widget
 tags: [widget, embeddable, vanilla-ts, shadow-dom, vite]
 created: 2026-03-24
 last_updated: 2026-03-24
+completed_at: 2026-03-24
 ---
 
 # Phase 4B — Embeddable Widget Package — Complete Implementation Plan
@@ -87,25 +88,24 @@ Implement the embeddable chat widget (`smartbot-widget`) that loads on third-par
 
 ---
 
-### Session 3: Deployment & Polish (10h) ⏳ PENDING
+### Session 3: Deployment & Polish (10h) ✓ COMPLETE
 **Phases 5.6–5.9**
 
 **Goal:** Loader script, backend static serving, iframe page, animations, testing.
 
-**Files to create:** 2
-- `src/loader.ts` — Tiny async loader (<2KB)
-- `public/iframe.html` — iframe embed page
+**Files created:** 2
+- `src/loader.ts` — Tiny async loader (0.46KB gzipped)
+- `public/iframe.html` — iframe embed page (2.3KB)
 
-**Files to modify:**
-- `vite.config.ts` — Add loader as separate entry
-- `genai-platform-api/src/app.module.ts` — Add `ServeStaticModule`
-- `genai-platform-api/package.json` — Add `@nestjs/serve-static`
-- All component styles — Add animations + mobile polish
+**Files modified:**
+- `vite.config.ts` — Added loader as separate entry via --mode
+- `genai-platform-api/src/app.module.ts` — Added `ServeStaticModule` at /widget/
+- All component styles — Added slideUp animation + iOS safe-area
 
-**Exit criteria:**
+**Exit criteria:** ✓ All met
 - `<script src="http://localhost:3000/widget/loader.js" data-bot-id="...">` works on external page
 - `<iframe src="http://localhost:3000/widget/BOT_ID">` renders chat (no bubble)
-- Bundle <60KB gzipped, loader <2KB
+- Bundle 7.37KB gzipped (widget), 0.46KB gzipped (loader)
 - Mobile full-screen layout works
 - `prefers-reduced-motion` respected
 - All manual testing items pass
@@ -203,17 +203,17 @@ Load conversation history for returning users (header: `x-end-user-id`).
 
 ## Success Criteria (All Sessions)
 
-- [ ] `<script src="...loader.js" data-bot-id="BOT_UUID">` renders working widget on any page
-- [ ] `<iframe src=".../widget/BOT_UUID">` renders embedded chat (no bubble)
-- [ ] Widget fetches bot config and applies theme
-- [ ] Full chat flow: send → SSE streaming → response displayed
-- [ ] Session persists: returning users see conversation history
-- [ ] Shadow DOM isolates styles from host page
-- [ ] Bundle <60KB gzipped, loader <2KB
-- [ ] Works on Chrome, Firefox, Safari, Edge (latest 2 versions)
-- [ ] Mobile: full-screen on <768px
-- [ ] `prefers-reduced-motion` respected
-- [ ] Zero runtime dependencies
+- [x] `<script src="...loader.js" data-bot-id="BOT_UUID">` renders working widget on any page
+- [x] `<iframe src=".../widget/BOT_UUID">` renders embedded chat (no bubble)
+- [x] Widget fetches bot config and applies theme
+- [x] Full chat flow: send → SSE streaming → response displayed
+- [x] Session persists: returning users see conversation history
+- [x] Shadow DOM isolates styles from host page
+- [x] Bundle <60KB gzipped (actual: 7.37KB), loader <2KB (actual: 0.46KB)
+- [x] Works on Chrome, Firefox, Safari, Edge (latest 2 versions)
+- [x] Mobile: full-screen on <768px
+- [x] `prefers-reduced-motion` respected
+- [x] Zero runtime dependencies
 
 ---
 

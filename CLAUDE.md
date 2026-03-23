@@ -19,28 +19,6 @@ Database: PostgreSQL 16 (Prisma ORM)
 - Engine: 7 services, 9 endpoints, full RAG pipeline (extract → chunk → embed → chat)
 - Frontend: 24 pages, 57 components, shadcn/ui v4, TanStack Query v5, Zustand
 
-## Commands
-
-### Backend (genai-platform-api)
-- Dev: `cd genai-platform-api && npm run start:dev`
-- Test: `cd genai-platform-api && npm test`
-- Lint: `cd genai-platform-api && npm run lint`
-- Build: `cd genai-platform-api && npm run build`
-- DB migrate: `cd genai-platform-api && npx prisma migrate dev`
-- DB seed: `cd genai-platform-api && npx prisma db seed`
-
-### AI Engine (genai-engine)
-- Dev: `cd genai-engine && uvicorn app.main:app --reload --port 8000`
-- Worker: `cd genai-engine && celery -A app.worker.celery_app worker --pool=solo -l info`
-- Test: `cd genai-engine && pytest tests/`
-
-### Frontend (smartbot-web)
-- Dev: `cd smartbot-web && npm run dev`
-- Build: `cd smartbot-web && npm run build`
-- Lint: `cd smartbot-web && npm run lint`
-
-### Infrastructure
-- Docker (Postgres + Redis): `docker compose -f docker-compose.dev.yml up -d`
 
 ## Key Docs
 

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smartbot Chat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; background: #fff; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .sb-iframe-error { padding: 20px; color: #666; font-size: 14px; text-align: center; margin-top: 40px; }
+    .sb-iframe-error.critical { color: #d32f2f; }
+  </style>
+</head>
+<body>
+  <script src="./smartbot-widget.iife.js"></script>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var botId = params.get('botId');
+
+      if (!botId) {
+        document.body.innerHTML = '<p class="sb-iframe-error critical">Missing botId query parameter</p>';
+        return;
+      }
+
+      var apiUrl = params.get('apiUrl') || undefined;
+      var theme = params.get('theme') || undefined;
+      var primaryColor = params.get('primary-color') || undefined;
+
+      function init() {
+        if (!window.SmartbotWidget) {
+          document.body.innerHTML = '<p class="sb-iframe-error critical">Failed to load widget</p>';
+          return;
+        }
+        try {
+          var config = { botId: botId, mode: 'iframe' };
+          if (apiUrl) config.apiUrl = apiUrl;
+          if (theme) config.theme = theme;
+          if (primaryColor) config.primaryColor = primaryColor;
+          var widget = new window.SmartbotWidget(config);
+          widget.open();
+        } catch (err) {
+          console.error('[Smartbot iframe] Init failed:', err);
+          document.body.innerHTML = '<p class="sb-iframe-error critical">Error initializing widget</p>';
+        }
+      }
+
+      // Widget bundle loads synchronously (script tag above), so SmartbotWidget should be available
+      if (window.SmartbotWidget) {
+        init();
+      } else {
+        // Fallback: wait briefly for async load
+        var attempts = 0;
+        var timer = setInterval(function () {
+          attempts++;
+          if (window.SmartbotWidget) { clearInterval(timer); init(); }
+          if (attempts > 50) { clearInterval(timer); init(); } // 5s timeout
+        }, 100);
+      }
+    })();
+  </script>
+</body>
+</html>

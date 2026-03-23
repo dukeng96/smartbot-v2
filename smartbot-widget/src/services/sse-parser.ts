@@ -89,15 +89,17 @@ export class SseParser {
    */
   private dispatchEvent(raw: string, callbacks: SseCallbacks): void {
     let eventType = ''
-    let data = ''
+    const dataLines: string[] = []
 
     for (const line of raw.split('\n')) {
       if (line.startsWith('event:')) {
         eventType = line.slice(6).trim()
       } else if (line.startsWith('data:')) {
-        data = line.slice(5).trim()
+        dataLines.push(line.slice(5).trim())
       }
     }
+
+    const data = dataLines.join('\n')
 
     if (!eventType || !data) return
 

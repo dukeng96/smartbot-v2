@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 // Config
 import {
@@ -51,6 +53,18 @@ import { AppController } from './app.controller';
       connection: {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      },
+    }),
+
+    // Serve widget assets at /widget/ from smartbot-widget/dist
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'smartbot-widget', 'dist'),
+      serveRoot: '/widget',
+      serveStaticOptions: {
+        maxAge: 86400000, // 24h cache
+        setHeaders: (res: any) => {
+          res.setHeader('X-Content-Type-Options', 'nosniff');
+        },
       },
     }),
 
