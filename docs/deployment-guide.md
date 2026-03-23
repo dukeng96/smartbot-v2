@@ -192,6 +192,7 @@ INTERNAL_API_KEY=internal-secret-key-change-in-production
 
 # App
 APP_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3001
 PORT=3000
 NODE_ENV=development
 ```

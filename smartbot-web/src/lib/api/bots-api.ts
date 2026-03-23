@@ -47,9 +47,21 @@ export const botsApi = {
   getEmbedCode: (id: string) =>
     apiGet<BotEmbedCode>(`api/v1/bots/${id}/embed-code`),
 
-  // Knowledge Bases
-  getKnowledgeBases: (id: string) =>
-    apiGet<BotKnowledgeBase[]>(`api/v1/bots/${id}/knowledge-bases`),
+  // Knowledge Bases — backend returns nested { knowledgeBase: {...} }, flatten for frontend
+  getKnowledgeBases: async (id: string): Promise<BotKnowledgeBase[]> => {
+    const raw = await apiGet<Array<Record<string, unknown>>>(`api/v1/bots/${id}/knowledge-bases`)
+    return raw.map((item) => {
+      const kb = (item.knowledgeBase ?? {}) as Record<string, unknown>
+      return {
+        knowledgeBaseId: (item.knowledgeBaseId ?? kb.id) as string,
+        name: kb.name as string,
+        totalDocuments: (kb.totalDocuments ?? 0) as number,
+        totalChars: (kb.totalChars ?? 0) as number,
+        status: (kb.status ?? "active") as string,
+        priority: (item.priority ?? 1) as number,
+      }
+    })
+  },
 
   attachKb: (id: string, data: { knowledgeBaseId: string; priority: number }) =>
     apiPost(`api/v1/bots/${id}/knowledge-bases`, data),
