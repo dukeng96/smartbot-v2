@@ -125,7 +125,10 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed');
 
       prisma.$transaction.mockImplementation(async (cb: any) => {
-        prisma.user.create.mockResolvedValue({ ...mockUser, email: 'upper@test.com' });
+        prisma.user.create.mockResolvedValue({
+          ...mockUser,
+          email: 'upper@test.com',
+        });
         prisma.tenant.create.mockResolvedValue(mockTenant);
         prisma.tenantMember.create.mockResolvedValue({});
         return cb(prisma);
@@ -235,8 +238,8 @@ describe('AuthService', () => {
         token: 'valid-token',
         expiresAt: new Date(Date.now() + 100000),
         user: {
-          id: 'user-1',
-          memberships: [{ tenantId: 'tenant-1', role: 'owner' }],
+          ...mockUser,
+          memberships: [{ tenantId: 'tenant-1', role: 'owner', tenant: { id: 'tenant-1', name: 'Test Workspace', slug: 'test-workspace', logoUrl: null, planId: null } }],
         },
       };
 

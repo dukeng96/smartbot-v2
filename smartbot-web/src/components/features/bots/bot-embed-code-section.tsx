@@ -73,8 +73,8 @@ export function BotEmbedCodeSection({ embedCode, isLoading }: BotEmbedCodeSectio
                   </span>
                   {code && <CopyButton text={code} />}
                 </div>
-                <pre className="overflow-x-auto p-3 text-[11px] leading-relaxed text-[#CDD6F4]">
-                  <code>{code || "Chưa có mã nhúng"}</code>
+                <pre className="min-h-[72px] overflow-x-auto p-3 text-[11px] leading-relaxed text-[#CDD6F4]">
+                  <code className="break-all">{code || "Chưa có mã nhúng"}</code>
                 </pre>
               </div>
             </div>

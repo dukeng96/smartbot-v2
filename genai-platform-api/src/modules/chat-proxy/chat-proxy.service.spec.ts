@@ -6,6 +6,27 @@ import { ConversationsService } from '../conversations/conversations.service';
 import { MessagesService } from '../conversations/messages.service';
 import { CreditsService } from '../billing/credits.service';
 
+/** Helper: create a mock SSE ReadableStream */
+function createMockSseStream(events: Array<{ event: string; data: string }>) {
+  const sseText = events
+    .map((e) => `event: ${e.event}\ndata: ${e.data}\n\n`)
+    .join('');
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(sseText);
+  let read = false;
+  return {
+    getReader: () => ({
+      read: async () => {
+        if (!read) {
+          read = true;
+          return { done: false, value: bytes };
+        }
+        return { done: true, value: undefined };
+      },
+    }),
+  };
+}
+
 describe('ChatProxyService', () => {
   let service: ChatProxyService;
   let mockBotsService: Record<string, jest.Mock>;
@@ -36,6 +57,19 @@ describe('ChatProxyService', () => {
   };
 
   beforeEach(async () => {
+    // Mock global fetch to simulate AI Engine SSE response
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      body: createMockSseStream([
+        { event: 'delta', data: JSON.stringify({ content: 'Hello ' }) },
+        { event: 'delta', data: JSON.stringify({ content: 'World' }) },
+        {
+          event: 'message_end',
+          data: JSON.stringify({ input_tokens: 50, output_tokens: 30 }),
+        },
+      ]),
+    }) as jest.Mock;
+
     mockBotsService = {
       findActive: jest.fn().mockResolvedValue(mockBot),
       getKnowledgeBaseIds: jest.fn().mockResolvedValue(['kb-1']),
@@ -59,7 +93,10 @@ describe('ChatProxyService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChatProxyService,
-        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('http://localhost:8000') } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('http://localhost:8000') },
+        },
         { provide: BotsService, useValue: mockBotsService },
         { provide: ConversationsService, useValue: mockConversationsService },
         { provide: MessagesService, useValue: mockMessagesService },
@@ -139,12 +176,12 @@ describe('ChatProxyService', () => {
         }),
       );
 
-      // Assistant message
+      // Assistant message (content from mock SSE stream)
       expect(mockMessagesService.create).toHaveBeenCalledWith(
         expect.objectContaining({
           role: 'assistant',
-          creditsUsed: 1,
-          modelUsed: 'mock-gpt-4',
+          content: 'Hello World',
+          modelUsed: 'vnpt-llm',
         }),
       );
     });
@@ -171,7 +208,10 @@ describe('ChatProxyService', () => {
         events.push(event);
       }
 
-      expect(mockConversationsService.updateStats).toHaveBeenCalledWith('conv-1', expect.any(String));
+      expect(mockConversationsService.updateStats).toHaveBeenCalledWith(
+        'conv-1',
+        expect.any(String),
+      );
     });
   });
 });

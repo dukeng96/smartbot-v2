@@ -1,14 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { Bot, FileText, MessageSquare, Plus, Upload, Zap } from "lucide-react"
+import { Bot, FileText, MessageSquare, Zap } from "lucide-react"
 
 import { PageHeader } from "@/components/layout/page-header"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ErrorState } from "@/components/shared/error-state"
 import { KpiCard } from "@/components/shared/kpi-card"
 import { LoadingSkeleton } from "@/components/shared/loading-skeleton"
-import { buttonVariants } from "@/components/ui/button"
 import { useAnalyticsOverview } from "@/lib/hooks/use-analytics"
 import { useBots } from "@/lib/hooks/use-bots"
 import { formatNumber } from "@/lib/utils/format-number"
@@ -86,18 +85,6 @@ export default function DashboardPage() {
           description="Tạo assistant đầu tiên để bắt đầu"
         />
       )}
-
-      {/* Quick Actions */}
-      <div className="flex gap-3">
-        <Link href="/bots" className={buttonVariants()}>
-          <Plus className="mr-1.5 size-4" />
-          Tạo Assistant
-        </Link>
-        <Link href="/knowledge-bases" className={buttonVariants({ variant: "outline" })}>
-          <Upload className="mr-1.5 size-4" />
-          Upload tài liệu
-        </Link>
-      </div>
 
       {/* My Assistants section */}
       {bots.length > 0 && (

@@ -36,7 +36,7 @@ export function useRevokeApiKey(botId: string) {
 export function useAttachKb(botId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: { knowledgeBaseId: string; priority: number }) =>
+    mutationFn: (data: { knowledgeBaseId: string }) =>
       botsApi.attachKb(botId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["bots", botId, "knowledge-bases"] })

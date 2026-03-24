@@ -119,14 +119,6 @@ export function KbDetailForm({ kb, onDelete }: KbDetailFormProps) {
         <CardContent>
           <div className="grid grid-cols-2 gap-4 text-[13px]">
             <div>
-              <p className="text-text-muted">Embedding Model</p>
-              <p className="font-medium">{kb.embeddingModel}</p>
-            </div>
-            <div>
-              <p className="text-text-muted">Vector Collection</p>
-              <p className="font-medium">{kb.vectorCollection || "—"}</p>
-            </div>
-            <div>
               <p className="text-text-muted">Tổng tài liệu</p>
               <p className="font-medium">{kb.totalDocuments.toLocaleString("vi-VN")}</p>
             </div>

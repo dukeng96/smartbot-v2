@@ -40,7 +40,12 @@ export default function BotKnowledgeBasesPage() {
 
       <BotKbList knowledgeBases={kbs ?? []} onDetach={setDetachTarget} />
 
-      <BotKbAttachDialog botId={botId} open={attachOpen} onOpenChange={setAttachOpen} />
+      <BotKbAttachDialog
+        botId={botId}
+        open={attachOpen}
+        onOpenChange={setAttachOpen}
+        attachedKbIds={(kbs ?? []).map((kb) => kb.knowledgeBaseId)}
+      />
 
       <ConfirmDialog
         open={!!detachTarget}

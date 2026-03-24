@@ -56,9 +56,9 @@ export function BotConfigForm({ bot, onDuplicate, onDelete }: BotConfigFormProps
       {/* Basic Info */}
       <section className="space-y-4">
         <h3 className="text-[14px] font-semibold text-foreground">Thông tin cơ bản</h3>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="text-[13px] font-medium">Tên Assistant</label>
-          <Input {...form.register("name")} className="max-w-md text-[13px]" />
+          <Input {...form.register("name")} className="max-w-md truncate text-[13px]" />
           {form.formState.errors.name && (
             <p className="text-[12px] text-destructive">{form.formState.errors.name.message}</p>
           )}

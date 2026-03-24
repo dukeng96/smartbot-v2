@@ -50,26 +50,30 @@ export default function KnowledgeBaseDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon-sm"
+          className="shrink-0"
           onClick={() => router.push("/knowledge-bases")}
         >
           <ArrowLeft className="size-4" />
         </Button>
-        <PageHeader
-          title={kb.name}
-          actions={
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/knowledge-bases/${kbId}/documents`)}
-            >
-              <FileText className="mr-1.5 size-4" />
-              Xem tài liệu
-            </Button>
-          }
-        />
+        <div className="min-w-0 flex-1">
+          <PageHeader
+            title={kb.name}
+            actions={
+              <Button
+                variant="outline"
+                className="shrink-0 whitespace-nowrap"
+                onClick={() => router.push(`/knowledge-bases/${kbId}/documents`)}
+              >
+                <FileText className="mr-1.5 size-4" />
+                Xem tài liệu
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       <KbDetailForm kb={kb} onDelete={() => setConfirmDelete(true)} />

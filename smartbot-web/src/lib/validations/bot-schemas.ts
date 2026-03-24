@@ -56,7 +56,6 @@ export type UpdateWidgetInput = z.infer<typeof updateWidgetSchema>
 
 export const attachKbSchema = z.object({
   knowledgeBaseId: z.string().min(1, "Vui lòng chọn Knowledge Base"),
-  priority: z.number().int().min(1, "Ưu tiên tối thiểu là 1"),
 })
 
 export type AttachKbInput = z.infer<typeof attachKbSchema>

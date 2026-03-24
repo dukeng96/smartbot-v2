@@ -249,7 +249,7 @@ model Message {
   retrievalContext Json?    @map("retrieval_context")
   responseTimeMs   Int?     @map("response_time_ms")
   modelUsed        String?  @map("model_used") @db.VarChar(100)
-  feedback         String?  @db.VarChar(10)
+  feedback         String?  @db.VarChar(20)
   createdAt        DateTime @default(now()) @map("created_at")
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

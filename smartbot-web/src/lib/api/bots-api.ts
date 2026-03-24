@@ -63,7 +63,7 @@ export const botsApi = {
     })
   },
 
-  attachKb: (id: string, data: { knowledgeBaseId: string; priority: number }) =>
+  attachKb: (id: string, data: { knowledgeBaseId: string }) =>
     apiPost(`api/v1/bots/${id}/knowledge-bases`, data),
 
   detachKb: (id: string, kbId: string) =>

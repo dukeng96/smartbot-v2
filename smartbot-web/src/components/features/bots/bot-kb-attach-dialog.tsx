@@ -15,7 +15,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -29,9 +28,11 @@ interface BotKbAttachDialogProps {
   botId: string
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** IDs of KBs already attached to this bot — excluded from dropdown */
+  attachedKbIds?: string[]
 }
 
-export function BotKbAttachDialog({ botId, open, onOpenChange }: BotKbAttachDialogProps) {
+export function BotKbAttachDialog({ botId, open, onOpenChange, attachedKbIds = [] }: BotKbAttachDialogProps) {
   const attachKb = useAttachKb(botId)
 
   const { data: kbList } = useQuery({
@@ -42,7 +43,7 @@ export function BotKbAttachDialog({ botId, open, onOpenChange }: BotKbAttachDial
 
   const form = useForm<AttachKbInput>({
     resolver: zodResolver(attachKbSchema),
-    defaultValues: { knowledgeBaseId: "", priority: 1 },
+    defaultValues: { knowledgeBaseId: "" },
   })
 
   const onSubmit = form.handleSubmit(async (data) => {
@@ -51,13 +52,18 @@ export function BotKbAttachDialog({ botId, open, onOpenChange }: BotKbAttachDial
     form.reset()
   })
 
+  // Filter out already-attached KBs
+  const availableKbs = (kbList?.items ?? []).filter(
+    (kb) => !attachedKbIds.includes(kb.id),
+  )
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>Gắn Knowledge Base</DialogTitle>
           <DialogDescription>
-            Chọn Knowledge Base và mức ưu tiên tìm kiếm
+            Chọn Knowledge Base để gắn vào Assistant
           </DialogDescription>
         </DialogHeader>
 
@@ -73,7 +79,7 @@ export function BotKbAttachDialog({ botId, open, onOpenChange }: BotKbAttachDial
                     <SelectValue placeholder="Chọn Knowledge Base..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {kbList?.items.map((kb) => (
+                    {availableKbs.map((kb) => (
                       <SelectItem key={kb.id} value={kb.id}>
                         {kb.name}
                       </SelectItem>
@@ -87,19 +93,9 @@ export function BotKbAttachDialog({ botId, open, onOpenChange }: BotKbAttachDial
                 {form.formState.errors.knowledgeBaseId.message}
               </p>
             )}
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-[13px] font-medium">Ưu tiên</label>
-            <Input
-              type="number"
-              {...form.register("priority", { valueAsNumber: true })}
-              min={1}
-              className="w-32 text-[13px]"
-            />
-            {form.formState.errors.priority && (
-              <p className="text-[12px] text-destructive">
-                {form.formState.errors.priority.message}
+            {availableKbs.length === 0 && (
+              <p className="text-[12px] text-text-muted">
+                Tất cả Knowledge Base đã được gắn vào Assistant này
               </p>
             )}
           </div>
@@ -108,7 +104,7 @@ export function BotKbAttachDialog({ botId, open, onOpenChange }: BotKbAttachDial
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
-            <Button type="submit" disabled={attachKb.isPending}>
+            <Button type="submit" disabled={attachKb.isPending || availableKbs.length === 0}>
               {attachKb.isPending ? "Đang gắn..." : "Gắn"}
             </Button>
           </DialogFooter>
