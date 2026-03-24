@@ -213,7 +213,7 @@ export class BotsService {
     return {
       html: `<!-- Widget Preview for Bot: ${escapedName} -->
 <div id="genai-widget" data-bot-id="${bot.id}" data-config='${escapedConfig}'></div>
-<script src="/widget/loader.js"></script>`,
+<script src="/widget/smartbot-widget-loader.iife.js"></script>`,
     };
   }
 
@@ -259,8 +259,8 @@ export class BotsService {
     const frontendUrl = process.env.FRONTEND_URL || appUrl;
 
     return {
-      iframe: `<iframe src="${appUrl}/widget/${botId}" width="400" height="600" frameborder="0"></iframe>`,
-      bubble: `<script src="${appUrl}/widget/loader.js" data-bot-id="${botId}"></script>`,
+      iframe: `<iframe src="${appUrl}/widget/iframe.html?botId=${botId}" width="400" height="600" frameborder="0"></iframe>`,
+      bubble: `<script src="${appUrl}/widget/smartbot-widget-loader.iife.js" data-bot-id="${botId}"></script>`,
       directLink: `${frontendUrl}/chat/${botId}`,
     };
   }

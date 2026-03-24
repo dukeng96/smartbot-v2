@@ -58,7 +58,7 @@ import { AppController } from './app.controller';
 
     // Serve widget assets at /widget/ from smartbot-widget/dist
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'smartbot-widget', 'dist'),
+      rootPath: join(__dirname, '..', '..', '..', 'smartbot-widget', 'dist'),
       serveRoot: '/widget',
       serveStaticOptions: {
         maxAge: 86400000, // 24h cache

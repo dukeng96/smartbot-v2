@@ -46,10 +46,14 @@
   script.async = true
 
   script.onload = function () {
-    if (!(window as any).SmartbotWidget) return
+    // Vite IIFE wraps exports: window.SmartbotWidget = { SmartbotWidget: class }
+    const Ctor =
+      (window as any).SmartbotWidget?.SmartbotWidget ||
+      (window as any).SmartbotWidget
+    if (typeof Ctor !== 'function') return
 
     try {
-      new (window as any).SmartbotWidget({
+      new Ctor({
         botId,
         ...(apiUrl && { apiUrl }),
         ...(position && { position }),

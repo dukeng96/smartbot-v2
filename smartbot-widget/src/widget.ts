@@ -82,6 +82,17 @@ export class SmartbotWidget {
     this.host = document.createElement('div')
     this.host.id = 'smartbot-widget-root'
     this.host.setAttribute('aria-label', 'Smartbot chat widget')
+
+    if (this.mode === 'iframe') {
+      // Fill the entire viewport in iframe embeds
+      Object.assign(this.host.style, {
+        position: 'fixed',
+        inset: '0',
+        width: '100%',
+        height: '100%',
+      })
+    }
+
     document.body.appendChild(this.host)
   }
 
