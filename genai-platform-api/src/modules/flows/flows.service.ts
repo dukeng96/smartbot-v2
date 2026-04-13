@@ -11,11 +11,11 @@ import { UpdateFlowDto } from './dto/update-flow.dto';
 import { FlowData, FlowNode, FlowEdge } from './types/flow-data.types';
 
 const VALID_NODE_TYPES = new Set([
-  'start', 'llm', 'agent', 'custom_tool', 'custom_function',
-  'condition', 'retriever', 'direct_reply', 'sticky_note', 'http', 'human_input',
+  'start', 'end', 'llm', 'condition', 'set_variable', 'http_request',
+  'knowledge_base', 'code', 'text_formatter', 'sticky_note', 'memory',
 ]);
 
-const TERMINAL_NODE_TYPES = new Set(['direct_reply', 'human_input']);
+const TERMINAL_NODE_TYPES = new Set(['end']);
 
 // Minimal simple-rag flow provisioned for every new bot.
 // Phase 10 replaces this with full template set.
@@ -29,10 +29,10 @@ export function buildSimpleRagFlowData(): FlowData {
         data: {},
       },
       {
-        id: 'retriever-1',
-        type: 'retriever',
+        id: 'kb-1',
+        type: 'knowledge_base',
         position: { x: 350, y: 200 },
-        data: { knowledgeBaseIds: [], topK: 5 },
+        data: { kb_id: '', top_k: 5 },
       },
       {
         id: 'llm-1',
@@ -45,16 +45,16 @@ export function buildSimpleRagFlowData(): FlowData {
         },
       },
       {
-        id: 'reply-1',
-        type: 'direct_reply',
+        id: 'end-1',
+        type: 'end',
         position: { x: 850, y: 200 },
-        data: { inputKey: 'llm-1.output' },
+        data: {},
       },
     ],
     edges: [
-      { id: 'e1', source: 'start-1', target: 'retriever-1' },
-      { id: 'e2', source: 'retriever-1', target: 'llm-1' },
-      { id: 'e3', source: 'llm-1', target: 'reply-1' },
+      { id: 'e1', source: 'start-1', target: 'kb-1' },
+      { id: 'e2', source: 'kb-1', target: 'llm-1' },
+      { id: 'e3', source: 'llm-1', target: 'end-1' },
     ],
     viewport: { x: 0, y: 0, zoom: 1 },
   };
@@ -241,7 +241,7 @@ export class FlowsService {
     const hasTerminal = nodes.some((n) => TERMINAL_NODE_TYPES.has(n.type));
     if (!hasTerminal) {
       throw new BadRequestException(
-        `Flow must have at least one terminal node (direct_reply or human_input)`,
+        `Flow must have at least one terminal node (end)`,
       );
     }
 

@@ -13,9 +13,9 @@ const MOCK_FLOW_PARAMS: RunFlowParams = {
     flowData: {
       nodes: [
         { id: 'start-1', type: 'start', position: { x: 0, y: 0 }, data: {} },
-        { id: 'reply-1', type: 'direct_reply', position: { x: 100, y: 0 }, data: {} },
+        { id: 'end-1', type: 'end', position: { x: 100, y: 0 }, data: {} },
       ],
-      edges: [{ id: 'e1', source: 'start-1', target: 'reply-1' }],
+      edges: [{ id: 'e1', source: 'start-1', target: 'end-1' }],
       viewport: { x: 0, y: 0, zoom: 1 },
     },
   },

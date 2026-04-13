@@ -7,9 +7,9 @@ import { FlowData } from './types/flow-data.types';
 const VALID_FLOW: FlowData = {
   nodes: [
     { id: 'start-1', type: 'start', position: { x: 0, y: 0 }, data: {} },
-    { id: 'reply-1', type: 'direct_reply', position: { x: 200, y: 0 }, data: {} },
+    { id: 'end-1', type: 'end', position: { x: 200, y: 0 }, data: {} },
   ],
-  edges: [{ id: 'e1', source: 'start-1', target: 'reply-1' }],
+  edges: [{ id: 'e1', source: 'start-1', target: 'end-1' }],
 };
 
 describe('FlowsService', () => {
@@ -54,9 +54,9 @@ describe('FlowsService', () => {
       expect(data.nodes).toHaveLength(4);
       const types = data.nodes.map((n) => n.type);
       expect(types).toContain('start');
-      expect(types).toContain('retriever');
+      expect(types).toContain('knowledge_base');
       expect(types).toContain('llm');
-      expect(types).toContain('direct_reply');
+      expect(types).toContain('end');
       expect(data.edges).toHaveLength(3);
     });
 
@@ -82,7 +82,7 @@ describe('FlowsService', () => {
       const flow: FlowData = {
         nodes: [
           { id: 'x', type: 'start', position: { x: 0, y: 0 }, data: {} },
-          { id: 'x', type: 'direct_reply', position: { x: 1, y: 0 }, data: {} },
+          { id: 'x', type: 'end', position: { x: 1, y: 0 }, data: {} },
         ],
         edges: [],
       };
@@ -94,11 +94,11 @@ describe('FlowsService', () => {
         nodes: [
           { id: 's', type: 'start', position: { x: 0, y: 0 }, data: {} },
           { id: 'u', type: 'unknown_xyz', position: { x: 1, y: 0 }, data: {} },
-          { id: 'r', type: 'direct_reply', position: { x: 2, y: 0 }, data: {} },
+          { id: 'e', type: 'end', position: { x: 2, y: 0 }, data: {} },
         ],
         edges: [
           { id: 'e1', source: 's', target: 'u' },
-          { id: 'e2', source: 'u', target: 'r' },
+          { id: 'e2', source: 'u', target: 'e' },
         ],
       };
       expect(() => service.validateFlowData(flow)).toThrow(BadRequestException);
@@ -107,7 +107,7 @@ describe('FlowsService', () => {
     it('rejects flow without start node', () => {
       const flow: FlowData = {
         nodes: [
-          { id: 'r', type: 'direct_reply', position: { x: 0, y: 0 }, data: {} },
+          { id: 'e', type: 'end', position: { x: 0, y: 0 }, data: {} },
         ],
         edges: [],
       };
@@ -119,7 +119,7 @@ describe('FlowsService', () => {
         nodes: [
           { id: 's1', type: 'start', position: { x: 0, y: 0 }, data: {} },
           { id: 's2', type: 'start', position: { x: 1, y: 0 }, data: {} },
-          { id: 'r', type: 'direct_reply', position: { x: 2, y: 0 }, data: {} },
+          { id: 'e', type: 'end', position: { x: 2, y: 0 }, data: {} },
         ],
         edges: [],
       };
@@ -141,9 +141,9 @@ describe('FlowsService', () => {
       const flow: FlowData = {
         nodes: [
           { id: 's', type: 'start', position: { x: 0, y: 0 }, data: {} },
-          { id: 'r', type: 'direct_reply', position: { x: 1, y: 0 }, data: {} },
+          { id: 'e', type: 'end', position: { x: 1, y: 0 }, data: {} },
         ],
-        edges: [{ id: 'e1', source: 'NONEXISTENT', target: 'r' }],
+        edges: [{ id: 'e1', source: 'NONEXISTENT', target: 'e' }],
       };
       expect(() => service.validateFlowData(flow)).toThrow(BadRequestException);
     });
