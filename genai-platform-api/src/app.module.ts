@@ -38,6 +38,7 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { ChannelsModule } from './modules/channels/channels.module';
 import { ChatProxyModule } from './modules/chat-proxy/chat-proxy.module';
+import { CredentialsModule } from './modules/credentials/credentials.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -90,6 +91,7 @@ import { AppController } from './app.controller';
     BillingModule,
     ChannelsModule,
     ChatProxyModule,
+    CredentialsModule,
   ],
   controllers: [AppController],
   providers: [
