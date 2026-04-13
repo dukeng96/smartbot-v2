@@ -4,38 +4,23 @@ import { ChatProxyService } from './chat-proxy.service';
 import { BotsService } from '../bots/bots.service';
 import { ConversationsService } from '../conversations/conversations.service';
 import { MessagesService } from '../conversations/messages.service';
-import { CreditsService } from '../billing/credits.service';
+import { FlowExecService } from '../flow-exec/flow-exec.service';
 
-/** Helper: create a mock SSE ReadableStream */
-function createMockSseStream(events: Array<{ event: string; data: string }>) {
-  const sseText = events
-    .map((e) => `event: ${e.event}\ndata: ${e.data}\n\n`)
-    .join('');
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(sseText);
-  let read = false;
-  return {
-    getReader: () => ({
-      read: async () => {
-        if (!read) {
-          read = true;
-          return { done: false, value: bytes };
-        }
-        return { done: true, value: undefined };
-      },
-    }),
-  };
+async function collect<T>(gen: AsyncIterable<T>): Promise<T[]> {
+  const result: T[] = [];
+  for await (const item of gen) result.push(item);
+  return result;
 }
 
 describe('ChatProxyService', () => {
   let service: ChatProxyService;
-  let mockBotsService: Record<string, jest.Mock>;
-  let mockConversationsService: Record<string, jest.Mock>;
-  let mockMessagesService: Record<string, jest.Mock>;
-  let mockCreditsService: Record<string, jest.Mock>;
+  let botsService: Record<string, jest.Mock>;
+  let conversationsService: Record<string, jest.Mock>;
+  let messagesService: Record<string, jest.Mock>;
+  let flowExecService: Record<string, jest.Mock>;
 
   const botId = 'bot-1';
-  const mockBot = {
+  const mockBotWithFlow = {
     id: botId,
     tenantId: 'tenant-1',
     name: 'Test Bot',
@@ -44,174 +29,165 @@ describe('ChatProxyService', () => {
     suggestedQuestions: ['Q1'],
     widgetConfig: {},
     systemPrompt: 'You are helpful',
-    topK: 5,
     memoryTurns: 10,
     status: 'active',
+    flow: {
+      id: 'flow-1',
+      flowData: { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } },
+    },
   };
 
-  const mockConv = {
-    id: 'conv-1',
-    botId,
-    tenantId: 'tenant-1',
-    status: 'active',
-  };
+  const mockConv = { id: 'conv-1', botId, tenantId: 'tenant-1' };
 
   beforeEach(async () => {
-    // Mock global fetch to simulate AI Engine SSE response
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      body: createMockSseStream([
-        { event: 'delta', data: JSON.stringify({ content: 'Hello ' }) },
-        { event: 'delta', data: JSON.stringify({ content: 'World' }) },
-        {
-          event: 'message_end',
-          data: JSON.stringify({ input_tokens: 50, output_tokens: 30 }),
-        },
-      ]),
-    }) as jest.Mock;
-
-    mockBotsService = {
-      findActive: jest.fn().mockResolvedValue(mockBot),
-      getKnowledgeBaseIds: jest.fn().mockResolvedValue(['kb-1']),
+    botsService = {
+      findActive: jest.fn().mockResolvedValue(mockBotWithFlow),
+      findActiveWithFlow: jest.fn().mockResolvedValue(mockBotWithFlow),
     };
 
-    mockConversationsService = {
+    conversationsService = {
       getOrCreate: jest.fn().mockResolvedValue(mockConv),
       updateStats: jest.fn().mockResolvedValue(undefined),
     };
 
-    mockMessagesService = {
+    messagesService = {
       create: jest.fn().mockResolvedValue({ id: 'msg-1' }),
       getRecent: jest.fn().mockResolvedValue([]),
     };
 
-    mockCreditsService = {
-      checkQuota: jest.fn().mockResolvedValue(undefined),
-      increment: jest.fn().mockResolvedValue(undefined),
+    flowExecService = {
+      runFlow: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ChatProxyService,
-        {
-          provide: ConfigService,
-          useValue: { get: jest.fn().mockReturnValue('http://localhost:8000') },
-        },
-        { provide: BotsService, useValue: mockBotsService },
-        { provide: ConversationsService, useValue: mockConversationsService },
-        { provide: MessagesService, useValue: mockMessagesService },
-        { provide: CreditsService, useValue: mockCreditsService },
+        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('http://localhost:8000') } },
+        { provide: BotsService, useValue: botsService },
+        { provide: ConversationsService, useValue: conversationsService },
+        { provide: MessagesService, useValue: messagesService },
+        { provide: FlowExecService, useValue: flowExecService },
       ],
     }).compile();
 
     service = module.get<ChatProxyService>(ChatProxyService);
   });
 
-  describe('getBotConfig', () => {
-    it('should return public bot config', async () => {
-      const result = await service.getBotConfig(botId);
+  afterEach(() => jest.clearAllMocks());
 
+  // --- getBotConfig ---
+
+  describe('getBotConfig', () => {
+    it('returns public bot config fields', async () => {
+      const result = await service.getBotConfig(botId);
       expect(result.id).toBe(botId);
       expect(result.name).toBe('Test Bot');
       expect(result.greetingMessage).toBe('Hello!');
-      expect(mockBotsService.findActive).toHaveBeenCalledWith(botId);
+      expect(botsService.findActive).toHaveBeenCalledWith(botId);
     });
   });
+
+  // --- getConversationHistory ---
 
   describe('getConversationHistory', () => {
-    it('should return recent messages', async () => {
-      mockMessagesService.getRecent.mockResolvedValue([
-        { role: 'user', content: 'hi' },
-      ]);
-
+    it('delegates to messagesService.getRecent', async () => {
+      messagesService.getRecent.mockResolvedValue([{ role: 'user', content: 'hi' }]);
       const result = await service.getConversationHistory(botId, 'conv-1');
-
       expect(result).toHaveLength(1);
-      expect(mockMessagesService.getRecent).toHaveBeenCalledWith('conv-1', 50);
+      expect(messagesService.getRecent).toHaveBeenCalledWith('conv-1', 50);
     });
   });
 
+  // --- processChat ---
+
   describe('processChat', () => {
-    it('should yield conversation, delta, and done events', async () => {
-      const events: Array<{ event: string; data: string }> = [];
-
-      for await (const event of service.processChat({
-        botId,
-        message: 'Hello',
-      })) {
-        events.push(event);
+    it('yields conversation event first, then flow events, then done', async () => {
+      async function* mockFlowStream() {
+        yield { type: 'token' as const, data: { content: 'Hello ' } };
+        yield { type: 'token' as const, data: { content: 'World' } };
+        yield { type: 'done' as const, data: {} };
       }
+      flowExecService.runFlow.mockReturnValue(mockFlowStream());
 
-      // First event: conversation ID
+      const events = await collect(service.processChat({ botId, message: 'Hi' }));
+
       expect(events[0].event).toBe('conversation');
-      const convData = JSON.parse(events[0].data);
-      expect(convData.conversationId).toBe('conv-1');
+      expect(JSON.parse(events[0].data).conversationId).toBe('conv-1');
 
-      // Middle events: delta chunks
-      const deltas = events.filter((e) => e.event === 'delta');
-      expect(deltas.length).toBeGreaterThan(0);
+      const tokenEvents = events.filter((e) => e.event === 'token');
+      expect(tokenEvents.length).toBe(2);
 
-      // Last event: done
-      const done = events[events.length - 1];
-      expect(done.event).toBe('done');
-      const doneData = JSON.parse(done.data);
-      expect(doneData.conversationId).toBe('conv-1');
-      expect(doneData.creditsUsed).toBe(1);
+      const doneEvent = events[events.length - 1];
+      expect(doneEvent.event).toBe('done');
     });
 
-    it('should save user and assistant messages', async () => {
-      const events: Array<{ event: string; data: string }> = [];
-      for await (const event of service.processChat({
-        botId,
-        message: 'Hello',
-      })) {
-        events.push(event);
+    it('saves user message before dispatching flow', async () => {
+      async function* mockFlowStream() {
+        yield { type: 'done' as const, data: {} };
       }
+      flowExecService.runFlow.mockReturnValue(mockFlowStream());
 
-      // User message
-      expect(mockMessagesService.create).toHaveBeenCalledWith(
+      await collect(service.processChat({ botId, message: 'Hello' }));
+
+      expect(messagesService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'user', content: 'Hello' }),
+      );
+    });
+
+    it('persists assistant message from accumulated token content', async () => {
+      async function* mockFlowStream() {
+        yield { type: 'token' as const, data: { content: 'Hello ' } };
+        yield { type: 'token' as const, data: { content: 'World' } };
+        yield { type: 'done' as const, data: {} };
+      }
+      flowExecService.runFlow.mockReturnValue(mockFlowStream());
+
+      await collect(service.processChat({ botId, message: 'Hi' }));
+
+      expect(messagesService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ role: 'assistant', content: 'Hello World' }),
+      );
+    });
+
+    it('updates conversation stats after flow completes', async () => {
+      async function* mockFlowStream() {
+        yield { type: 'token' as const, data: { content: 'response' } };
+        yield { type: 'done' as const, data: {} };
+      }
+      flowExecService.runFlow.mockReturnValue(mockFlowStream());
+
+      await collect(service.processChat({ botId, message: 'Hi' }));
+
+      expect(conversationsService.updateStats).toHaveBeenCalledWith('conv-1', 'response');
+    });
+
+    it('passes history to FlowExecService.runFlow', async () => {
+      messagesService.getRecent.mockResolvedValue([
+        { role: 'user', content: 'prev message' },
+      ]);
+
+      async function* mockFlowStream() {
+        yield { type: 'done' as const, data: {} };
+      }
+      flowExecService.runFlow.mockReturnValue(mockFlowStream());
+
+      await collect(service.processChat({ botId, message: 'Hi' }));
+
+      expect(flowExecService.runFlow).toHaveBeenCalledWith(
         expect.objectContaining({
-          role: 'user',
-          content: 'Hello',
+          history: [{ role: 'user', content: 'prev message' }],
         }),
       );
-
-      // Assistant message (content from mock SSE stream)
-      expect(mockMessagesService.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          role: 'assistant',
-          content: 'Hello World',
-          modelUsed: 'vnpt-llm',
-        }),
-      );
     });
 
-    it('should check quota and increment credits', async () => {
-      const events: Array<{ event: string; data: string }> = [];
-      for await (const event of service.processChat({
-        botId,
-        message: 'test',
-      })) {
-        events.push(event);
+    it('yields error event and does not throw when flow fails', async () => {
+      async function* mockFlowStream() {
+        yield { type: 'error' as const, message: 'engine down' };
       }
+      flowExecService.runFlow.mockReturnValue(mockFlowStream());
 
-      expect(mockCreditsService.checkQuota).toHaveBeenCalledWith('tenant-1');
-      expect(mockCreditsService.increment).toHaveBeenCalledWith('tenant-1', 1);
-    });
-
-    it('should update conversation stats after processing', async () => {
-      const events: Array<{ event: string; data: string }> = [];
-      for await (const event of service.processChat({
-        botId,
-        message: 'test',
-      })) {
-        events.push(event);
-      }
-
-      expect(mockConversationsService.updateStats).toHaveBeenCalledWith(
-        'conv-1',
-        expect.any(String),
-      );
+      const events = await collect(service.processChat({ botId, message: 'Hi' }));
+      expect(events.some((e) => e.event === 'error')).toBe(true);
     });
   });
 });
