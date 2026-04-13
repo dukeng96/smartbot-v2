@@ -15,6 +15,7 @@ const BOT_TABS = [
   { value: "api-embed", label: "API & Embed", segment: "api-embed" },
   { value: "knowledge-bases", label: "Knowledge Bases", segment: "knowledge-bases" },
   { value: "channels", label: "Kênh kết nối", segment: "channels" },
+  { value: "flow", label: "Flow Canvas", segment: "flow" },
 ] as const
 
 /**
