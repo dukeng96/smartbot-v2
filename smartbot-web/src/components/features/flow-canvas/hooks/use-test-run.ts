@@ -87,7 +87,7 @@ export function useTestRun(): UseTestRunReturn {
                   if (last?.role === "assistant") {
                     copy[copy.length - 1] = {
                       ...last,
-                      content: last.content + event.data.content,
+                      content: last.content + event.content,
                     }
                   }
                   return copy

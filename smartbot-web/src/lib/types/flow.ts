@@ -114,7 +114,7 @@ export interface SseFlowStartEvent {
 
 export interface SseTokenEvent {
   type: "token"
-  data: { content: string }
+  content: string
 }
 
 export interface SseNodeStartEvent {
