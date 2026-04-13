@@ -35,6 +35,16 @@ trafilatura==2.0.0
 # Text chunking (only splitter module)
 langchain-text-splitters==0.3.4
 
+# LangGraph Flow Engine
+langgraph>=1.1.5
+langchain-core>=0.3
+langchain-openai>=0.2
+langchain-anthropic>=0.2
+langchain-community>=0.3
+langgraph-checkpoint-postgres>=0.2.0
+asyncpg>=0.30.0
+uvloop==0.20.0
+
 # Object storage
 boto3==1.35.86
 
