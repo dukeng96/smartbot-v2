@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from app.flow.base_node import BaseNode, NodeDefinition, NodeOutput
@@ -156,3 +158,49 @@ async def test_minimal_flow_executes():
     event_types = [e.type for e in events]
     assert "node_start" in event_types
     assert "node_end" in event_types
+
+
+@pytest.mark.asyncio
+async def test_sse_event_sequence_for_minimal_flow():
+    """Integration: SSE stream emits flow_start, node_start, node_end, done in order."""
+    sse_events: list[ExecutionEvent] = []
+
+    async def collect_stream() -> None:
+        queue: asyncio.Queue[ExecutionEvent] = asyncio.Queue()
+
+        def emit(ev: ExecutionEvent) -> None:
+            queue.put_nowait(ev)
+
+        flow = _make_minimal_flow()
+        executor = FlowExecutor(flow, {}, emit)
+
+        async def _run() -> None:
+            try:
+                graph = executor.build_graph()
+                await graph.ainvoke({})
+                queue.put_nowait(ExecutionEvent(type="done"))
+            except Exception as e:
+                queue.put_nowait(ExecutionEvent(type="error", error=str(e)))
+
+        queue.put_nowait(ExecutionEvent(type="flow_start"))
+        task = asyncio.create_task(_run())
+
+        while True:
+            ev = await queue.get()
+            sse_events.append(ev)
+            if ev.type in ("done", "error"):
+                break
+        await task
+
+    await collect_stream()
+
+    types = [e.type for e in sse_events]
+    assert types[0] == "flow_start"
+    assert types[-1] == "done"
+    assert types.count("node_start") == 1   # only hello node (start/end are virtual)
+    assert types.count("node_end") == 1
+    # node_start must precede node_end
+    assert types.index("node_start") < types.index("node_end")
+    # verify hello node id in events
+    hello_start = next(e for e in sse_events if e.type == "node_start")
+    assert hello_start.node_id == "n_hello"
