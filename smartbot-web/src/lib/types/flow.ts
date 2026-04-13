@@ -114,53 +114,44 @@ export interface SseFlowStartEvent {
 
 export interface SseTokenEvent {
   type: "token"
-  content: string
+  data: { content: string }
 }
 
 export interface SseNodeStartEvent {
   type: "node_start"
   node_id: string
-  node_type?: string
-  ts?: number
 }
 
 export interface SseNodeEndEvent {
   type: "node_end"
   node_id: string
-  output_preview?: string
-  duration_ms?: number
-  ts?: number
 }
 
 export interface SseNodeErrorEvent {
   type: "node_error"
   node_id: string
-  error?: string
 }
 
 export interface SseStateUpdatedEvent {
   type: "state_updated"
-  key: string
-  value: unknown
+  node_id: string
+  data: { updates: Record<string, unknown> }
 }
 
 export interface SseAwaitingInputEvent {
   type: "awaiting_input"
   node_id: string
-  prompt: string
+  data: { prompt: string; context?: unknown }
 }
 
 export interface SseErrorEvent {
   type: "error"
-  node_id?: string
   message: string
-  code?: string
 }
 
 export interface SseDoneEvent {
   type: "done"
-  total_duration_ms?: number
-  credits_used?: number
+  data: Record<string, never>
 }
 
 export type SseEvent =

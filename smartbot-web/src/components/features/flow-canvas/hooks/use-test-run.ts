@@ -23,6 +23,7 @@ export function useTestRun(): UseTestRunReturn {
   const [traceMap, setTraceMap] = useState<Record<string, NodeTrace>>({})
   const [isRunning, setIsRunning] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  const nodeStartTimesRef = useRef<Record<string, number>>({})
 
   const sendMessage = useCallback(
     async (botId: string, content: string) => {
@@ -31,6 +32,7 @@ export function useTestRun(): UseTestRunReturn {
       setMessages((prev) => [...prev, { role: "user", content }])
       setIsRunning(true)
       setTraceMap({})
+      nodeStartTimesRef.current = {}
 
       setMessages((prev) => [
         ...prev,
@@ -85,26 +87,28 @@ export function useTestRun(): UseTestRunReturn {
                   if (last?.role === "assistant") {
                     copy[copy.length - 1] = {
                       ...last,
-                      content: last.content + event.content,
+                      content: last.content + event.data.content,
                     }
                   }
                   return copy
                 })
               } else if (event.type === "node_start") {
                 const nodeId = event.node_id
+                nodeStartTimesRef.current[nodeId] = Date.now()
                 setTraceMap((prev) => ({
                   ...prev,
                   [nodeId]: { nodeId, running: true },
                 }))
               } else if (event.type === "node_end") {
                 const nodeId = event.node_id
+                const startedAt = nodeStartTimesRef.current[nodeId]
+                const duration = startedAt ? Date.now() - startedAt : undefined
                 setTraceMap((prev) => ({
                   ...prev,
                   [nodeId]: {
                     ...(prev[nodeId] ?? { nodeId, running: false }),
                     running: false,
-                    duration: event.duration_ms,
-                    outputPreview: event.output_preview,
+                    duration,
                   },
                 }))
               } else if (event.type === "node_error") {
@@ -114,7 +118,7 @@ export function useTestRun(): UseTestRunReturn {
                   [nodeId]: {
                     ...(prev[nodeId] ?? { nodeId, running: false }),
                     running: false,
-                    error: event.error,
+                    error: "Lỗi node",
                   },
                 }))
               } else if (event.type === "awaiting_input") {
