@@ -171,6 +171,8 @@ export class FlowExecService {
         return { type: 'state_updated', node_id: ev.node_id, data: ev.data };
       case 'done':
         return { type: 'done', data: ev.data };
+      case 'node_error':
+        return { type: 'node_error', node_id: ev.node_id, error: ev.error };
       case 'error':
         return { type: 'error', message: ev.message };
       default:
