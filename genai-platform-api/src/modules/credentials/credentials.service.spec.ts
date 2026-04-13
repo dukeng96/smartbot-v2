@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { CredentialsService } from './credentials.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { encrypt, decrypt } from './crypto.util';
+import { encrypt, decrypt } from './aes-gcm.util';
 import { CredentialType } from './credential-types';
 
 // ---- crypto.util unit tests ------------------------------------------------
@@ -124,7 +124,7 @@ describe('CredentialsService', () => {
         data: { apiKey: 'sk-secret-key' },
       });
 
-      expect(result.maskedPreview).toMatch(/\*+/);
+      expect(result.maskedPreview).toBe(''); // create returns no preview
       expect((result as any).data).toBeUndefined();
       expect((result as any).encryptedData).toBeUndefined();
     });
@@ -195,28 +195,23 @@ describe('CredentialsService', () => {
 
   // --- bulkDecrypt tenant isolation -----------------------------------------
 
-  describe('bulkDecrypt', () => {
-    it('returns decrypted data for owned credentials', async () => {
+  describe('decryptById', () => {
+    it('returns decrypted data for owned credential', async () => {
       const cred = makeFakeCredential();
-      (prisma.credential.findMany as jest.Mock).mockResolvedValue([cred]);
-      const result = await service.bulkDecrypt([cred.id], 'tenant-1');
-      expect(result[cred.id]).toBeDefined();
-      expect(result[cred.id].apiKey).toBe('sk-secret-key');
+      (prisma.credential.findFirst as jest.Mock).mockResolvedValue(cred);
+      const result = await service.decryptById(cred.id, 'tenant-1');
+      expect(result).toBeDefined();
+      expect(result.apiKey).toBe('sk-secret-key');
     });
 
-    it('throws ForbiddenException when a credential belongs to a different tenant', async () => {
-      // findMany returns fewer results than requested → ownership violation
-      (prisma.credential.findMany as jest.Mock).mockResolvedValue([]);
+    it('throws ForbiddenException when credential belongs to a different tenant', async () => {
+      (prisma.credential.findFirst as jest.Mock).mockResolvedValue(null);
       await expect(
-        service.bulkDecrypt(['foreign-cred-id'], 'tenant-1'),
+        service.decryptById('foreign-cred-id', 'tenant-1'),
       ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
-    it('returns empty object for empty ids array', async () => {
-      const result = await service.bulkDecrypt([], 'tenant-1');
-      expect(result).toEqual({});
-      expect(prisma.credential.findMany).not.toHaveBeenCalled();
-    });
+
   });
 
   // --- remove ---------------------------------------------------------------

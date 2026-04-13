@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { CredentialsController, CredentialsInternalController } from './credentials.controller';
+import { CredentialsController } from './credentials.controller';
 import { CredentialsService } from './credentials.service';
 
 @Module({
-  controllers: [CredentialsController, CredentialsInternalController],
+  controllers: [CredentialsController],
   providers: [CredentialsService],
   exports: [CredentialsService],
 })

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { encrypt, decrypt, maskSecret } from './crypto.util';
+import { encrypt, decrypt } from './aes-gcm.util';
 import {
   CREDENTIAL_CAP_PER_TENANT,
   CREDENTIAL_SCHEMA,
@@ -15,6 +15,12 @@ import {
 import { CreateCredentialDto } from './dto/create-credential.dto';
 import { UpdateCredentialDto } from './dto/update-credential.dto';
 import { CredentialResponseDto } from './dto/credential-response.dto';
+
+// 12-char prefix + ellipsis + 4-char suffix — legible for long VNPT JWTs and short API keys.
+function buildMaskedPreview(secret: string): string {
+  if (secret.length <= 16) return '****';
+  return secret.slice(0, 12) + '…' + secret.slice(-4);
+}
 
 @Injectable()
 export class CredentialsService {
@@ -47,7 +53,7 @@ export class CredentialsService {
           authTag,
         },
       });
-      return this.toResponse(credential, dto.data);
+      return this.toResponseNoPreview(credential);
     } catch (e: any) {
       if (e.code === 'P2002') {
         throw new ConflictException(
@@ -96,10 +102,10 @@ export class CredentialsService {
         dto.data,
       );
       const plaintext = JSON.stringify(dto.data);
-      const { encryptedData, iv, authTag } = encrypt(plaintext);
-      updateData.encryptedData = encryptedData as unknown as Uint8Array;
-      updateData.iv = iv as unknown as Uint8Array;
-      updateData.authTag = authTag as unknown as Uint8Array;
+      const encrypted = encrypt(plaintext);
+      updateData.encryptedData = encrypted.encryptedData;
+      updateData.iv = encrypted.iv;
+      updateData.authTag = encrypted.authTag;
     }
 
     try {
@@ -107,9 +113,7 @@ export class CredentialsService {
         where: { id },
         data: updateData,
       });
-
-      const previewData = dto.data ?? this.decryptToObject(existing);
-      return this.toResponse(updated, previewData);
+      return this.toResponseNoPreview(updated);
     } catch (e: any) {
       if (e.code === 'P2002') {
         throw new ConflictException(
@@ -175,9 +179,7 @@ export class CredentialsService {
         try {
           const resp = await fetch(`${data.url}/collections`, {
             method: 'GET',
-            headers: data.apiKey
-              ? { 'api-key': data.apiKey }
-              : {},
+            headers: data.apiKey ? { 'api-key': data.apiKey } : {},
             signal: AbortSignal.timeout(5000),
           });
           return {
@@ -193,32 +195,21 @@ export class CredentialsService {
     }
   }
 
-  // Internal — called by flow-exec module to decrypt credentials for engine dispatch.
+  // In-process method called by FlowExecService (Phase 07) — no HTTP round-trip.
   // Verifies tenant ownership before decrypting.
-  async bulkDecrypt(
-    ids: string[],
-    tenantId: string,
-  ): Promise<Record<string, Record<string, string>>> {
-    if (ids.length === 0) return {};
-
-    const credentials = await this.prisma.credential.findMany({
-      where: { id: { in: ids }, tenantId },
+  async decryptById(id: string, tenantId: string): Promise<Record<string, string>> {
+    const credential = await this.prisma.credential.findFirst({
+      where: { id, tenantId },
     });
-
-    if (credentials.length !== ids.length) {
-      const foundIds = new Set(credentials.map((c) => c.id));
-      const missing = ids.filter((id) => !foundIds.has(id));
+    if (!credential) {
       throw new ForbiddenException(
-        `Credentials not found or access denied: ${missing.join(', ')}`,
+        `Credential not found or access denied: ${id}`,
       );
     }
-
-    return Object.fromEntries(
-      credentials.map((c) => [c.id, this.decryptToObject(c)]),
-    );
+    return this.decryptToObject(credential);
   }
 
-  // Prisma Bytes → Uint8Array at runtime; Buffer.from() ensures crypto compat.
+  // Prisma returns Bytes as Uint8Array; Buffer.from() ensures crypto compat.
   private decryptToObject(credential: {
     encryptedData: Uint8Array;
     iv: Uint8Array;
@@ -250,13 +241,13 @@ export class CredentialsService {
     }
   }
 
+  // Returns masked response for GET list/detail — never includes plaintext.
   private toResponseMasked(credential: any): CredentialResponseDto {
-    // Decrypt just enough to build masked preview — first field value
     let maskedPreview = '****';
     try {
       const data = this.decryptToObject(credential);
       const firstValue = Object.values(data)[0] as string;
-      maskedPreview = maskSecret(firstValue);
+      maskedPreview = buildMaskedPreview(firstValue);
     } catch {
       maskedPreview = '****';
     }
@@ -270,16 +261,13 @@ export class CredentialsService {
     };
   }
 
-  private toResponse(
-    credential: any,
-    data: Record<string, string>,
-  ): CredentialResponseDto {
-    const firstValue = Object.values(data)[0] as string;
+  // Create/update response — no maskedPreview (client has plaintext they just submitted).
+  private toResponseNoPreview(credential: any): CredentialResponseDto {
     return {
       id: credential.id,
       name: credential.name,
       credentialType: credential.credentialType,
-      maskedPreview: maskSecret(firstValue),
+      maskedPreview: '',
       createdAt: credential.createdAt,
       updatedAt: credential.updatedAt,
     };

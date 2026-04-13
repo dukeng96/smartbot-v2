@@ -7,7 +7,6 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -15,9 +14,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { InternalApiKeyGuard } from '../../common/guards/internal-api-key.guard';
-import { Public } from '../../common/decorators/public.decorator';
 import { CredentialsService } from './credentials.service';
 import { CreateCredentialDto } from './dto/create-credential.dto';
 import { UpdateCredentialDto } from './dto/update-credential.dto';
@@ -78,22 +74,5 @@ export class CredentialsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.credentialsService.testCredential(tenantId, id);
-  }
-}
-
-// Separate internal controller — guarded by X-Internal-Key, no JWT
-@ApiTags('Credentials — Internal')
-@Controller('internal/credentials')
-@Public()
-@UseGuards(InternalApiKeyGuard)
-export class CredentialsInternalController {
-  constructor(private readonly credentialsService: CredentialsService) {}
-
-  @Post('decrypt')
-  @ApiOperation({
-    summary: 'Internal: bulk decrypt credentials for flow execution',
-  })
-  bulkDecrypt(@Body() body: { ids: string[]; tenantId: string }) {
-    return this.credentialsService.bulkDecrypt(body.ids, body.tenantId);
   }
 }
