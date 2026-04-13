@@ -305,7 +305,7 @@ def test_llm_streams_tokens_individually() -> None:
 
     token_events = [e for e in events if e.type == ExecutionEventType.TOKEN]
     assert len(token_events) == 5
-    assert [e.data["token"] for e in token_events] == ["He", "ll", "o ", "Wo", "rld"]
+    assert [e.data["content"] for e in token_events] == ["He", "ll", "o ", "Wo", "rld"]
     assert result["text"] == "Hello World"
 
     llm_done_events = [e for e in events if e.type == ExecutionEventType.LLM_CALL_COMPLETED]

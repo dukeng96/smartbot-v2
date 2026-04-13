@@ -95,7 +95,7 @@ class LlmNode(BaseNode):
                 ctx.emit(ExecutionEvent(
                     type=ExecutionEventType.TOKEN,
                     node_id=ctx.node_id,
-                    data={"token": token_text},
+                    data={"content": token_text},
                 ))
             # Accumulate usage metadata if available
             if hasattr(chunk, "usage_metadata") and chunk.usage_metadata:
