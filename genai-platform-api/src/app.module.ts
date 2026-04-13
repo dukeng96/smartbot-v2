@@ -41,6 +41,7 @@ import { ChatProxyModule } from './modules/chat-proxy/chat-proxy.module';
 import { CredentialsModule } from './modules/credentials/credentials.module';
 import { FlowsModule } from './modules/flows/flows.module';
 import { CustomToolsModule } from './modules/custom-tools/custom-tools.module';
+import { FlowExecModule } from './modules/flow-exec/flow-exec.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -96,6 +97,7 @@ import { AppController } from './app.controller';
     CredentialsModule,
     FlowsModule,
     CustomToolsModule,
+    FlowExecModule,
   ],
   controllers: [AppController],
   providers: [

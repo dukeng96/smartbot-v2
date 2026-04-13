@@ -101,6 +101,15 @@ export class BotsService {
     return bot;
   }
 
+  async findActiveWithFlow(botId: string) {
+    const bot = await this.prisma.bot.findFirst({
+      where: { id: botId, status: 'active', deletedAt: null },
+      include: { flow: true },
+    });
+    if (!bot) throw new NotFoundException('Bot not found or inactive');
+    return bot;
+  }
+
   async update(tenantId: string, botId: string, dto: UpdateBotDto) {
     await this.ensureBotExists(tenantId, botId);
 
