@@ -25,6 +25,7 @@ class ExecutionEvent(BaseModel):
     type: ExecutionEventType
     node_id: str | None = None
     data: Any = None
+    updates: dict[str, Any] | None = None
     output: dict[str, Any] | None = None
     error: str | None = None
     meta: dict[str, Any] | None = None

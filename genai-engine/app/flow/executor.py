@@ -180,7 +180,7 @@ class FlowExecutor:
                 self._emit(ExecutionEvent(
                     type=ExecutionEventType.STATE_UPDATED,
                     node_id=node.id,
-                    data={u["key"]: next_state.get(u["key"]) for u in updates if "key" in u},
+                    updates={u["key"]: next_state.get(u["key"]) for u in updates if "key" in u},
                 ))
 
             self._emit(ExecutionEvent(
