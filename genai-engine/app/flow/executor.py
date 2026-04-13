@@ -146,7 +146,6 @@ class FlowExecutor:
             self._emit(ExecutionEvent(
                 type=ExecutionEventType.NODE_START,
                 node_id=node.id,
-                meta={"node_type": node.type},
             ))
 
             ctx = NodeExecutionContext(
@@ -180,13 +179,12 @@ class FlowExecutor:
                 self._emit(ExecutionEvent(
                     type=ExecutionEventType.STATE_UPDATED,
                     node_id=node.id,
-                    updates={u["key"]: next_state.get(u["key"]) for u in updates if "key" in u},
+                    data={"updates": {u["key"]: next_state.get(u["key"]) for u in updates if "key" in u}},
                 ))
 
             self._emit(ExecutionEvent(
                 type=ExecutionEventType.NODE_END,
                 node_id=node.id,
-                output=result,
             ))
 
             if ctx.should_halt:
@@ -217,8 +215,8 @@ class FlowExecutor:
         except Exception as exc:
             self._emit(ExecutionEvent(
                 type=ExecutionEventType.ERROR,
-                error=str(exc),
+                message=str(exc),
             ))
             return
 
-        self._emit(ExecutionEvent(type=ExecutionEventType.DONE))
+        self._emit(ExecutionEvent(type=ExecutionEventType.DONE, data={}))

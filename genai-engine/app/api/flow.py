@@ -56,7 +56,7 @@ async def execute_flow(
         try:
             await executor.stream(req.inputs)
         except Exception as exc:
-            queue.emit(ExecutionEvent(type=ExecutionEventType.ERROR, error=str(exc)))
+            queue.emit(ExecutionEvent(type=ExecutionEventType.ERROR, message=str(exc)))
         finally:
             queue.close()
 

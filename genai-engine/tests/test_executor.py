@@ -231,7 +231,7 @@ class TestFlowExecutor:
         assert ExecutionEventType.NODE_END in types
         assert ExecutionEventType.DONE in types
 
-    def test_node_end_carries_output(self) -> None:
+    def test_node_end_fires_for_each_node(self) -> None:
         flow = FlowDefinition(
             nodes=[
                 _make_node("n1", "start"),
@@ -240,9 +240,12 @@ class TestFlowExecutor:
             edges=[_make_edge("n1", "n2")],
         )
         events = _collect_events(flow)
-        node_end_events = [e for e in events if e.type == ExecutionEventType.NODE_END]
-        outputs = {e.node_id: e.output for e in node_end_events if e.output}
-        assert outputs.get("n2") == {"out": "ping"}
+        node_end_ids = {e.node_id for e in events if e.type == ExecutionEventType.NODE_END}
+        assert "n1" in node_end_ids
+        assert "n2" in node_end_ids
+        # node_end carries no output per client contract (client-side timing only)
+        node_end_outputs = [e.output for e in events if e.type == ExecutionEventType.NODE_END]
+        assert all(o is None for o in node_end_outputs)
 
     def test_flow_start_carries_execution_id(self) -> None:
         flow = FlowDefinition(
