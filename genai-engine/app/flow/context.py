@@ -55,6 +55,7 @@ class NodeExecutionContext:
     state: dict[str, Any]
     session_id: str | None
     execution_id: str | None
+    tenant_id: str | None = None
     _halt_flag: bool = field(default=False, init=False, repr=False)
 
     def resolve(self, value: Any) -> Any:

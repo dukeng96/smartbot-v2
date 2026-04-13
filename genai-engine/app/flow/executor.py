@@ -95,12 +95,14 @@ class FlowExecutor:
         emit: Callable[[ExecutionEvent], None],
         session_id: str | None = None,
         execution_id: str | None = None,
+        tenant_id: str | None = None,
     ) -> None:
         self._flow = flow
         self._credentials = credentials
         self._emit = emit
         self._session_id = session_id
         self._execution_id = execution_id
+        self._tenant_id = tenant_id
         self._halt = False
 
     def build_graph(self) -> Any:
@@ -155,6 +157,7 @@ class FlowExecutor:
                 state=state,
                 session_id=self._session_id,
                 execution_id=self._execution_id,
+                tenant_id=self._tenant_id,
             )
 
             try:

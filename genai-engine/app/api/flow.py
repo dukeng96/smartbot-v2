@@ -51,6 +51,7 @@ async def execute_flow(
             emit=queue.emit,
             session_id=req.inputs.get("session_id"),
             execution_id=req.inputs.get("execution_id"),
+            tenant_id=req.inputs.get("tenant_id"),
         )
         try:
             await executor.stream(req.inputs)
