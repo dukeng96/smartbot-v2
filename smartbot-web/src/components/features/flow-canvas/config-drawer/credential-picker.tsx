@@ -20,7 +20,7 @@ export function CredentialPicker({ value, onChange }: CredentialPickerProps) {
         {credentials?.map((cred) => (
           <SelectItem key={cred.id} value={cred.id} className="text-[13px]">
             <span className="font-medium">{cred.name}</span>
-            <span className="ml-2 text-muted-foreground text-[11px]">{cred.type}</span>
+            <span className="ml-2 text-muted-foreground text-[11px]">{cred.credentialType}</span>
           </SelectItem>
         ))}
       </SelectContent>

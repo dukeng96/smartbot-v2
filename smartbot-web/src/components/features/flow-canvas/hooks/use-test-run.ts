@@ -49,7 +49,7 @@ export function useTestRun(): UseTestRunReturn {
               "Content-Type": "application/json",
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
-            body: JSON.stringify({ content }),
+            body: JSON.stringify({ message: content }),
             signal: abortRef.current.signal,
           }
         )

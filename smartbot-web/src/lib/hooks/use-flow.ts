@@ -46,5 +46,6 @@ export function useCustomTools() {
     queryKey: ["custom-tools"],
     queryFn: flowsApi.getCustomTools,
     staleTime: 60_000,
+    select: (res) => res.data,
   })
 }

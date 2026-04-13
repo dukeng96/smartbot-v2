@@ -79,6 +79,7 @@ export interface NodeData extends Record<string, unknown> {
 export interface FlowData {
   nodes: Node<NodeData>[]
   edges: Edge[]
+  viewport?: { x: number; y: number; zoom: number }
 }
 
 // Full Flow entity (from GET /api/v1/flows/:id)
@@ -184,7 +185,7 @@ export interface SaveFlowDto {
 export interface CredentialItem {
   id: string
   name: string
-  type: string
+  credentialType: string
   createdAt: string
 }
 
@@ -194,6 +195,17 @@ export interface CustomToolItem {
   name: string
   description: string
   schema?: Record<string, unknown>
+}
+
+// Paginated wrapper for list endpoints
+export interface PaginatedResult<T> {
+  data: T[]
+  meta: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
 }
 
 export type { XYPosition }
