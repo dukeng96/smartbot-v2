@@ -4,6 +4,7 @@ export interface Bot {
   id: string
   tenantId: string
   name: string
+  flowId: string | null
   description: string | null
   avatarUrl: string | null
   status: BotStatus

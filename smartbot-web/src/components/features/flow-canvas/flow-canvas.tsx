@@ -86,7 +86,7 @@ export function FlowCanvas({ flowId, botId }: FlowCanvasProps) {
       <NodePalette ref={paletteRef} />
 
       <div className="flex-1 relative">
-        <CanvasToolbar flowId={flowId} dirty={dirty} />
+        <CanvasToolbar flowId={flowId} botId={botId} dirty={dirty} />
 
         <ReactFlow
           nodes={nodes}

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { flowsApi } from "@/lib/api/flows-api"
 import type { SaveFlowDto } from "@/lib/types/flow"
+import type { FlowValidateResult } from "@/lib/api/flows-api"
 
 export function useFlow(flowId: string) {
   return useQuery({
@@ -23,6 +24,12 @@ export function useSaveFlow(flowId: string) {
     onError: () => {
       toast.error("Lưu flow thất bại. Vui lòng thử lại.")
     },
+  })
+}
+
+export function useValidateFlow(flowId: string) {
+  return useMutation<FlowValidateResult, Error>({
+    mutationFn: () => flowsApi.validate(flowId),
   })
 }
 

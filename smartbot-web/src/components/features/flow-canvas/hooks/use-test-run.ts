@@ -43,6 +43,9 @@ export function useTestRun(): UseTestRunReturn {
 
       try {
         const token = getAccessToken()
+        // TODO(Phase 07): Switch to backend flow-test proxy endpoint once dev-backend Phase 07 ships.
+        // Endpoint will be: POST /api/v1/flows/:flowId/test with SSE response.
+        // Until then, this hits the public chat endpoint which won't return node_start/node_end traces.
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/chat/${botId}/messages`,
           {
