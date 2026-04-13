@@ -25,10 +25,9 @@ function truncate(s: string, max: number): string {
 interface InlineTrace {
   running?: boolean
   duration?: number
-  tokens?: number
   error?: string
   awaitingInput?: boolean
-  stateUpdates?: Record<string, unknown>
+  outputPreview?: string
 }
 
 export const GenericNode = memo(function GenericNode({
@@ -97,12 +96,18 @@ export const GenericNode = memo(function GenericNode({
 
       {/* Inline trace badge */}
       {trace && (
-        <div className="px-3 py-1 border-t bg-muted/30 text-[11px] flex justify-between gap-1">
-          {trace.awaitingInput && (
+        <div className="px-3 py-1 border-t bg-muted/30 text-[11px] flex items-center justify-between gap-1">
+          {trace.awaitingInput ? (
             <span className="text-warning font-medium">Chờ phê duyệt</span>
-          )}
-          {!trace.awaitingInput && trace.duration !== undefined && (
-            <span>{trace.duration}ms</span>
+          ) : (
+            <>
+              {trace.duration !== undefined && <span>{trace.duration}ms</span>}
+              {trace.outputPreview && (
+                <span className="font-mono text-muted-foreground truncate max-w-[120px]">
+                  {trace.outputPreview}
+                </span>
+              )}
+            </>
           )}
           {trace.error && (
             <span className="text-destructive truncate">{trace.error}</span>

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useCallback, useRef } from "react"
-import { useFlowStore } from "./use-flow-store"
 import type { NodeTrace, SseEvent } from "@/lib/types/flow"
 import { getAccessToken } from "@/lib/api/client"
 
@@ -24,8 +23,6 @@ export function useTestRun(): UseTestRunReturn {
   const [traceMap, setTraceMap] = useState<Record<string, NodeTrace>>({})
   const [isRunning, setIsRunning] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
-  // Track node start times for client-side duration calculation
-  const nodeStartTimesRef = useRef<Record<string, number>>({})
 
   const sendMessage = useCallback(
     async (botId: string, content: string) => {
@@ -34,7 +31,6 @@ export function useTestRun(): UseTestRunReturn {
       setMessages((prev) => [...prev, { role: "user", content }])
       setIsRunning(true)
       setTraceMap({})
-      nodeStartTimesRef.current = {}
 
       setMessages((prev) => [
         ...prev,
@@ -96,21 +92,19 @@ export function useTestRun(): UseTestRunReturn {
                 })
               } else if (event.type === "node_start") {
                 const nodeId = event.node_id
-                nodeStartTimesRef.current[nodeId] = Date.now()
                 setTraceMap((prev) => ({
                   ...prev,
                   [nodeId]: { nodeId, running: true },
                 }))
               } else if (event.type === "node_end") {
                 const nodeId = event.node_id
-                const started = nodeStartTimesRef.current[nodeId]
-                const duration = started ? Date.now() - started : undefined
                 setTraceMap((prev) => ({
                   ...prev,
                   [nodeId]: {
                     ...(prev[nodeId] ?? { nodeId, running: false }),
                     running: false,
-                    duration,
+                    duration: event.duration_ms,
+                    outputPreview: event.output_preview,
                   },
                 }))
               } else if (event.type === "node_error") {
@@ -123,15 +117,6 @@ export function useTestRun(): UseTestRunReturn {
                     error: event.error,
                   },
                 }))
-              } else if (event.type === "state_updated") {
-                const nodeId = event.node_id
-                setTraceMap((prev) => ({
-                  ...prev,
-                  [nodeId]: {
-                    ...(prev[nodeId] ?? { nodeId, running: false }),
-                    stateUpdates: event.updates,
-                  },
-                }))
               } else if (event.type === "awaiting_input") {
                 const nodeId = event.node_id
                 setTraceMap((prev) => ({
@@ -142,7 +127,7 @@ export function useTestRun(): UseTestRunReturn {
                     awaitingInput: true,
                   },
                 }))
-                // TODO(Phase 09): show approval UI and resume via
+                // TODO(Phase 09): surface approval UI; resume via
                 // POST /api/v1/flows/executions/:id/resume
               } else if (event.type === "error") {
                 setMessages((prev) => {
@@ -200,7 +185,6 @@ export function useTestRun(): UseTestRunReturn {
     setMessages([])
     setTraceMap({})
     setIsRunning(false)
-    nodeStartTimesRef.current = {}
   }, [])
 
   return { messages, traceMap, isRunning, sendMessage, clearMessages }

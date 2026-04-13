@@ -96,10 +96,9 @@ export interface NodeTrace {
   nodeId: string
   running: boolean
   duration?: number
-  tokens?: number
   error?: string
   awaitingInput?: boolean
-  stateUpdates?: Record<string, unknown>
+  outputPreview?: string
 }
 
 // Test panel SSE event shapes — field names match backend snake_case from Python engine
@@ -120,11 +119,16 @@ export interface SseTokenEvent {
 export interface SseNodeStartEvent {
   type: "node_start"
   node_id: string
+  node_type?: string
+  ts?: number
 }
 
 export interface SseNodeEndEvent {
   type: "node_end"
   node_id: string
+  output_preview?: string
+  duration_ms?: number
+  ts?: number
 }
 
 export interface SseNodeErrorEvent {
@@ -135,25 +139,27 @@ export interface SseNodeErrorEvent {
 
 export interface SseStateUpdatedEvent {
   type: "state_updated"
-  node_id: string
-  updates: Record<string, unknown>
+  key: string
+  value: unknown
 }
 
 export interface SseAwaitingInputEvent {
   type: "awaiting_input"
   node_id: string
   prompt: string
-  context?: Record<string, unknown>
 }
 
 export interface SseErrorEvent {
   type: "error"
+  node_id?: string
   message: string
+  code?: string
 }
 
 export interface SseDoneEvent {
   type: "done"
-  conversationId?: string
+  total_duration_ms?: number
+  credits_used?: number
 }
 
 export type SseEvent =
