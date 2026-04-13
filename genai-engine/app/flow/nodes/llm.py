@@ -21,9 +21,16 @@ def _resolve_credential(credentials: dict[str, dict], credential_id: str) -> dic
     cred = credentials.get(credential_id)
     if not cred:
         raise NodeExecutionError(f"LlmNode: credential '{credential_id}' not found")
-    if not cred.get("api_key"):
+    # Accept both camelCase (NestJS backend sends apiKey/baseUrl) and
+    # snake_case (direct Python callers / tests). camelCase takes lower priority.
+    normalized: dict[str, str] = {
+        "api_key": cred.get("api_key") or cred.get("apiKey") or "",
+        "base_url": cred.get("base_url") or cred.get("baseUrl") or "",
+        "model": cred.get("model") or "",
+    }
+    if not normalized["api_key"]:
         raise NodeExecutionError(f"LlmNode: credential '{credential_id}' missing required 'api_key'")
-    return cred
+    return normalized
 
 
 @NodeRegistry.register
@@ -58,8 +65,8 @@ class LlmNode(BaseNode):
 
         prompt = ctx.resolve(ctx.inputs.get("prompt", ""))
         system_prompt = ctx.resolve(ctx.inputs.get("system_prompt", ""))
-        model = ctx.resolve(ctx.inputs.get("model", "")) or cred.get("model") or _DEFAULT_MODEL
-        base_url = cred.get("base_url") or _VNPT_BASE_URL
+        model = ctx.resolve(ctx.inputs.get("model", "")) or cred["model"] or _DEFAULT_MODEL
+        base_url = cred["base_url"] or _VNPT_BASE_URL
         temperature = float(ctx.inputs.get("temperature") or 0.7)
         max_tokens = int(ctx.inputs.get("max_tokens") or 2048)
 
