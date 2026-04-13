@@ -130,6 +130,7 @@ export interface SseNodeEndEvent {
 export interface SseNodeErrorEvent {
   type: "node_error"
   node_id: string
+  error: string
 }
 
 export interface SseStateUpdatedEvent {

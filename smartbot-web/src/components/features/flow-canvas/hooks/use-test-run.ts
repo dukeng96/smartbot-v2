@@ -118,7 +118,7 @@ export function useTestRun(): UseTestRunReturn {
                   [nodeId]: {
                     ...(prev[nodeId] ?? { nodeId, running: false }),
                     running: false,
-                    error: "Lỗi node",
+                    error: event.error,
                   },
                 }))
               } else if (event.type === "awaiting_input") {
