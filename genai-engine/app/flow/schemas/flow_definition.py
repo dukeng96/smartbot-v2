@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FlowNodeData(BaseModel):
@@ -24,8 +24,8 @@ class FlowNode(BaseModel):
 class FlowEdge(BaseModel):
     source: str
     target: str
-    source_handle: str | None = None
-    target_handle: str | None = None
+    source_handle: str | None = Field(None, alias="sourceHandle")
+    target_handle: str | None = Field(None, alias="targetHandle")
 
     model_config = {"populate_by_name": True}
 
