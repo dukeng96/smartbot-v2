@@ -55,7 +55,7 @@ describe('BotsService', () => {
       const result = await service.create(tenantId, {
         name: 'Test Bot',
         description: 'A test bot',
-      });
+      }, 'flow-id-placeholder');
 
       expect(result.name).toBe('Test Bot');
       expect(prisma.bot.create).toHaveBeenCalledWith({
@@ -191,7 +191,7 @@ describe('BotsService', () => {
       const clonedBot = { ...mockBot, id: 'bot-2', name: 'Test Bot (copy)' };
       prisma.bot.create.mockResolvedValue(clonedBot);
 
-      const result = await service.duplicate(tenantId, botId);
+      const result = await service.duplicate(tenantId, botId, 'clone-flow-id');
 
       expect(result.name).toBe('Test Bot (copy)');
       expect(prisma.bot.create).toHaveBeenCalledWith({

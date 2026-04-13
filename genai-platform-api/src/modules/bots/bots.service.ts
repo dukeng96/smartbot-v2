@@ -21,13 +21,15 @@ import {
 export class BotsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(tenantId: string, dto: CreateBotDto) {
+  // flowId is provisioned by FlowsService in Phase 05 (auto-creates simple-rag flow on bot create)
+  async create(tenantId: string, dto: CreateBotDto, flowId: string) {
     return this.prisma.bot.create({
       data: {
         tenantId,
         name: dto.name,
         description: dto.description,
         status: 'draft',
+        flowId,
       },
     });
   }
@@ -115,7 +117,8 @@ export class BotsService {
     });
   }
 
-  async duplicate(tenantId: string, botId: string) {
+  // cloneFlowId is provisioned by FlowsService in Phase 05 (deep-clone source flow)
+  async duplicate(tenantId: string, botId: string, cloneFlowId: string) {
     const original = await this.findOne(tenantId, botId);
 
     const clone = await this.prisma.bot.create({
@@ -133,6 +136,7 @@ export class BotsService {
         topK: original.topK,
         memoryTurns: original.memoryTurns,
         widgetConfig: original.widgetConfig as any,
+        flowId: cloneFlowId,
       },
     });
 

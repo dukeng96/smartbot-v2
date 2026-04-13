@@ -26,6 +26,8 @@ model User {
   ownedTenants  Tenant[]        @relation("TenantOwner")
   memberships   TenantMember[]
   refreshTokens RefreshToken[]
+  createdFlows  Flow[]          @relation("FlowCreator")
+  createdTools  CustomTool[]    @relation("CustomToolCreator")
 
   @@map("users")
 }
@@ -70,6 +72,9 @@ model Tenant {
   subscriptions  Subscription[]
   creditUsages   CreditUsage[]
   payments       PaymentHistory[]
+  flows          Flow[]
+  credentials    Credential[]
+  customTools    CustomTool[]
 
   @@index([slug])
   @@index([ownerId])
@@ -116,11 +121,13 @@ model Bot {
   currentKnowledgeChars BigInt    @default(0) @map("current_knowledge_chars")
   apiKeyHash            String?   @map("api_key_hash") @db.VarChar(255)
   apiKeyPrefix          String?   @map("api_key_prefix") @db.VarChar(10)
+  flowId                String    @unique @map("flow_id") @db.Uuid
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
   deletedAt             DateTime? @map("deleted_at")
 
   tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  flow           Flow               @relation(fields: [flowId], references: [id], onDelete: Restrict)
   knowledgeBases BotKnowledgeBase[]
   conversations  Conversation[]
   messages       Message[]
@@ -223,9 +230,10 @@ model Conversation {
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  bot      Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  messages Message[]
+  bot            Bot             @relation(fields: [botId], references: [id], onDelete: Cascade)
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  messages       Message[]
+  flowExecutions FlowExecution[]
 
   @@index([botId])
   @@index([tenantId])
@@ -281,6 +289,92 @@ model Channel {
 
   @@index([botId])
   @@map("channels")
+}
+
+// ==================== AGENTCANVAS — FLOWS ====================
+
+model Flow {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  type        String   @default("agentflow") @db.VarChar(32)
+  flowData    Json     @map("flow_data")
+  deployed    Boolean  @default(false)
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator    User            @relation("FlowCreator", fields: [createdBy], references: [id])
+  bot        Bot?
+  executions FlowExecution[]
+
+  @@index([tenantId])
+  @@index([tenantId, type])
+  @@map("flows")
+}
+
+model FlowExecution {
+  id             String    @id @default(uuid()) @db.Uuid
+  flowId         String    @map("flow_id") @db.Uuid
+  botId          String?   @map("bot_id") @db.Uuid
+  conversationId String?   @map("conversation_id") @db.Uuid
+  sessionId      String?   @map("session_id") @db.VarChar(128)
+  state          String    @db.VarChar(20)
+  executionData  Json      @map("execution_data")
+  errorMessage   String?   @map("error_message") @db.Text
+  tokensUsed     Int       @default(0) @map("tokens_used")
+  startedAt      DateTime  @default(now()) @map("started_at")
+  finishedAt     DateTime? @map("finished_at")
+
+  flow         Flow          @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  conversation Conversation? @relation(fields: [conversationId], references: [id])
+
+  @@index([flowId, state])
+  @@index([conversationId])
+  @@map("flow_executions")
+}
+
+// ==================== AGENTCANVAS — CREDENTIALS ====================
+
+model Credential {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  name           String   @db.VarChar(128)
+  credentialType String   @map("credential_type") @db.VarChar(64)
+  encryptedData  Bytes    @map("encrypted_data")
+  iv             Bytes
+  authTag        Bytes    @map("auth_tag")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@index([tenantId, credentialType])
+  @@map("credentials")
+}
+
+// ==================== AGENTCANVAS — CUSTOM TOOLS ====================
+
+model CustomTool {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  name           String   @db.VarChar(128)
+  description    String?  @db.Text
+  schema         Json
+  implementation String   @db.Text
+  createdBy      String   @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creator User   @relation("CustomToolCreator", fields: [createdBy], references: [id])
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("custom_tools")
 }
 
 // ==================== BILLING ====================

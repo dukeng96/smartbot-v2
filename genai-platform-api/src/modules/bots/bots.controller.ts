@@ -38,7 +38,8 @@ export class BotsController {
   @QuotaType('bot_create')
   @ApiOperation({ summary: 'Create a new bot' })
   create(@CurrentTenant() tenantId: string, @Body() dto: CreateBotDto) {
-    return this.botsService.create(tenantId, dto);
+    // flowId provisioning injected by FlowsService in Phase 05
+    return this.botsService.create(tenantId, dto, '' as any);
   }
 
   @Get()
@@ -83,7 +84,8 @@ export class BotsController {
     @CurrentTenant() tenantId: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.botsService.duplicate(tenantId, id);
+    // cloneFlowId provisioned by FlowsService in Phase 05
+    return this.botsService.duplicate(tenantId, id, '' as any);
   }
 
   @Get(':id/personality')
