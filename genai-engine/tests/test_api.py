@@ -1,10 +1,18 @@
 """
 Phase 2 AI Engine - API Integration Tests
 Runs against the locally running Docker Compose stack (localhost:8000).
+Set RUN_LIVE_API_TESTS=1 to run these tests.
 """
 
-import time
+import os
 import sys
+
+import pytest
+
+if not os.environ.get("RUN_LIVE_API_TESTS"):
+    pytest.skip("requires live server (set RUN_LIVE_API_TESTS=1)", allow_module_level=True)
+
+import time
 import json
 import requests
 
@@ -14,7 +22,6 @@ KB_ID = "techcrunch-test-001"
 DOC_ID = "doc-tc-text-001"
 TENANT_ID = "tenant-test-01"
 
-import os
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 # Force UTF-8 stdout on Windows (charmap codec can't encode Vietnamese chars)
 if hasattr(sys.stdout, "reconfigure"):
