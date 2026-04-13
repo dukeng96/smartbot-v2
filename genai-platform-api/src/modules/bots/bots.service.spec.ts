@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { BotsService } from './bots.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { FlowsService } from '../flows/flows.service';
 import { createPrismaMock } from '../../common/testing/prisma-mock.helper';
 
 jest.mock('../../common/utils/crypto', () => ({
@@ -41,8 +42,17 @@ describe('BotsService', () => {
   beforeEach(async () => {
     prisma = createPrismaMock();
 
+    const flowsServiceMock: Partial<FlowsService> = {
+      provisionSimpleRag: jest.fn().mockResolvedValue({ id: 'flow-auto-1' }),
+      duplicate: jest.fn().mockResolvedValue({ id: 'flow-clone-1' }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [BotsService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        BotsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: FlowsService, useValue: flowsServiceMock },
+      ],
     }).compile();
 
     service = module.get<BotsService>(BotsService);
@@ -52,10 +62,10 @@ describe('BotsService', () => {
     it('should create a bot with draft status', async () => {
       prisma.bot.create.mockResolvedValue(mockBot);
 
-      const result = await service.create(tenantId, {
+      const result = await service.create(tenantId, 'user-1', {
         name: 'Test Bot',
         description: 'A test bot',
-      }, 'flow-id-placeholder');
+      });
 
       expect(result.name).toBe('Test Bot');
       expect(prisma.bot.create).toHaveBeenCalledWith({

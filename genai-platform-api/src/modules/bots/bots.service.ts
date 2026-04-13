@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { FlowsService } from '../flows/flows.service';
 import { CreateBotDto } from './dto/create-bot.dto';
 import { UpdateBotDto } from './dto/update-bot.dto';
 import { UpdatePersonalityDto } from './dto/update-personality.dto';
@@ -19,17 +20,24 @@ import {
 
 @Injectable()
 export class BotsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly flowsService: FlowsService,
+  ) {}
 
-  // flowId is provisioned by FlowsService in Phase 05 (auto-creates simple-rag flow on bot create)
-  async create(tenantId: string, dto: CreateBotDto, flowId: string) {
+  async create(tenantId: string, userId: string, dto: CreateBotDto) {
+    const flow = await this.flowsService.provisionSimpleRag(
+      tenantId,
+      userId,
+      `${dto.name} — default flow`,
+    );
     return this.prisma.bot.create({
       data: {
         tenantId,
         name: dto.name,
         description: dto.description,
         status: 'draft',
-        flowId,
+        flowId: flow.id,
       },
     });
   }
@@ -117,9 +125,9 @@ export class BotsService {
     });
   }
 
-  // cloneFlowId is provisioned by FlowsService in Phase 05 (deep-clone source flow)
-  async duplicate(tenantId: string, botId: string, cloneFlowId: string) {
+  async duplicate(tenantId: string, userId: string, botId: string) {
     const original = await this.findOne(tenantId, botId);
+    const clonedFlow = await this.flowsService.duplicate(tenantId, userId, original.flowId!);
 
     const clone = await this.prisma.bot.create({
       data: {
@@ -136,7 +144,7 @@ export class BotsService {
         topK: original.topK,
         memoryTurns: original.memoryTurns,
         widgetConfig: original.widgetConfig as any,
-        flowId: cloneFlowId,
+        flowId: clonedFlow.id,
       },
     });
 

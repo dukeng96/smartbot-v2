@@ -39,6 +39,8 @@ import { BillingModule } from './modules/billing/billing.module';
 import { ChannelsModule } from './modules/channels/channels.module';
 import { ChatProxyModule } from './modules/chat-proxy/chat-proxy.module';
 import { CredentialsModule } from './modules/credentials/credentials.module';
+import { FlowsModule } from './modules/flows/flows.module';
+import { CustomToolsModule } from './modules/custom-tools/custom-tools.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -92,6 +94,8 @@ import { AppController } from './app.controller';
     ChannelsModule,
     ChatProxyModule,
     CredentialsModule,
+    FlowsModule,
+    CustomToolsModule,
   ],
   controllers: [AppController],
   providers: [

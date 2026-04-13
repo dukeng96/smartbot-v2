@@ -17,29 +17,38 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { QuotaGuard } from '../../common/guards/quota.guard';
 import { QuotaType } from '../../common/decorators/quota-type.decorator';
 import { BotsService } from './bots.service';
+import { FlowsService } from '../flows/flows.service';
 import { CreateBotDto } from './dto/create-bot.dto';
 import { UpdateBotDto } from './dto/update-bot.dto';
 import { UpdatePersonalityDto } from './dto/update-personality.dto';
 import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { AttachKnowledgeBaseDto } from './dto/attach-knowledge-base.dto';
 import { ListBotsQueryDto } from './dto/list-bots-query.dto';
+import { SwapBotFlowDto } from './dto/swap-bot-flow.dto';
 
 @ApiTags('Bots')
 @ApiBearerAuth()
 @Controller('api/v1/bots')
 export class BotsController {
-  constructor(private readonly botsService: BotsService) {}
+  constructor(
+    private readonly botsService: BotsService,
+    private readonly flowsService: FlowsService,
+  ) {}
 
   @Post()
   @UseGuards(QuotaGuard)
   @QuotaType('bot_create')
   @ApiOperation({ summary: 'Create a new bot' })
-  create(@CurrentTenant() tenantId: string, @Body() dto: CreateBotDto) {
-    // flowId provisioning injected by FlowsService in Phase 05
-    return this.botsService.create(tenantId, dto, '' as any);
+  create(
+    @CurrentTenant() tenantId: string,
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CreateBotDto,
+  ) {
+    return this.botsService.create(tenantId, user.userId, dto);
   }
 
   @Get()
@@ -82,10 +91,20 @@ export class BotsController {
   @ApiOperation({ summary: 'Duplicate bot' })
   duplicate(
     @CurrentTenant() tenantId: string,
+    @CurrentUser() user: { userId: string },
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    // cloneFlowId provisioned by FlowsService in Phase 05
-    return this.botsService.duplicate(tenantId, id, '' as any);
+    return this.botsService.duplicate(tenantId, user.userId, id);
+  }
+
+  @Patch(':id/flow')
+  @ApiOperation({ summary: 'Swap the flow attached to a bot' })
+  swapFlow(
+    @CurrentTenant() tenantId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SwapBotFlowDto,
+  ) {
+    return this.flowsService.swapBotFlow(tenantId, id, dto.flowId);
   }
 
   @Get(':id/personality')
