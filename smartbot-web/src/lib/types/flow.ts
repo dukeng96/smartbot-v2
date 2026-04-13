@@ -98,35 +98,74 @@ export interface NodeTrace {
   duration?: number
   tokens?: number
   error?: string
+  awaitingInput?: boolean
+  stateUpdates?: Record<string, unknown>
 }
 
-// Test panel SSE event shapes
-export interface SseChunkEvent {
-  type: "chunk"
+// Test panel SSE event shapes — field names match backend snake_case from Python engine
+export interface SseConversationEvent {
+  type: "conversation"
+  conversationId: string
+}
+
+export interface SseFlowStartEvent {
+  type: "flow_start"
+}
+
+export interface SseTokenEvent {
+  type: "token"
   content: string
 }
 
 export interface SseNodeStartEvent {
   type: "node_start"
-  nodeId: string
+  node_id: string
 }
 
 export interface SseNodeEndEvent {
   type: "node_end"
-  nodeId: string
-  duration: number
-  tokens?: number
+  node_id: string
+}
+
+export interface SseNodeErrorEvent {
+  type: "node_error"
+  node_id: string
   error?: string
+}
+
+export interface SseStateUpdatedEvent {
+  type: "state_updated"
+  node_id: string
+  updates: Record<string, unknown>
+}
+
+export interface SseAwaitingInputEvent {
+  type: "awaiting_input"
+  node_id: string
+  prompt: string
+  context?: Record<string, unknown>
+}
+
+export interface SseErrorEvent {
+  type: "error"
+  message: string
 }
 
 export interface SseDoneEvent {
   type: "done"
+  conversationId?: string
 }
 
 export type SseEvent =
-  | SseChunkEvent
+  | SseConversationEvent
+  | SseFlowStartEvent
+  | SseTokenEvent
   | SseNodeStartEvent
   | SseNodeEndEvent
+  | SseNodeErrorEvent
+  | SseStateUpdatedEvent
+  | SseAwaitingInputEvent
+  | SseErrorEvent
   | SseDoneEvent
 
 // Save flow request body

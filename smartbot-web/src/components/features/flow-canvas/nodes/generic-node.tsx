@@ -27,6 +27,8 @@ interface InlineTrace {
   duration?: number
   tokens?: number
   error?: string
+  awaitingInput?: boolean
+  stateUpdates?: Record<string, unknown>
 }
 
 export const GenericNode = memo(function GenericNode({
@@ -51,7 +53,8 @@ export const GenericNode = memo(function GenericNode({
         CATEGORY_BORDER[category],
         selected && "ring-2 ring-primary",
         trace?.error && "ring-2 ring-destructive",
-        trace?.running && "animate-pulse"
+        trace?.awaitingInput && "ring-2 ring-warning",
+        trace?.running && !trace.awaitingInput && "animate-pulse"
       )}
       onClick={() => setSelected(id)}
     >
@@ -94,10 +97,16 @@ export const GenericNode = memo(function GenericNode({
 
       {/* Inline trace badge */}
       {trace && (
-        <div className="px-3 py-1 border-t bg-muted/30 text-[11px] flex justify-between">
-          {trace.duration !== undefined && <span>{trace.duration}ms</span>}
-          {trace.tokens !== undefined && <span>{trace.tokens} tok</span>}
-          {trace.error && <span className="text-destructive truncate">{trace.error}</span>}
+        <div className="px-3 py-1 border-t bg-muted/30 text-[11px] flex justify-between gap-1">
+          {trace.awaitingInput && (
+            <span className="text-warning font-medium">Chờ phê duyệt</span>
+          )}
+          {!trace.awaitingInput && trace.duration !== undefined && (
+            <span>{trace.duration}ms</span>
+          )}
+          {trace.error && (
+            <span className="text-destructive truncate">{trace.error}</span>
+          )}
         </div>
       )}
 

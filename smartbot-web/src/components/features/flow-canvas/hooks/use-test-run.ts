@@ -24,6 +24,8 @@ export function useTestRun(): UseTestRunReturn {
   const [traceMap, setTraceMap] = useState<Record<string, NodeTrace>>({})
   const [isRunning, setIsRunning] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  // Track node start times for client-side duration calculation
+  const nodeStartTimesRef = useRef<Record<string, number>>({})
 
   const sendMessage = useCallback(
     async (botId: string, content: string) => {
@@ -32,8 +34,8 @@ export function useTestRun(): UseTestRunReturn {
       setMessages((prev) => [...prev, { role: "user", content }])
       setIsRunning(true)
       setTraceMap({})
+      nodeStartTimesRef.current = {}
 
-      // Append empty assistant message for streaming
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "", streaming: true },
@@ -43,9 +45,6 @@ export function useTestRun(): UseTestRunReturn {
 
       try {
         const token = getAccessToken()
-        // TODO(Phase 07): Switch to backend flow-test proxy endpoint once dev-backend Phase 07 ships.
-        // Endpoint will be: POST /api/v1/flows/:flowId/test with SSE response.
-        // Until then, this hits the public chat endpoint which won't return node_start/node_end traces.
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/chat/${botId}/messages`,
           {
@@ -67,7 +66,7 @@ export function useTestRun(): UseTestRunReturn {
         const decoder = new TextDecoder()
         let buffer = ""
 
-        while (true) {
+        outer: while (true) {
           const { done, value } = await reader.read()
           if (done) break
 
@@ -83,7 +82,7 @@ export function useTestRun(): UseTestRunReturn {
             try {
               const event = JSON.parse(raw) as SseEvent
 
-              if (event.type === "chunk") {
+              if (event.type === "token") {
                 setMessages((prev) => {
                   const copy = [...prev]
                   const last = copy[copy.length - 1]
@@ -96,23 +95,70 @@ export function useTestRun(): UseTestRunReturn {
                   return copy
                 })
               } else if (event.type === "node_start") {
+                const nodeId = event.node_id
+                nodeStartTimesRef.current[nodeId] = Date.now()
                 setTraceMap((prev) => ({
                   ...prev,
-                  [event.nodeId]: { nodeId: event.nodeId, running: true },
+                  [nodeId]: { nodeId, running: true },
                 }))
               } else if (event.type === "node_end") {
+                const nodeId = event.node_id
+                const started = nodeStartTimesRef.current[nodeId]
+                const duration = started ? Date.now() - started : undefined
                 setTraceMap((prev) => ({
                   ...prev,
-                  [event.nodeId]: {
-                    nodeId: event.nodeId,
+                  [nodeId]: {
+                    ...(prev[nodeId] ?? { nodeId, running: false }),
                     running: false,
-                    duration: event.duration,
-                    tokens: event.tokens,
+                    duration,
+                  },
+                }))
+              } else if (event.type === "node_error") {
+                const nodeId = event.node_id
+                setTraceMap((prev) => ({
+                  ...prev,
+                  [nodeId]: {
+                    ...(prev[nodeId] ?? { nodeId, running: false }),
+                    running: false,
                     error: event.error,
                   },
                 }))
+              } else if (event.type === "state_updated") {
+                const nodeId = event.node_id
+                setTraceMap((prev) => ({
+                  ...prev,
+                  [nodeId]: {
+                    ...(prev[nodeId] ?? { nodeId, running: false }),
+                    stateUpdates: event.updates,
+                  },
+                }))
+              } else if (event.type === "awaiting_input") {
+                const nodeId = event.node_id
+                setTraceMap((prev) => ({
+                  ...prev,
+                  [nodeId]: {
+                    ...(prev[nodeId] ?? { nodeId, running: false }),
+                    running: true,
+                    awaitingInput: true,
+                  },
+                }))
+                // TODO(Phase 09): show approval UI and resume via
+                // POST /api/v1/flows/executions/:id/resume
+              } else if (event.type === "error") {
+                setMessages((prev) => {
+                  const copy = [...prev]
+                  const last = copy[copy.length - 1]
+                  if (last?.role === "assistant") {
+                    copy[copy.length - 1] = {
+                      ...last,
+                      content: last.content || event.message,
+                      streaming: false,
+                    }
+                  }
+                  return copy
+                })
               } else if (event.type === "done") {
-                break
+                break outer
               }
             } catch {
               // Malformed SSE line — skip
@@ -135,7 +181,6 @@ export function useTestRun(): UseTestRunReturn {
           })
         }
       } finally {
-        // Mark streaming done
         setMessages((prev) => {
           const copy = [...prev]
           const last = copy[copy.length - 1]
@@ -155,6 +200,7 @@ export function useTestRun(): UseTestRunReturn {
     setMessages([])
     setTraceMap({})
     setIsRunning(false)
+    nodeStartTimesRef.current = {}
   }, [])
 
   return { messages, traceMap, isRunning, sendMessage, clearMessages }
