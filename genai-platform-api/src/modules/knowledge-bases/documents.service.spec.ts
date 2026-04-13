@@ -61,7 +61,10 @@ describe('DocumentsService', () => {
         DocumentsService,
         { provide: PrismaService, useValue: prisma },
         { provide: StorageService, useValue: mockStorage },
-        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('http://localhost:8000') } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('http://localhost:8000') },
+        },
         { provide: getQueueToken('document-processing'), useValue: mockQueue },
       ],
     }).compile();
@@ -103,10 +106,18 @@ describe('DocumentsService', () => {
   describe('createFromUrl', () => {
     it('should create document from URL and enqueue', async () => {
       prisma.knowledgeBase.findFirst.mockResolvedValue(mockKb);
-      const urlDoc = { ...mockDoc, sourceType: 'url_crawl', sourceUrl: 'https://example.com' };
+      const urlDoc = {
+        ...mockDoc,
+        sourceType: 'url_crawl',
+        sourceUrl: 'https://example.com',
+      };
       prisma.document.create.mockResolvedValue(urlDoc);
 
-      const result = await service.createFromUrl(tenantId, kbId, 'https://example.com');
+      const result = await service.createFromUrl(
+        tenantId,
+        kbId,
+        'https://example.com',
+      );
 
       expect(result.sourceType).toBe('url_crawl');
       expect(mockQueue.add).toHaveBeenCalled();
@@ -119,7 +130,12 @@ describe('DocumentsService', () => {
       const textDoc = { ...mockDoc, sourceType: 'text_input' };
       prisma.document.create.mockResolvedValue(textDoc);
 
-      const result = await service.createFromText(tenantId, kbId, 'Hello world', 'My Note');
+      const result = await service.createFromText(
+        tenantId,
+        kbId,
+        'Hello world',
+        'My Note',
+      );
 
       expect(result.sourceType).toBe('text_input');
       expect(prisma.document.create).toHaveBeenCalledWith({
@@ -153,7 +169,9 @@ describe('DocumentsService', () => {
         limit: 20,
         sort: 'createdAt',
         order: 'desc' as const,
-        get skip() { return 0; },
+        get skip() {
+          return 0;
+        },
       });
 
       expect(result.items).toHaveLength(1);
@@ -182,7 +200,10 @@ describe('DocumentsService', () => {
   describe('softDelete', () => {
     it('should soft-delete document and update KB totals', async () => {
       prisma.document.findFirst.mockResolvedValue(mockDoc);
-      prisma.document.update.mockResolvedValue({ ...mockDoc, deletedAt: new Date() });
+      prisma.document.update.mockResolvedValue({
+        ...mockDoc,
+        deletedAt: new Date(),
+      });
       prisma.document.aggregate.mockResolvedValue({
         _count: 0,
         _sum: { charCount: BigInt(0) },
@@ -216,7 +237,10 @@ describe('DocumentsService', () => {
   describe('reprocessAll', () => {
     it('should reprocess all documents in KB', async () => {
       prisma.knowledgeBase.findFirst.mockResolvedValue(mockKb);
-      prisma.document.findMany.mockResolvedValue([mockDoc, { ...mockDoc, id: 'doc-2' }]);
+      prisma.document.findMany.mockResolvedValue([
+        mockDoc,
+        { ...mockDoc, id: 'doc-2' },
+      ]);
       prisma.document.update.mockResolvedValue({});
 
       const result = await service.reprocessAll(tenantId, kbId);

@@ -11,7 +11,11 @@ import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { AttachKnowledgeBaseDto } from './dto/attach-knowledge-base.dto';
 import { PaginatedResult } from '../../common/dto/pagination.dto';
 import { ListBotsQueryDto } from './dto/list-bots-query.dto';
-import { generateApiKey, hashApiKey, getApiKeyPrefix } from '../../common/utils/crypto';
+import {
+  generateApiKey,
+  hashApiKey,
+  getApiKeyPrefix,
+} from '../../common/utils/crypto';
 
 @Injectable()
 export class BotsService {
@@ -39,7 +43,13 @@ export class BotsService {
         skip: query.skip,
         take: query.limit,
         include: {
-          _count: { select: { knowledgeBases: true, conversations: true, channels: true } },
+          _count: {
+            select: {
+              knowledgeBases: true,
+              conversations: true,
+              channels: true,
+            },
+          },
         },
       }),
       this.prisma.bot.count({ where }),
@@ -55,7 +65,13 @@ export class BotsService {
         knowledgeBases: {
           include: {
             knowledgeBase: {
-              select: { id: true, name: true, totalDocuments: true, totalChars: true, status: true },
+              select: {
+                id: true,
+                name: true,
+                totalDocuments: true,
+                totalChars: true,
+                status: true,
+              },
             },
           },
           orderBy: { priority: 'asc' },
@@ -145,16 +161,28 @@ export class BotsService {
     };
   }
 
-  async updatePersonality(tenantId: string, botId: string, dto: UpdatePersonalityDto) {
+  async updatePersonality(
+    tenantId: string,
+    botId: string,
+    dto: UpdatePersonalityDto,
+  ) {
     await this.ensureBotExists(tenantId, botId);
 
     return this.prisma.bot.update({
       where: { id: botId },
       data: {
-        ...(dto.systemPrompt !== undefined && { systemPrompt: dto.systemPrompt }),
-        ...(dto.greetingMessage !== undefined && { greetingMessage: dto.greetingMessage }),
-        ...(dto.suggestedQuestions !== undefined && { suggestedQuestions: dto.suggestedQuestions }),
-        ...(dto.fallbackMessage !== undefined && { fallbackMessage: dto.fallbackMessage }),
+        ...(dto.systemPrompt !== undefined && {
+          systemPrompt: dto.systemPrompt,
+        }),
+        ...(dto.greetingMessage !== undefined && {
+          greetingMessage: dto.greetingMessage,
+        }),
+        ...(dto.suggestedQuestions !== undefined && {
+          suggestedQuestions: dto.suggestedQuestions,
+        }),
+        ...(dto.fallbackMessage !== undefined && {
+          fallbackMessage: dto.fallbackMessage,
+        }),
         ...(dto.personality !== undefined && { personality: dto.personality }),
       },
       select: {
@@ -172,7 +200,7 @@ export class BotsService {
     await this.ensureBotExists(tenantId, botId);
 
     const bot = await this.prisma.bot.findUnique({ where: { id: botId } });
-    const currentConfig = ((bot?.widgetConfig ?? {}) as Record<string, any>);
+    const currentConfig = (bot?.widgetConfig ?? {}) as Record<string, any>;
 
     return this.prisma.bot.update({
       where: { id: botId },
@@ -180,18 +208,30 @@ export class BotsService {
         widgetConfig: {
           ...currentConfig,
           ...(dto.theme !== undefined && { theme: dto.theme }),
-          ...(dto.primaryColor !== undefined && { primaryColor: dto.primaryColor }),
+          ...(dto.primaryColor !== undefined && {
+            primaryColor: dto.primaryColor,
+          }),
           ...(dto.position !== undefined && { position: dto.position }),
           ...(dto.bubbleIcon !== undefined && { bubbleIcon: dto.bubbleIcon }),
-          ...(dto.showPoweredBy !== undefined && { showPoweredBy: dto.showPoweredBy }),
+          ...(dto.showPoweredBy !== undefined && {
+            showPoweredBy: dto.showPoweredBy,
+          }),
           ...(dto.customCss !== undefined && { customCss: dto.customCss }),
           ...(dto.headerText !== undefined && { headerText: dto.headerText }),
-          ...(dto.displayName !== undefined && { displayName: dto.displayName }),
+          ...(dto.displayName !== undefined && {
+            displayName: dto.displayName,
+          }),
           ...(dto.logoUrl !== undefined && { logoUrl: dto.logoUrl }),
           ...(dto.fontColor !== undefined && { fontColor: dto.fontColor }),
-          ...(dto.backgroundColor !== undefined && { backgroundColor: dto.backgroundColor }),
-          ...(dto.userMessageColor !== undefined && { userMessageColor: dto.userMessageColor }),
-          ...(dto.botMessageColor !== undefined && { botMessageColor: dto.botMessageColor }),
+          ...(dto.backgroundColor !== undefined && {
+            backgroundColor: dto.backgroundColor,
+          }),
+          ...(dto.userMessageColor !== undefined && {
+            userMessageColor: dto.userMessageColor,
+          }),
+          ...(dto.botMessageColor !== undefined && {
+            botMessageColor: dto.botMessageColor,
+          }),
           ...(dto.fontFamily !== undefined && { fontFamily: dto.fontFamily }),
           ...(dto.fontSize !== undefined && { fontSize: dto.fontSize }),
         },
@@ -265,7 +305,11 @@ export class BotsService {
     };
   }
 
-  async attachKnowledgeBase(tenantId: string, botId: string, dto: AttachKnowledgeBaseDto) {
+  async attachKnowledgeBase(
+    tenantId: string,
+    botId: string,
+    dto: AttachKnowledgeBaseDto,
+  ) {
     await this.ensureBotExists(tenantId, botId);
 
     // Verify KB belongs to tenant
@@ -276,9 +320,12 @@ export class BotsService {
 
     // Check not already attached
     const existing = await this.prisma.botKnowledgeBase.findUnique({
-      where: { botId_knowledgeBaseId: { botId, knowledgeBaseId: dto.knowledgeBaseId } },
+      where: {
+        botId_knowledgeBaseId: { botId, knowledgeBaseId: dto.knowledgeBaseId },
+      },
     });
-    if (existing) throw new ConflictException('Knowledge base already attached');
+    if (existing)
+      throw new ConflictException('Knowledge base already attached');
 
     return this.prisma.botKnowledgeBase.create({
       data: {
@@ -311,7 +358,14 @@ export class BotsService {
       where: { botId },
       include: {
         knowledgeBase: {
-          select: { id: true, name: true, description: true, totalDocuments: true, totalChars: true, status: true },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            totalDocuments: true,
+            totalChars: true,
+            status: true,
+          },
         },
       },
       orderBy: { priority: 'asc' },

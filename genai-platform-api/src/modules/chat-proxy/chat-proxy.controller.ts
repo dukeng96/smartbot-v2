@@ -1,6 +1,13 @@
 import {
-  Body, Controller, Get, Headers, Logger, Param, ParseUUIDPipe,
-  Post, Res,
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Logger,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Res,
 } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
@@ -17,7 +24,9 @@ export class ChatProxyController {
   constructor(private readonly chatProxyService: ChatProxyService) {}
 
   @Get(':botId/config')
-  @ApiOperation({ summary: 'Widget loads bot config (name, avatar, greeting, suggestions)' })
+  @ApiOperation({
+    summary: 'Widget loads bot config (name, avatar, greeting, suggestions)',
+  })
   getBotConfig(
     @Param('botId', ParseUUIDPipe) botId: string,
     @Headers('referer') referer?: string,
@@ -28,7 +37,11 @@ export class ChatProxyController {
 
   @Post(':botId/messages')
   @ApiOperation({ summary: 'Send message, receive SSE stream' })
-  @ApiHeader({ name: 'X-Bot-Api-Key', required: false, description: 'Bot API key for auth' })
+  @ApiHeader({
+    name: 'X-Bot-Api-Key',
+    required: false,
+    description: 'Bot API key for auth',
+  })
   async chat(
     @Param('botId', ParseUUIDPipe) botId: string,
     @Body() dto: ChatDto,
@@ -54,7 +67,10 @@ export class ChatProxyController {
         res.write(`event: ${event.event}\ndata: ${event.data}\n\n`);
       }
     } catch (error) {
-      this.logger.error(`Chat error for bot ${botId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Chat error for bot ${botId}: ${error.message}`,
+        error.stack,
+      );
       res.write(
         `event: error\ndata: ${JSON.stringify({ error: error.message })}\n\n`,
       );
@@ -70,7 +86,11 @@ export class ChatProxyController {
     @Param('convId', ParseUUIDPipe) convId: string,
     @Headers('x-end-user-id') endUserId?: string,
   ) {
-    return this.chatProxyService.getConversationHistory(botId, convId, endUserId);
+    return this.chatProxyService.getConversationHistory(
+      botId,
+      convId,
+      endUserId,
+    );
   }
 
   private extractHost(referer: string): string | undefined {

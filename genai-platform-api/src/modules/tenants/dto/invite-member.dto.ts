@@ -6,7 +6,10 @@ export class InviteMemberDto {
   @IsEmail()
   email: string;
 
-  @ApiPropertyOptional({ enum: ['admin', 'member', 'viewer'], default: 'member' })
+  @ApiPropertyOptional({
+    enum: ['admin', 'member', 'viewer'],
+    default: 'member',
+  })
   @IsOptional()
   @IsString()
   @IsIn(['admin', 'member', 'viewer'])

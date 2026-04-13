@@ -42,10 +42,7 @@ describe('BotsService', () => {
     prisma = createPrismaMock();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        BotsService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [BotsService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<BotsService>(BotsService);
@@ -81,7 +78,9 @@ describe('BotsService', () => {
         limit: 20,
         sort: 'createdAt',
         order: 'desc' as const,
-        get skip() { return 0; },
+        get skip() {
+          return 0;
+        },
       });
 
       expect(result.items).toHaveLength(1);
@@ -98,7 +97,9 @@ describe('BotsService', () => {
         sort: 'createdAt',
         order: 'desc' as const,
         status: 'active',
-        get skip() { return 0; },
+        get skip() {
+          return 0;
+        },
       });
 
       expect(prisma.bot.findMany).toHaveBeenCalledWith(
@@ -139,7 +140,9 @@ describe('BotsService', () => {
     it('should throw NotFoundException for inactive bot', async () => {
       prisma.bot.findFirst.mockResolvedValue(null);
 
-      await expect(service.findActive('bad-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findActive('bad-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -148,7 +151,9 @@ describe('BotsService', () => {
       prisma.bot.findFirst.mockResolvedValue(mockBot);
       prisma.bot.update.mockResolvedValue({ ...mockBot, name: 'Updated Bot' });
 
-      const result = await service.update(tenantId, botId, { name: 'Updated Bot' });
+      const result = await service.update(tenantId, botId, {
+        name: 'Updated Bot',
+      });
 
       expect(result.name).toBe('Updated Bot');
     });
@@ -165,7 +170,10 @@ describe('BotsService', () => {
   describe('softDelete', () => {
     it('should set deletedAt on bot', async () => {
       prisma.bot.findFirst.mockResolvedValue(mockBot);
-      prisma.bot.update.mockResolvedValue({ ...mockBot, deletedAt: new Date() });
+      prisma.bot.update.mockResolvedValue({
+        ...mockBot,
+        deletedAt: new Date(),
+      });
 
       const result = await service.softDelete(tenantId, botId);
 
@@ -257,7 +265,10 @@ describe('BotsService', () => {
   describe('attachKnowledgeBase', () => {
     it('should attach a knowledge base to bot', async () => {
       prisma.bot.findFirst.mockResolvedValue(mockBot);
-      prisma.knowledgeBase.findFirst.mockResolvedValue({ id: 'kb-1', tenantId });
+      prisma.knowledgeBase.findFirst.mockResolvedValue({
+        id: 'kb-1',
+        tenantId,
+      });
       prisma.botKnowledgeBase.findUnique.mockResolvedValue(null);
       prisma.botKnowledgeBase.create.mockResolvedValue({
         botId,
@@ -275,11 +286,19 @@ describe('BotsService', () => {
 
     it('should throw ConflictException if already attached', async () => {
       prisma.bot.findFirst.mockResolvedValue(mockBot);
-      prisma.knowledgeBase.findFirst.mockResolvedValue({ id: 'kb-1', tenantId });
-      prisma.botKnowledgeBase.findUnique.mockResolvedValue({ botId, knowledgeBaseId: 'kb-1' });
+      prisma.knowledgeBase.findFirst.mockResolvedValue({
+        id: 'kb-1',
+        tenantId,
+      });
+      prisma.botKnowledgeBase.findUnique.mockResolvedValue({
+        botId,
+        knowledgeBaseId: 'kb-1',
+      });
 
       await expect(
-        service.attachKnowledgeBase(tenantId, botId, { knowledgeBaseId: 'kb-1' }),
+        service.attachKnowledgeBase(tenantId, botId, {
+          knowledgeBaseId: 'kb-1',
+        }),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -288,7 +307,9 @@ describe('BotsService', () => {
       prisma.knowledgeBase.findFirst.mockResolvedValue(null);
 
       await expect(
-        service.attachKnowledgeBase(tenantId, botId, { knowledgeBaseId: 'bad-kb' }),
+        service.attachKnowledgeBase(tenantId, botId, {
+          knowledgeBaseId: 'bad-kb',
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });

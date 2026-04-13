@@ -22,10 +22,7 @@ describe('TenantsService', () => {
     prisma = createPrismaMock();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TenantsService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [TenantsService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<TenantsService>(TenantsService);
@@ -44,15 +41,22 @@ describe('TenantsService', () => {
     it('should throw NotFoundException if not found', async () => {
       prisma.tenant.findUnique.mockResolvedValue(null);
 
-      await expect(service.getTenant('bad-id')).rejects.toThrow(NotFoundException);
+      await expect(service.getTenant('bad-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('updateTenant', () => {
     it('should update tenant when role is owner', async () => {
-      prisma.tenant.update.mockResolvedValue({ ...mockTenant, name: 'Updated' });
+      prisma.tenant.update.mockResolvedValue({
+        ...mockTenant,
+        name: 'Updated',
+      });
 
-      const result = await service.updateTenant(tenantId, 'owner', { name: 'Updated' });
+      const result = await service.updateTenant(tenantId, 'owner', {
+        name: 'Updated',
+      });
 
       expect(result.name).toBe('Updated');
     });
@@ -118,14 +122,19 @@ describe('TenantsService', () => {
         user: existingUser,
       });
 
-      await service.inviteMember(tenantId, 'admin', { email: 'exists@test.com' });
+      await service.inviteMember(tenantId, 'admin', {
+        email: 'exists@test.com',
+      });
 
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
     it('should throw ForbiddenException if already a member', async () => {
       prisma.user.findUnique.mockResolvedValue({ id: 'u1' });
-      prisma.tenantMember.findUnique.mockResolvedValue({ userId: 'u1', role: 'member' });
+      prisma.tenantMember.findUnique.mockResolvedValue({
+        userId: 'u1',
+        role: 'member',
+      });
 
       await expect(
         service.inviteMember(tenantId, 'owner', { email: 'dup@test.com' }),
@@ -179,7 +188,9 @@ describe('TenantsService', () => {
       prisma.tenantMember.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.updateMemberRole(tenantId, 'bad-id', 'owner', { role: 'admin' }),
+        service.updateMemberRole(tenantId, 'bad-id', 'owner', {
+          role: 'admin',
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });

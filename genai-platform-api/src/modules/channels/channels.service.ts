@@ -33,7 +33,12 @@ export class ChannelsService {
     });
   }
 
-  async update(tenantId: string, botId: string, channelId: string, dto: UpdateChannelDto) {
+  async update(
+    tenantId: string,
+    botId: string,
+    channelId: string,
+    dto: UpdateChannelDto,
+  ) {
     await this.ensureChannelExists(tenantId, botId, channelId);
 
     return this.prisma.channel.update({
@@ -53,11 +58,17 @@ export class ChannelsService {
     return { message: 'Channel disconnected' };
   }
 
-  async connectFacebook(tenantId: string, botId: string, dto: FacebookConnectDto) {
+  async connectFacebook(
+    tenantId: string,
+    botId: string,
+    dto: FacebookConnectDto,
+  ) {
     await this.ensureBotExists(tenantId, botId);
 
     // Stub: In production, verify token with Facebook Graph API
-    this.logger.log(`[STUB] Facebook connect for bot ${botId}, pageId: ${dto.pageId}`);
+    this.logger.log(
+      `[STUB] Facebook connect for bot ${botId}, pageId: ${dto.pageId}`,
+    );
 
     return this.prisma.channel.create({
       data: {
@@ -79,7 +90,11 @@ export class ChannelsService {
     return bot;
   }
 
-  private async ensureChannelExists(tenantId: string, botId: string, channelId: string) {
+  private async ensureChannelExists(
+    tenantId: string,
+    botId: string,
+    channelId: string,
+  ) {
     const channel = await this.prisma.channel.findFirst({
       where: { id: channelId, botId, tenantId },
     });

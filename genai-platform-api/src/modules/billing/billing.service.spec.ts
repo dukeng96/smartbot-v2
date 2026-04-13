@@ -153,7 +153,10 @@ describe('BillingService', () => {
 
     it('should update billing cycle', async () => {
       prisma.subscription.findFirst.mockResolvedValue(mockSub);
-      prisma.subscription.update.mockResolvedValue({ ...mockSub, billingCycle: 'yearly' });
+      prisma.subscription.update.mockResolvedValue({
+        ...mockSub,
+        billingCycle: 'yearly',
+      });
 
       const result = await service.updateSubscription(tenantId, {
         billingCycle: 'yearly',
@@ -214,7 +217,9 @@ describe('BillingService', () => {
         limit: 20,
         sort: 'createdAt',
         order: 'desc' as const,
-        get skip() { return 0; },
+        get skip() {
+          return 0;
+        },
       });
 
       expect(result.items).toHaveLength(0);

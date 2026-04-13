@@ -23,10 +23,7 @@ describe('CreditsService', () => {
     prisma = createPrismaMock();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CreditsService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [CreditsService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<CreditsService>(CreditsService);
@@ -89,7 +86,9 @@ describe('CreditsService', () => {
         topUpCredits: 0,
       });
 
-      await expect(service.checkQuota(tenantId)).rejects.toThrow(ForbiddenException);
+      await expect(service.checkQuota(tenantId)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should allow if topUp credits available', async () => {

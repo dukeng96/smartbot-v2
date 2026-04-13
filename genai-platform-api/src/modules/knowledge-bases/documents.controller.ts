@@ -67,7 +67,12 @@ export class DocumentsController {
     @Param('kbId', ParseUUIDPipe) kbId: string,
     @Body() dto: CreateDocumentTextDto,
   ) {
-    return this.documentsService.createFromText(tenantId, kbId, dto.content, dto.name);
+    return this.documentsService.createFromText(
+      tenantId,
+      kbId,
+      dto.content,
+      dto.name,
+    );
   }
 
   @Get()

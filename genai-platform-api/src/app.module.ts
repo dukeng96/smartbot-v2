@@ -45,7 +45,14 @@ import { AppController } from './app.controller';
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, redisConfig, minioConfig, jwtConfig, aiEngineConfig],
+      load: [
+        appConfig,
+        databaseConfig,
+        redisConfig,
+        minioConfig,
+        jwtConfig,
+        aiEngineConfig,
+      ],
     }),
 
     // BullMQ (Redis-backed queues)

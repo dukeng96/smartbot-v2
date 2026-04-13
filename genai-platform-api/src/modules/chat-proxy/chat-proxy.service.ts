@@ -30,7 +30,10 @@ export class ChatProxyService {
     private readonly messagesService: MessagesService,
     private readonly creditsService: CreditsService,
   ) {
-    this.aiEngineUrl = this.configService.get<string>('aiEngine.url', 'http://localhost:8000');
+    this.aiEngineUrl = this.configService.get<string>(
+      'aiEngine.url',
+      'http://localhost:8000',
+    );
   }
 
   async getBotConfig(botId: string, refererHost?: string) {
@@ -46,7 +49,11 @@ export class ChatProxyService {
     };
   }
 
-  async getConversationHistory(botId: string, conversationId: string, endUserId?: string) {
+  async getConversationHistory(
+    botId: string,
+    conversationId: string,
+    endUserId?: string,
+  ) {
     const messages = await this.messagesService.getRecent(conversationId, 50);
     return messages;
   }
@@ -74,7 +81,10 @@ export class ChatProxyService {
     );
 
     // Yield conversation ID so client knows which conversation this is
-    yield { event: 'conversation', data: JSON.stringify({ conversationId: conv.id }) };
+    yield {
+      event: 'conversation',
+      data: JSON.stringify({ conversationId: conv.id }),
+    };
 
     // 4. Save user message
     await this.messagesService.create({
@@ -86,7 +96,10 @@ export class ChatProxyService {
     });
 
     // 5. Load conversation history
-    const history = await this.messagesService.getRecent(conv.id, bot.memoryTurns);
+    const history = await this.messagesService.getRecent(
+      conv.id,
+      bot.memoryTurns,
+    );
 
     // 6. Get attached KB IDs
     const kbIds = await this.botsService.getKnowledgeBaseIds(req.botId);
@@ -100,7 +113,10 @@ export class ChatProxyService {
       knowledge_base_ids: kbIds,
       top_k: bot.topK,
       memory_turns: bot.memoryTurns,
-      conversation_history: history.map((m: any) => ({ role: m.role, content: m.content })),
+      conversation_history: history.map((m: any) => ({
+        role: m.role,
+        content: m.content,
+      })),
       stream: true,
     };
 
@@ -108,7 +124,7 @@ export class ChatProxyService {
     let fullContent = '';
     let inputTokens = 0;
     let outputTokens = 0;
-    let modelUsed = 'vnpt-llm';
+    const modelUsed = 'vnpt-llm';
 
     try {
       const engineResponse = await fetch(
@@ -122,7 +138,9 @@ export class ChatProxyService {
 
       if (!engineResponse.ok) {
         const errorText = await engineResponse.text();
-        this.logger.error(`AI Engine error ${engineResponse.status}: ${errorText}`);
+        this.logger.error(
+          `AI Engine error ${engineResponse.status}: ${errorText}`,
+        );
         throw new Error(`AI Engine returned ${engineResponse.status}`);
       }
 
@@ -173,7 +191,12 @@ export class ChatProxyService {
               }
               case 'error': {
                 this.logger.error(`AI Engine stream error: ${parsed.error}`);
-                yield { event: 'error', data: JSON.stringify({ error: parsed.error ?? 'AI Engine error' }) };
+                yield {
+                  event: 'error',
+                  data: JSON.stringify({
+                    error: parsed.error ?? 'AI Engine error',
+                  }),
+                };
                 break;
               }
               // message_start, retrieval — skip (internal engine events)
@@ -184,19 +207,27 @@ export class ChatProxyService {
         }
       }
     } catch (error) {
-      this.logger.error(`AI Engine request failed: ${error.message}`, error.stack);
+      this.logger.error(
+        `AI Engine request failed: ${error.message}`,
+        error.stack,
+      );
 
       // Fallback: yield error event so frontend shows a message
       if (!fullContent) {
         yield {
           event: 'error',
-          data: JSON.stringify({ error: `Không thể kết nối AI Engine: ${error.message}` }),
+          data: JSON.stringify({
+            error: `Không thể kết nối AI Engine: ${error.message}`,
+          }),
         };
       }
     }
 
     const responseTimeMs = Date.now() - startTime;
-    const creditsUsed = Math.max(1, Math.ceil((inputTokens + outputTokens) / 1000));
+    const creditsUsed = Math.max(
+      1,
+      Math.ceil((inputTokens + outputTokens) / 1000),
+    );
 
     // 9. Save assistant message (even if partial)
     if (fullContent) {

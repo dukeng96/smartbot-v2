@@ -1,4 +1,9 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 
 /**
@@ -13,10 +18,16 @@ import { Observable } from 'rxjs';
 export class SnakeToCamelInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
-    if (request.body && typeof request.body === 'object' && !Array.isArray(request.body)) {
+    if (
+      request.body &&
+      typeof request.body === 'object' &&
+      !Array.isArray(request.body)
+    ) {
       const converted: Record<string, any> = {};
       for (const [key, val] of Object.entries(request.body)) {
-        const camelKey = key.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+        const camelKey = key.replace(/_([a-z])/g, (_, c: string) =>
+          c.toUpperCase(),
+        );
         converted[camelKey] = val;
       }
       request.body = converted;

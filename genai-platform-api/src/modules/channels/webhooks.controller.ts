@@ -31,7 +31,9 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Facebook message webhook' })
   facebookWebhook(@Body() body: Record<string, any>) {
     // Stub: Parse FB messaging events → route to bot → proxy to AI Engine
-    this.logger.log(`[STUB] Facebook webhook: ${JSON.stringify(body).slice(0, 200)}`);
+    this.logger.log(
+      `[STUB] Facebook webhook: ${JSON.stringify(body).slice(0, 200)}`,
+    );
     return { status: 'EVENT_RECEIVED' };
   }
 
@@ -39,7 +41,9 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Telegram update webhook' })
   telegramWebhook(@Body() body: Record<string, any>) {
     // Stub: Parse Telegram update → route to bot → proxy to AI Engine
-    this.logger.log(`[STUB] Telegram webhook: ${JSON.stringify(body).slice(0, 200)}`);
+    this.logger.log(
+      `[STUB] Telegram webhook: ${JSON.stringify(body).slice(0, 200)}`,
+    );
     return { ok: true };
   }
 
@@ -47,7 +51,9 @@ export class WebhooksController {
   @ApiOperation({ summary: 'Zalo event webhook' })
   zaloWebhook(@Body() body: Record<string, any>) {
     // Stub: Parse Zalo event → route to bot → proxy to AI Engine
-    this.logger.log(`[STUB] Zalo webhook: ${JSON.stringify(body).slice(0, 200)}`);
+    this.logger.log(
+      `[STUB] Zalo webhook: ${JSON.stringify(body).slice(0, 200)}`,
+    );
     return { error: 0, message: 'success' };
   }
 }

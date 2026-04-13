@@ -14,7 +14,12 @@ async function bootstrap() {
 
   // CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3001', 'http://localhost:5173'],
+    origin: process.env.CORS_ORIGINS?.split(',') || [
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'http://localhost:5500',
+      'http://localhost:5501',
+    ],
     credentials: true,
   });
 
@@ -31,10 +36,15 @@ async function bootstrap() {
   // Swagger
   const swaggerConfig = new DocumentBuilder()
     .setTitle('GenAI Platform API')
-    .setDescription('Web Backend API for GenAI Assistant Platform — bot management, knowledge bases, billing, chat proxy')
+    .setDescription(
+      'Web Backend API for GenAI Assistant Platform — bot management, knowledge bases, billing, chat proxy',
+    )
     .setVersion('1.0')
     .addBearerAuth()
-    .addApiKey({ type: 'apiKey', name: 'X-Bot-Api-Key', in: 'header' }, 'BotApiKey')
+    .addApiKey(
+      { type: 'apiKey', name: 'X-Bot-Api-Key', in: 'header' },
+      'BotApiKey',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);

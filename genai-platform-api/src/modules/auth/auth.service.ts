@@ -134,7 +134,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -206,7 +209,9 @@ export class AuthService {
         OR: [
           { id: stored.id },
           { expiresAt: { lt: new Date() } },
-          { createdAt: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+          {
+            createdAt: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+          },
         ],
       },
     });
@@ -250,7 +255,9 @@ export class AuthService {
 
   async resetPassword(token: string, newPassword: string) {
     // Stub: in production, verify token from DB/cache
-    this.logger.log(`Reset password with token: ${token} (stub implementation)`);
+    this.logger.log(
+      `Reset password with token: ${token} (stub implementation)`,
+    );
     throw new BadRequestException(
       'Password reset not fully implemented yet. Token verification pending.',
     );
@@ -272,11 +279,7 @@ export class AuthService {
     );
   }
 
-  private async generateTokens(
-    userId: string,
-    tenantId: string,
-    role: string,
-  ) {
+  private async generateTokens(userId: string, tenantId: string, role: string) {
     const payload = { userId, tenantId, role };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -284,7 +287,8 @@ export class AuthService {
     });
 
     const refreshTokenValue = generateToken(64);
-    const refreshTtl = this.configService.get<number>('jwt.refreshTtl') ?? 604800;
+    const refreshTtl =
+      this.configService.get<number>('jwt.refreshTtl') ?? 604800;
 
     await this.prisma.refreshToken.create({
       data: {

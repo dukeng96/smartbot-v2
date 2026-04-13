@@ -6,7 +6,10 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { UpdateDocumentStatusDto } from './dto/update-document-status.dto';
-import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import {
+  PaginationDto,
+  PaginatedResult,
+} from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class DocumentsService {
@@ -19,11 +22,7 @@ export class DocumentsService {
     @InjectQueue('document-processing') private readonly documentQueue: Queue,
   ) {}
 
-  async uploadFile(
-    tenantId: string,
-    kbId: string,
-    file: Express.Multer.File,
-  ) {
+  async uploadFile(tenantId: string, kbId: string, file: Express.Multer.File) {
     const kb = await this.ensureKbExists(tenantId, kbId);
     const storagePath = await this.storageService.upload(file);
 
@@ -144,7 +143,12 @@ export class DocumentsService {
     return doc;
   }
 
-  async update(tenantId: string, kbId: string, docId: string, dto: UpdateDocumentDto) {
+  async update(
+    tenantId: string,
+    kbId: string,
+    docId: string,
+    dto: UpdateDocumentDto,
+  ) {
     await this.ensureDocExists(tenantId, kbId, docId);
 
     return this.prisma.document.update({
@@ -232,12 +236,18 @@ export class DocumentsService {
 
     const data: any = {
       status: dto.status,
-      ...(dto.processingStep !== undefined && { processingStep: dto.processingStep }),
-      ...(dto.processingProgress !== undefined && { processingProgress: dto.processingProgress }),
+      ...(dto.processingStep !== undefined && {
+        processingStep: dto.processingStep,
+      }),
+      ...(dto.processingProgress !== undefined && {
+        processingProgress: dto.processingProgress,
+      }),
       ...(dto.errorMessage !== undefined && { errorMessage: dto.errorMessage }),
       ...(dto.charCount !== undefined && { charCount: BigInt(dto.charCount) }),
       ...(dto.chunkCount !== undefined && { chunkCount: dto.chunkCount }),
-      ...(dto.markdownStoragePath !== undefined && { markdownStoragePath: dto.markdownStoragePath }),
+      ...(dto.markdownStoragePath !== undefined && {
+        markdownStoragePath: dto.markdownStoragePath,
+      }),
       ...(dto.metadata !== undefined && { metadata: dto.metadata }),
     };
 

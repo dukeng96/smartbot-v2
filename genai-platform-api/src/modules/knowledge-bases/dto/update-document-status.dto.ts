@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsObject, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 /**
@@ -56,7 +64,9 @@ export class UpdateDocumentStatusDto {
   @IsString()
   markdownStoragePath?: string;
 
-  @ApiPropertyOptional({ description: 'Extraction metadata from AI Engine (pages, language, etc.)' })
+  @ApiPropertyOptional({
+    description: 'Extraction metadata from AI Engine (pages, language, etc.)',
+  })
   @IsOptional()
   @IsObject()
   metadata?: Record<string, any>;

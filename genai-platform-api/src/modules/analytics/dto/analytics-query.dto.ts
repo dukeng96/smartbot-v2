@@ -3,7 +3,10 @@ import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AnalyticsQueryDto {
-  @ApiPropertyOptional({ default: '7d', enum: ['1d', '7d', '14d', '30d', '90d'] })
+  @ApiPropertyOptional({
+    default: '7d',
+    enum: ['1d', '7d', '14d', '30d', '90d'],
+  })
   @IsOptional()
   @IsString()
   @IsIn(['1d', '7d', '14d', '30d', '90d'])

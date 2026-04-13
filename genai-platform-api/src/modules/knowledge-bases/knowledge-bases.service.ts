@@ -3,7 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateKnowledgeBaseDto } from './dto/create-knowledge-base.dto';
 import { UpdateKnowledgeBaseDto } from './dto/update-knowledge-base.dto';
-import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import {
+  PaginationDto,
+  PaginatedResult,
+} from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class KnowledgeBasesService {
@@ -71,7 +74,9 @@ export class KnowledgeBasesService {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.chunkSize !== undefined && { chunkSize: dto.chunkSize }),
-        ...(dto.chunkOverlap !== undefined && { chunkOverlap: dto.chunkOverlap }),
+        ...(dto.chunkOverlap !== undefined && {
+          chunkOverlap: dto.chunkOverlap,
+        }),
       },
     });
   }

@@ -61,7 +61,12 @@ export class TenantsController {
     @Body() dto: UpdateMemberRoleDto,
     @Req() req: any,
   ) {
-    return this.tenantsService.updateMemberRole(id, userId, req.tenantRole, dto);
+    return this.tenantsService.updateMemberRole(
+      id,
+      userId,
+      req.tenantRole,
+      dto,
+    );
   }
 
   @Delete(':id/members/:userId')

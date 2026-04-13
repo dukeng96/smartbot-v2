@@ -46,7 +46,9 @@ export class CreditsService {
   async checkQuota(tenantId: string) {
     const usage = await this.getCurrentUsage(tenantId);
     if (usage.creditsUsed >= usage.creditsAllocated + usage.topUpCredits) {
-      throw new ForbiddenException('Credit limit reached. Please upgrade or top up.');
+      throw new ForbiddenException(
+        'Credit limit reached. Please upgrade or top up.',
+      );
     }
   }
 

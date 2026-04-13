@@ -8,7 +8,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { ConversationsService } from './conversations.service';
 import { ListConversationsDto } from './dto/list-conversations.dto';
@@ -79,7 +84,11 @@ export class ConversationsController {
     @Query() query: SearchMessagesDto,
   ) {
     return this.conversationsService.searchMessages(
-      tenantId, botId, query.q, query.page, query.limit,
+      tenantId,
+      botId,
+      query.q,
+      query.page,
+      query.limit,
     );
   }
 
@@ -100,6 +109,10 @@ export class ConversationsController {
     @Param('msgId', ParseUUIDPipe) msgId: string,
     @Body() dto: MessageFeedbackDto,
   ) {
-    return this.conversationsService.messageFeedback(tenantId, msgId, dto.feedback);
+    return this.conversationsService.messageFeedback(
+      tenantId,
+      msgId,
+      dto.feedback,
+    );
   }
 }

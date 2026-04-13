@@ -26,10 +26,7 @@ describe('UsersService', () => {
     prisma = createPrismaMock();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UsersService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [UsersService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
@@ -50,7 +47,9 @@ describe('UsersService', () => {
     it('should throw NotFoundException if user not found', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.getProfile('no-user')).rejects.toThrow(NotFoundException);
+      await expect(service.getProfile('no-user')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -59,7 +58,9 @@ describe('UsersService', () => {
       const updatedUser = { ...mockUser, fullName: 'New Name' };
       prisma.user.update.mockResolvedValue(updatedUser);
 
-      const result = await service.updateProfile('user-1', { fullName: 'New Name' });
+      const result = await service.updateProfile('user-1', {
+        fullName: 'New Name',
+      });
 
       expect(result.fullName).toBe('New Name');
       expect(prisma.user.update).toHaveBeenCalledWith(
@@ -71,9 +72,14 @@ describe('UsersService', () => {
     });
 
     it('should handle partial updates', async () => {
-      prisma.user.update.mockResolvedValue({ ...mockUser, phone: '0901234567' });
+      prisma.user.update.mockResolvedValue({
+        ...mockUser,
+        phone: '0901234567',
+      });
 
-      const result = await service.updateProfile('user-1', { phone: '0901234567' });
+      const result = await service.updateProfile('user-1', {
+        phone: '0901234567',
+      });
 
       expect(result.phone).toBe('0901234567');
     });

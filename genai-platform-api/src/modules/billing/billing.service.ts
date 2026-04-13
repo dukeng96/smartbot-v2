@@ -1,10 +1,18 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreditsService } from './credits.service';
 import { SubscribeDto } from './dto/subscribe.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { TopUpCreditsDto } from './dto/top-up-credits.dto';
-import { PaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import {
+  PaginationDto,
+  PaginatedResult,
+} from '../../common/dto/pagination.dto';
 
 @Injectable()
 export class BillingService {
@@ -34,7 +42,9 @@ export class BillingService {
   }
 
   async subscribe(tenantId: string, dto: SubscribeDto) {
-    const plan = await this.prisma.plan.findUnique({ where: { id: dto.planId } });
+    const plan = await this.prisma.plan.findUnique({
+      where: { id: dto.planId },
+    });
     if (!plan) throw new NotFoundException('Plan not found');
 
     // Check if already has active subscription
@@ -69,7 +79,13 @@ export class BillingService {
       // Create payment record
       const price = this.getPlanPrice(plan, dto.billingCycle);
       if (price > 0) {
-        await this.createPaymentRecord(tenantId, updated.id, 'subscription', price, dto.paymentMethod);
+        await this.createPaymentRecord(
+          tenantId,
+          updated.id,
+          'subscription',
+          price,
+          dto.paymentMethod,
+        );
       }
 
       return updated;
@@ -107,7 +123,13 @@ export class BillingService {
 
     const price = this.getPlanPrice(plan, dto.billingCycle);
     if (price > 0) {
-      await this.createPaymentRecord(tenantId, sub.id, 'subscription', price, dto.paymentMethod);
+      await this.createPaymentRecord(
+        tenantId,
+        sub.id,
+        'subscription',
+        price,
+        dto.paymentMethod,
+      );
     }
 
     return sub;
@@ -149,7 +171,9 @@ export class BillingService {
     await this.creditsService.addTopUp(tenantId, dto.amount);
 
     await this.createPaymentRecord(
-      tenantId, null, 'top_up',
+      tenantId,
+      null,
+      'top_up',
       BigInt(dto.amount * 100), // mock price: 100 VND per credit
       dto.paymentMethod,
     );
@@ -205,7 +229,8 @@ export class BillingService {
         currency: 'VND',
         status: 'completed',
         paymentMethod: paymentMethod || 'system',
-        description: type === 'subscription' ? 'Subscription payment' : 'Credit top-up',
+        description:
+          type === 'subscription' ? 'Subscription payment' : 'Credit top-up',
       },
     });
   }
@@ -229,10 +254,13 @@ export class BillingService {
 
   private getPlanPrice(plan: any, cycle: string): bigint {
     switch (cycle) {
-      case 'weekly': return plan.priceWeekly;
-      case 'yearly': return plan.priceYearly;
+      case 'weekly':
+        return plan.priceWeekly;
+      case 'yearly':
+        return plan.priceYearly;
       case 'monthly':
-      default: return plan.priceMonthly;
+      default:
+        return plan.priceMonthly;
     }
   }
 }

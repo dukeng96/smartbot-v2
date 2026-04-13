@@ -8,9 +8,7 @@ import { InternalDocumentsController } from './internal-documents.controller';
 import { DocumentProcessingWorker } from './document-processing.worker';
 
 @Module({
-  imports: [
-    BullModule.registerQueue({ name: 'document-processing' }),
-  ],
+  imports: [BullModule.registerQueue({ name: 'document-processing' })],
   controllers: [
     KnowledgeBasesController,
     DocumentsController,

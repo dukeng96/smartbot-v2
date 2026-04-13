@@ -2,7 +2,10 @@ import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { AnalyticsService } from './analytics.service';
-import { AnalyticsQueryDto, TopQuestionsQueryDto } from './dto/analytics-query.dto';
+import {
+  AnalyticsQueryDto,
+  TopQuestionsQueryDto,
+} from './dto/analytics-query.dto';
 
 @ApiTags('Analytics')
 @ApiBearerAuth()
@@ -22,7 +25,11 @@ export class AnalyticsController {
     @CurrentTenant() tenantId: string,
     @Query() query: AnalyticsQueryDto,
   ) {
-    return this.analyticsService.getConversationsOverTime(tenantId, query.period, query.botId);
+    return this.analyticsService.getConversationsOverTime(
+      tenantId,
+      query.period,
+      query.botId,
+    );
   }
 
   @Get('messages')
@@ -31,7 +38,11 @@ export class AnalyticsController {
     @CurrentTenant() tenantId: string,
     @Query() query: AnalyticsQueryDto,
   ) {
-    return this.analyticsService.getMessagesOverTime(tenantId, query.period, query.botId);
+    return this.analyticsService.getMessagesOverTime(
+      tenantId,
+      query.period,
+      query.botId,
+    );
   }
 
   @Get('credits')

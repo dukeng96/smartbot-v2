@@ -59,7 +59,9 @@ describe('ConversationsService', () => {
         limit: 20,
         sort: 'createdAt',
         order: 'desc' as const,
-        get skip() { return 0; },
+        get skip() {
+          return 0;
+        },
       });
 
       expect(result.items).toHaveLength(1);
@@ -77,7 +79,9 @@ describe('ConversationsService', () => {
         order: 'desc' as const,
         channel: 'facebook',
         status: 'archived',
-        get skip() { return 0; },
+        get skip() {
+          return 0;
+        },
       });
 
       expect(prisma.conversation.findMany).toHaveBeenCalledWith(
@@ -122,7 +126,9 @@ describe('ConversationsService', () => {
         limit: 50,
         sort: 'createdAt',
         order: 'asc' as const,
-        get skip() { return 0; },
+        get skip() {
+          return 0;
+        },
       });
 
       expect(result.items).toHaveLength(1);
@@ -137,7 +143,9 @@ describe('ConversationsService', () => {
           limit: 50,
           sort: 'createdAt',
           order: 'asc' as const,
-          get skip() { return 0; },
+          get skip() {
+            return 0;
+          },
         }),
       ).rejects.toThrow(NotFoundException);
     });
@@ -177,7 +185,11 @@ describe('ConversationsService', () => {
       prisma.message.findFirst.mockResolvedValue(mockMsg);
       prisma.message.update.mockResolvedValue({});
 
-      const result = await service.messageFeedback(tenantId, 'msg-1', 'thumbs_up');
+      const result = await service.messageFeedback(
+        tenantId,
+        'msg-1',
+        'thumbs_up',
+      );
 
       expect(result.message).toBe('Feedback saved');
     });
@@ -196,7 +208,13 @@ describe('ConversationsService', () => {
       prisma.message.findMany.mockResolvedValue([mockMsg]);
       prisma.message.count.mockResolvedValue(1);
 
-      const result = await service.searchMessages(tenantId, botId, 'hello', 1, 20);
+      const result = await service.searchMessages(
+        tenantId,
+        botId,
+        'hello',
+        1,
+        20,
+      );
 
       expect(result.items).toHaveLength(1);
       expect(prisma.message.findMany).toHaveBeenCalledWith(

@@ -10,7 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
 import { QuotaGuard } from '../../common/guards/quota.guard';
 import { QuotaType } from '../../common/decorators/quota-type.decorator';
@@ -38,10 +43,7 @@ export class BotsController {
 
   @Get()
   @ApiOperation({ summary: 'List bots' })
-  findAll(
-    @CurrentTenant() tenantId: string,
-    @Query() query: ListBotsQueryDto,
-  ) {
+  findAll(@CurrentTenant() tenantId: string, @Query() query: ListBotsQueryDto) {
     return this.botsService.findAll(tenantId, query);
   }
 

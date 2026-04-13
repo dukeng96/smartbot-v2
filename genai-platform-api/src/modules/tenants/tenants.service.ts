@@ -59,7 +59,11 @@ export class TenantsService {
     });
   }
 
-  async inviteMember(tenantId: string, tenantRole: string, dto: InviteMemberDto) {
+  async inviteMember(
+    tenantId: string,
+    tenantRole: string,
+    dto: InviteMemberDto,
+  ) {
     if (!['owner', 'admin'].includes(tenantRole)) {
       throw new ForbiddenException('Only owner or admin can invite members');
     }

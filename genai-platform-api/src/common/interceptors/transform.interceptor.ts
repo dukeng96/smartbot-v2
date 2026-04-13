@@ -12,9 +12,10 @@ export interface ApiResponse<T> {
 }
 
 @Injectable()
-export class TransformInterceptor<T>
-  implements NestInterceptor<T, ApiResponse<T>>
-{
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
@@ -22,7 +23,12 @@ export class TransformInterceptor<T>
     return next.handle().pipe(
       map((responseData) => {
         // If the response already has data/meta structure, pass through
-        if (responseData && typeof responseData === 'object' && 'data' in responseData && 'meta' in responseData) {
+        if (
+          responseData &&
+          typeof responseData === 'object' &&
+          'data' in responseData &&
+          'meta' in responseData
+        ) {
           return responseData;
         }
         return { data: responseData };

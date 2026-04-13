@@ -99,7 +99,9 @@ describe('KnowledgeBasesService', () => {
         limit: 20,
         sort: 'createdAt',
         order: 'desc' as const,
-        get skip() { return 0; },
+        get skip() {
+          return 0;
+        },
       });
 
       expect(result.items).toHaveLength(1);
@@ -133,7 +135,9 @@ describe('KnowledgeBasesService', () => {
         name: 'Updated KB',
       });
 
-      const result = await service.update(tenantId, kbId, { name: 'Updated KB' });
+      const result = await service.update(tenantId, kbId, {
+        name: 'Updated KB',
+      });
 
       expect(result.name).toBe('Updated KB');
     });

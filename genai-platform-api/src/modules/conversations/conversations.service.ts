@@ -1,7 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ListConversationsDto } from './dto/list-conversations.dto';
-import { PaginatedResult, PaginationDto } from '../../common/dto/pagination.dto';
+import {
+  PaginatedResult,
+  PaginationDto,
+} from '../../common/dto/pagination.dto';
 import { RateConversationDto } from './dto/rate-conversation.dto';
 import { Prisma } from '@prisma/client';
 
@@ -49,7 +52,11 @@ export class ConversationsService {
     return new PaginatedResult(data, total, query.page, query.limit);
   }
 
-  async findAllByBot(tenantId: string, botId: string, query: ListConversationsDto) {
+  async findAllByBot(
+    tenantId: string,
+    botId: string,
+    query: ListConversationsDto,
+  ) {
     const where: Prisma.ConversationWhereInput = { botId, tenantId };
 
     if (query.channel) where.channel = query.channel;
@@ -160,7 +167,13 @@ export class ConversationsService {
     return { message: 'Feedback saved' };
   }
 
-  async searchMessages(tenantId: string, botId: string, q: string, page: number, limit: number) {
+  async searchMessages(
+    tenantId: string,
+    botId: string,
+    q: string,
+    page: number,
+    limit: number,
+  ) {
     const offset = (page - 1) * limit;
 
     // Basic full-text search using PostgreSQL ILIKE

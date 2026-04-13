@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionContext, ForbiddenException, HttpException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  HttpException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { QuotaGuard } from './quota.guard';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,7 +23,10 @@ describe('QuotaGuard', () => {
     },
   };
 
-  function createMockContext(quotaType: string | undefined, user?: any): ExecutionContext {
+  function createMockContext(
+    quotaType: string | undefined,
+    user?: any,
+  ): ExecutionContext {
     reflector.get = jest.fn().mockReturnValue(quotaType);
     return {
       getHandler: jest.fn(),

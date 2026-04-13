@@ -45,14 +45,20 @@ export class AnalyticsService {
       totalMessagesToday,
       creditsUsed: creditUsage?.creditsUsed ?? 0,
       creditsRemaining: creditUsage
-        ? (creditUsage.creditsAllocated + creditUsage.topUpCredits) - creditUsage.creditsUsed
+        ? creditUsage.creditsAllocated +
+          creditUsage.topUpCredits -
+          creditUsage.creditsUsed
         : 0,
       activeBots,
       totalDocuments,
     };
   }
 
-  async getConversationsOverTime(tenantId: string, period: string, botId?: string) {
+  async getConversationsOverTime(
+    tenantId: string,
+    period: string,
+    botId?: string,
+  ) {
     const days = this.parsePeriodDays(period);
     const botFilter = botId
       ? Prisma.sql`AND c.bot_id = ${botId}::uuid`
@@ -172,22 +178,38 @@ export class AnalyticsService {
       ORDER BY rating ASC
     `;
 
-    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const distribution: Record<number, number> = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
     for (const row of rows) {
       distribution[row.rating] = row.count;
     }
 
     const totalRatings = rows.reduce((sum: number, r: any) => sum + r.count, 0);
-    const avgRating = totalRatings > 0
-      ? rows.reduce((sum: number, r: any) => sum + r.rating * r.count, 0) / totalRatings
-      : 0;
+    const avgRating =
+      totalRatings > 0
+        ? rows.reduce((sum: number, r: any) => sum + r.rating * r.count, 0) /
+          totalRatings
+        : 0;
 
-    return { distribution, totalRatings, avgRating: Math.round(avgRating * 100) / 100 };
+    return {
+      distribution,
+      totalRatings,
+      avgRating: Math.round(avgRating * 100) / 100,
+    };
   }
 
   private parsePeriodDays(period: string): number {
     const map: Record<string, number> = {
-      '1d': 1, '7d': 7, '14d': 14, '30d': 30, '90d': 90,
+      '1d': 1,
+      '7d': 7,
+      '14d': 14,
+      '30d': 30,
+      '90d': 90,
     };
     return map[period] || 7;
   }

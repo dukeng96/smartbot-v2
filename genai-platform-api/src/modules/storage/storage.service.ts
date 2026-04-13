@@ -17,15 +17,27 @@ export class StorageService {
 
   constructor(private readonly configService: ConfigService) {
     this.s3 = new S3Client({
-      endpoint: this.configService.get<string>('minio.serviceUrl', 'https://voice-storage.vnpt.vn'),
+      endpoint: this.configService.get<string>(
+        'minio.serviceUrl',
+        'https://voice-storage.vnpt.vn',
+      ),
       region: this.configService.get<string>('minio.region', 'us-east-1'),
       credentials: {
-        accessKeyId: this.configService.get<string>('minio.accessKey', 'texttospeech'),
-        secretAccessKey: this.configService.get<string>('minio.secretKey', 'Text2speechVnptAI@2024'),
+        accessKeyId: this.configService.get<string>(
+          'minio.accessKey',
+          'texttospeech',
+        ),
+        secretAccessKey: this.configService.get<string>(
+          'minio.secretKey',
+          'Text2speechVnptAI@2024',
+        ),
       },
       forcePathStyle: true,
     });
-    this.bucket = this.configService.get<string>('minio.folderName', 'smartbot-v2');
+    this.bucket = this.configService.get<string>(
+      'minio.folderName',
+      'smartbot-v2',
+    );
   }
 
   async upload(

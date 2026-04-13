@@ -28,7 +28,10 @@ export class KnowledgeBasesController {
 
   @Post()
   @ApiOperation({ summary: 'Create knowledge base' })
-  create(@CurrentTenant() tenantId: string, @Body() dto: CreateKnowledgeBaseDto) {
+  create(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: CreateKnowledgeBaseDto,
+  ) {
     return this.kbService.create(tenantId, dto);
   }
 

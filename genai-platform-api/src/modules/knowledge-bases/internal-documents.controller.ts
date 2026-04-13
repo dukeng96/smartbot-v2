@@ -1,4 +1,12 @@
-import { Body, Controller, Param, ParseUUIDPipe, Patch, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InternalApiKeyGuard } from '../../common/guards/internal-api-key.guard';
 import { Public } from '../../common/decorators/public.decorator';
@@ -16,7 +24,9 @@ export class InternalDocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update document processing status (AI Engine callback)' })
+  @ApiOperation({
+    summary: 'Update document processing status (AI Engine callback)',
+  })
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateDocumentStatusDto,

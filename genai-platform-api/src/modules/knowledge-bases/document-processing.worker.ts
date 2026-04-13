@@ -15,7 +15,8 @@ export class DocumentProcessingWorker extends WorkerHost {
     this.aiEngineUrl =
       this.configService.get<string>('aiEngine.url') || 'http://localhost:8000';
     this.internalApiKey =
-      this.configService.get<string>('aiEngine.internalApiKey') || 'internal-secret-key';
+      this.configService.get<string>('aiEngine.internalApiKey') ||
+      'internal-secret-key';
   }
 
   async process(job: Job): Promise<void> {
@@ -61,9 +62,7 @@ export class DocumentProcessingWorker extends WorkerHost {
 
         if (!response.ok) {
           const text = await response.text().catch(() => '');
-          throw new Error(
-            `AI Engine responded ${response.status}: ${text}`,
-          );
+          throw new Error(`AI Engine responded ${response.status}: ${text}`);
         }
 
         this.logger.log(

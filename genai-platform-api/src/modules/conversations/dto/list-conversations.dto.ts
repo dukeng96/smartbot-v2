@@ -3,7 +3,9 @@ import { IsDateString, IsIn, IsOptional, IsString } from 'class-validator';
 import { PaginationDto } from '../../../common/dto/pagination.dto';
 
 export class ListConversationsDto extends PaginationDto {
-  @ApiPropertyOptional({ enum: ['web_widget', 'facebook', 'telegram', 'zalo', 'api'] })
+  @ApiPropertyOptional({
+    enum: ['web_widget', 'facebook', 'telegram', 'zalo', 'api'],
+  })
   @IsOptional()
   @IsString()
   channel?: string;

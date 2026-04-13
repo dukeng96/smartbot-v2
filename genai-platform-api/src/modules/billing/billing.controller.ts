@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Post, Patch, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
@@ -54,7 +62,10 @@ export class BillingController {
   @Post('credits/top-up')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Purchase additional credits' })
-  topUpCredits(@CurrentTenant() tenantId: string, @Body() dto: TopUpCreditsDto) {
+  topUpCredits(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: TopUpCreditsDto,
+  ) {
     return this.billingService.topUpCredits(tenantId, dto);
   }
 
@@ -68,7 +79,10 @@ export class BillingController {
   @Get('payments')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Payment history' })
-  getPayments(@CurrentTenant() tenantId: string, @Query() query: PaginationDto) {
+  getPayments(
+    @CurrentTenant() tenantId: string,
+    @Query() query: PaginationDto,
+  ) {
     return this.billingService.getPaymentHistory(tenantId, query);
   }
 
