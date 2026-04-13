@@ -102,12 +102,17 @@ export class ChatProxyService {
       })) {
         // Accumulate token content for persisting assistant message
         if (ev.type === 'token') {
-          fullContent += ev.data?.content ?? '';
+          fullContent += ev.content ?? '';
         }
         if (ev.type === 'done') {
           done = true;
         }
-        yield { event: ev.type, data: JSON.stringify(ev.data ?? {}) };
+        yield {
+          event: ev.type,
+          data: JSON.stringify(
+            ev.type === 'token' ? { content: ev.content ?? '' } : (ev.data ?? {}),
+          ),
+        };
       }
     } catch (err: any) {
       this.logger.error(`processChat failed: ${err.message}`, err.stack);

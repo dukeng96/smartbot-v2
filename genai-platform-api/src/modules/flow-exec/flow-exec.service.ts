@@ -164,7 +164,7 @@ export class FlowExecService {
   private leanPayload(ev: SseEvent): SseEvent {
     switch (ev.type) {
       case 'token':
-        return { type: 'token', data: { content: ev.data?.content ?? '' } };
+        return { type: 'token', content: ev.data?.content ?? ev.content ?? '' };
       case 'awaiting_input':
         return { type: 'awaiting_input', node_id: ev.node_id, data: ev.data };
       case 'state_updated':

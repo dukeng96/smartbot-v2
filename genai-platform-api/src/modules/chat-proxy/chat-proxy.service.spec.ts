@@ -103,8 +103,8 @@ describe('ChatProxyService', () => {
   describe('processChat', () => {
     it('yields conversation event first, then flow events, then done', async () => {
       async function* mockFlowStream() {
-        yield { type: 'token' as const, data: { content: 'Hello ' } };
-        yield { type: 'token' as const, data: { content: 'World' } };
+        yield { type: 'token' as const, content: 'Hello ' };
+        yield { type: 'token' as const, content: 'World' };
         yield { type: 'done' as const, data: {} };
       }
       flowExecService.runFlow.mockReturnValue(mockFlowStream());
@@ -136,8 +136,8 @@ describe('ChatProxyService', () => {
 
     it('persists assistant message from accumulated token content', async () => {
       async function* mockFlowStream() {
-        yield { type: 'token' as const, data: { content: 'Hello ' } };
-        yield { type: 'token' as const, data: { content: 'World' } };
+        yield { type: 'token' as const, content: 'Hello ' };
+        yield { type: 'token' as const, content: 'World' };
         yield { type: 'done' as const, data: {} };
       }
       flowExecService.runFlow.mockReturnValue(mockFlowStream());
@@ -151,7 +151,7 @@ describe('ChatProxyService', () => {
 
     it('updates conversation stats after flow completes', async () => {
       async function* mockFlowStream() {
-        yield { type: 'token' as const, data: { content: 'response' } };
+        yield { type: 'token' as const, content: 'response' };
         yield { type: 'done' as const, data: {} };
       }
       flowExecService.runFlow.mockReturnValue(mockFlowStream());

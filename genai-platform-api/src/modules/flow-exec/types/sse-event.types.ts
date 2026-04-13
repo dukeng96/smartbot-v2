@@ -13,6 +13,7 @@ export type SseEventType =
 export interface SseEvent {
   type: SseEventType;
   node_id?: string;
+  content?: string;        // top-level for token events (frontend reads event.content)
   data?: Record<string, any>;
   output?: any;
   error?: string;
