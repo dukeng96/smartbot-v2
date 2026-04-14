@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react"
 import { MessageCircle, X, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { useFlowStore } from "../hooks/use-flow-store"
 import { useTestRun } from "../hooks/use-test-run"
 import { TestMessageList } from "./test-message-list"
@@ -14,11 +16,12 @@ interface TestPanelProps {
 
 export function TestPanel({ botId }: TestPanelProps) {
   const [open, setOpen] = useState(false)
+  const [approvalText, setApprovalText] = useState("")
   const pushDialogDepth = useFlowStore((s) => s.pushDialogDepth)
   const popDialogDepth = useFlowStore((s) => s.popDialogDepth)
   const setTraceMap = useFlowStore((s) => s.setTraceMap)
 
-  const { messages, traceMap, isRunning, sendMessage, clearMessages } = useTestRun()
+  const { messages, traceMap, isRunning, humanInputState, sendMessage, submitHumanInput, clearMessages } = useTestRun()
 
   // Sync traceMap into store so GenericNode can read inline trace badges
   useEffect(() => {
@@ -39,8 +42,48 @@ export function TestPanel({ botId }: TestPanelProps) {
     sendMessage(botId, content)
   }
 
+  async function handleSubmitApproval() {
+    await submitHumanInput(approvalText)
+    setApprovalText("")
+  }
+
   return (
     <>
+      {/* Human input approval dialog */}
+      <Dialog
+        open={!!humanInputState}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setApprovalText("")
+        }}
+      >
+        <DialogContent className="max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-[15px]">Yêu cầu xác nhận từ người dùng</DialogTitle>
+          </DialogHeader>
+          <p className="text-[13px] text-muted-foreground whitespace-pre-wrap">
+            {humanInputState?.prompt}
+          </p>
+          <Textarea
+            value={approvalText}
+            onChange={(e) => setApprovalText(e.target.value)}
+            placeholder="Nhập phản hồi của bạn…"
+            className="text-[13px] min-h-[80px]"
+          />
+          <DialogFooter className="gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setApprovalText("")}
+            >
+              Bỏ qua
+            </Button>
+            <Button size="sm" onClick={handleSubmitApproval} disabled={!approvalText.trim()}>
+              Gửi
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Collapsed pill button */}
       {!open && (
         <button
