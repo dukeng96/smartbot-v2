@@ -11,3 +11,6 @@ from app.flow.nodes import memory  # noqa: F401
 from app.flow.nodes import http_request  # noqa: F401
 from app.flow.nodes import llm  # noqa: F401
 from app.flow.nodes import knowledge_base  # noqa: F401
+from app.flow.nodes import agent        # noqa: F401
+from app.flow.nodes import custom_tool  # noqa: F401
+from app.flow.nodes import human_input  # noqa: F401

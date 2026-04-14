@@ -2,15 +2,23 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from typing import Any, AsyncIterator, Callable
 
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.errors import GraphInterrupt
 from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command
 
 from app.flow.context import NodeExecutionContext, resolve_template
 from app.flow.exceptions import FlowValidationError, NodeExecutionError
 from app.flow.registry import NodeRegistry
 from app.flow.schemas.execution_event import ExecutionEvent, ExecutionEventType
 from app.flow.schemas.flow_definition import FlowDefinition, FlowNode
+
+# Keyed by execution_id — stores (compiled_graph, MemorySaver, suspended_at_timestamp)
+# for flows paused at a human_input node. TTL eviction runs lazily on each resume call.
+_SUSPENDED_GRAPHS: dict[str, tuple[Any, MemorySaver, float]] = {}
 
 
 def apply_state_updates(
@@ -138,6 +146,35 @@ class FlowExecutor:
 
         return graph.compile()
 
+    def build_graph_with_checkpointer(self, checkpointer: MemorySaver) -> Any:
+        """Compile graph with a MemorySaver checkpointer — required for human_input interrupt()."""
+        graph = StateGraph(dict)
+
+        for node in self._flow.nodes:
+            if node.type == "sticky_note":
+                continue
+            node_cls = NodeRegistry.get(node.type)
+            instance = node_cls()
+            graph.add_node(node.id, self._wrap_node(node, instance))
+
+        start_nodes = [n for n in self._flow.nodes if n.type == "start"]
+        if not start_nodes:
+            raise FlowValidationError("Flow must contain a 'start' node")
+        graph.add_edge(START, start_nodes[0].id)
+
+        for edge in self._flow.edges:
+            source = edge.source
+            target = edge.target
+            source_node = next((n for n in self._flow.nodes if n.id == source), None)
+            target_node = next((n for n in self._flow.nodes if n.id == target), None)
+            if source_node and source_node.type == "sticky_note":
+                continue
+            if target_node and target_node.type == "sticky_note":
+                continue
+            graph.add_edge(source, target)
+
+        return graph.compile(checkpointer=checkpointer)
+
     def _wrap_node(self, node: FlowNode, instance: Any) -> Callable:
         async def run(state: dict[str, Any]) -> dict[str, Any]:
             if self._halt:
@@ -201,15 +238,32 @@ class FlowExecutor:
 
     async def stream(self, inputs: dict[str, Any]) -> AsyncIterator[ExecutionEvent]:
         """Run the graph and yield events. Caller drains into SSE."""
-        graph = self.build_graph()
+        has_human_input = any(n.type == "human_input" for n in self._flow.nodes)
+
+        if has_human_input:
+            saver = MemorySaver()
+            graph = self.build_graph_with_checkpointer(saver)
+        else:
+            graph = self.build_graph()
+            saver = None
+
         self._emit(ExecutionEvent(
             type=ExecutionEventType.FLOW_START,
             data={"execution_id": self._execution_id},
         ))
 
+        astream_config: dict[str, Any] = {}
+        if has_human_input and self._execution_id:
+            astream_config["configurable"] = {"thread_id": self._execution_id}
+
         try:
-            async for _ in graph.astream(inputs, stream_mode="updates"):
+            async for _ in graph.astream(inputs, config=astream_config or None, stream_mode="updates"):
                 pass  # events already emitted via self._emit callback
+        except GraphInterrupt:
+            # Flow suspended at a human_input node — store graph for resume
+            if self._execution_id and saver is not None:
+                _SUSPENDED_GRAPHS[self._execution_id] = (graph, saver, time.monotonic())
+            return
         except NodeExecutionError:
             raise
         except Exception as exc:
@@ -220,3 +274,47 @@ class FlowExecutor:
             return
 
         self._emit(ExecutionEvent(type=ExecutionEventType.DONE, data={}))
+
+    async def resume(self, approval: str) -> None:
+        """Resume a suspended human_input flow by injecting the approval value."""
+        if not self._execution_id:
+            raise NodeExecutionError("resume() requires execution_id")
+
+        _evict_stale_graphs()
+
+        entry = _SUSPENDED_GRAPHS.pop(self._execution_id, None)
+        if entry is None:
+            raise NodeExecutionError(f"No suspended flow found for execution_id '{self._execution_id}'")
+
+        graph, _saver, _ts = entry
+        config = {"configurable": {"thread_id": self._execution_id}}
+
+        try:
+            async for _ in graph.astream(
+                Command(resume={"approval": approval}),
+                config=config,
+                stream_mode="updates",
+            ):
+                pass
+        except GraphInterrupt:
+            # Re-suspended (chained human_input nodes) — store again
+            _SUSPENDED_GRAPHS[self._execution_id] = (graph, _saver, time.monotonic())
+            return
+        except NodeExecutionError:
+            raise
+        except Exception as exc:
+            self._emit(ExecutionEvent(
+                type=ExecutionEventType.ERROR,
+                message=str(exc),
+            ))
+            return
+
+        self._emit(ExecutionEvent(type=ExecutionEventType.DONE, data={}))
+
+
+def _evict_stale_graphs(max_age_seconds: float = 600.0) -> None:
+    """Remove suspended graph entries older than max_age_seconds."""
+    now = time.monotonic()
+    stale = [eid for eid, (_, _, ts) in _SUSPENDED_GRAPHS.items() if now - ts > max_age_seconds]
+    for eid in stale:
+        _SUSPENDED_GRAPHS.pop(eid, None)
