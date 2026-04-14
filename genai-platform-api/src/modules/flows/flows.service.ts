@@ -13,6 +13,7 @@ import { FlowData, FlowNode, FlowEdge } from './types/flow-data.types';
 const VALID_NODE_TYPES = new Set([
   'start', 'end', 'llm', 'condition', 'set_variable', 'http_request',
   'knowledge_base', 'code', 'text_formatter', 'sticky_note', 'memory',
+  'agent', 'custom_tool', 'human_input',
 ]);
 
 const TERMINAL_NODE_TYPES = new Set(['end']);
