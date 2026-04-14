@@ -102,8 +102,9 @@ export function InputEditor({ input, value, nodeId, onChange }: InputEditorProps
 
       {input.type === "custom_tool_list" && (
         <CustomToolPicker
-          value={(value as string[]) ?? []}
+          value={input.name === "tool_id" ? (value as string) ?? "" : (value as string[]) ?? []}
           onChange={onChange}
+          mode={input.name === "tool_id" ? "single" : "multi"}
         />
       )}
 
