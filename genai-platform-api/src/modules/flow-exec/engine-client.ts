@@ -70,7 +70,7 @@ export class EngineClient {
   async *resumeStream(execId: string, approval: string): AsyncIterable<SseEvent> {
     let response: Response;
     try {
-      response = await fetch(`${this.engineUrl}/v1/flow/resume/${execId}`, {
+      response = await fetch(`${this.engineUrl}/v1/flows/resume/${execId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
