@@ -6,6 +6,7 @@ import {
   BarChart,
   CreditCard,
   Settings,
+  Wrench,
   type LucideIcon,
 } from "lucide-react"
 
@@ -37,6 +38,12 @@ export const SIDEBAR_NAV_ITEMS: NavItem[] = [
     href: "/knowledge-bases",
     icon: BookOpen,
     matchPaths: ["/knowledge-bases"],
+  },
+  {
+    label: "Custom Tools",
+    href: "/custom-tools",
+    icon: Wrench,
+    matchPaths: ["/custom-tools"],
   },
   {
     label: "Conversations",

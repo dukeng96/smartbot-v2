@@ -100,6 +100,8 @@ export interface NodeTrace {
   error?: string
   awaitingInput?: boolean
   outputPreview?: string
+  toolCall?: { tool_name: string; tool_id: string; inputs: Record<string, unknown> }
+  toolResult?: { tool_id: string; output: unknown }
 }
 
 // Test panel SSE event shapes — field names match backend snake_case from Python engine
@@ -145,6 +147,24 @@ export interface SseAwaitingInputEvent {
   data: { prompt: string; context?: unknown }
 }
 
+export interface SseToolCallEvent {
+  type: "tool_call"
+  node_id: string
+  data: { tool_name: string; tool_id: string; inputs: Record<string, unknown> }
+}
+
+export interface SseToolResultEvent {
+  type: "tool_result"
+  node_id: string
+  data: { tool_id: string; output: unknown }
+}
+
+export interface SseHumanInputRequiredEvent {
+  type: "human_input_required"
+  node_id: string
+  data: { run_id: string; exec_id?: string; prompt: string }
+}
+
 export interface SseErrorEvent {
   type: "error"
   message: string
@@ -164,6 +184,9 @@ export type SseEvent =
   | SseNodeErrorEvent
   | SseStateUpdatedEvent
   | SseAwaitingInputEvent
+  | SseToolCallEvent
+  | SseToolResultEvent
+  | SseHumanInputRequiredEvent
   | SseErrorEvent
   | SseDoneEvent
 
