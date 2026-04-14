@@ -7,6 +7,9 @@ export type SseEventType =
   | 'llm_call_completed'
   | 'state_updated'
   | 'awaiting_input'
+  | 'tool_call'
+  | 'tool_result'
+  | 'human_input_required'
   | 'done'
   | 'error';
 

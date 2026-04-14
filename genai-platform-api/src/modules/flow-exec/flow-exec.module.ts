@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FlowExecService } from './flow-exec.service';
+import { FlowExecController } from './flow-exec.controller';
 import { EngineClient } from './engine-client';
 import { CredentialsModule } from '../credentials/credentials.module';
 import { BillingModule } from '../billing/billing.module';
 
 @Module({
   imports: [CredentialsModule, BillingModule],
+  controllers: [FlowExecController],
   providers: [
     FlowExecService,
     {

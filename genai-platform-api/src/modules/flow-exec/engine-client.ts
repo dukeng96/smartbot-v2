@@ -64,7 +64,40 @@ export class EngineClient {
       throw new HttpException('Engine returned no stream body', 502);
     }
 
-    const reader = response.body.getReader();
+    yield* this._parseStream(response);
+  }
+
+  async *resumeStream(execId: string, approval: string): AsyncIterable<SseEvent> {
+    let response: Response;
+    try {
+      response = await fetch(`${this.engineUrl}/v1/flow/resume/${execId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Internal-Key': this.internalKey,
+          Accept: 'text/event-stream',
+        },
+        body: JSON.stringify({ approval }),
+      });
+    } catch (err: any) {
+      throw new HttpException(`Engine unreachable: ${err.message}`, 502);
+    }
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      this.logger.error(`Engine resume ${response.status}: ${text}`);
+      throw new HttpException(`Engine returned ${response.status}`, 502);
+    }
+
+    if (!response.body) {
+      throw new HttpException('Engine returned no stream body', 502);
+    }
+
+    yield* this._parseStream(response);
+  }
+
+  private async *_parseStream(response: Response): AsyncIterable<SseEvent> {
+    const reader = response.body!.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 

@@ -1,4 +1,10 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CredentialsService } from '../credentials/credentials.service';
 import { CreditsService } from '../billing/credits.service';
@@ -16,6 +22,7 @@ const VNPT_CREDIT_MAP: Record<string, number> = {
 const CLIENT_FORWARD_TYPES = new Set([
   'flow_start', 'node_start', 'node_end', 'node_error',
   'token', 'state_updated', 'awaiting_input', 'done', 'error',
+  'tool_call', 'tool_result', 'human_input_required',
 ]);
 
 function extractCredentialRefs(flowData: FlowData): string[] {
@@ -80,6 +87,30 @@ export class FlowExecService {
     });
 
     yield* this.relayAndPersist(engineStream, exec.id, params.tenantId);
+  }
+
+  async *resumeExecution(
+    execId: string,
+    tenantId: string,
+    approval: string,
+  ): AsyncIterable<SseEvent> {
+    const exec = await this.prisma.flowExecution.findUnique({
+      where: { id: execId },
+      include: { flow: { select: { tenantId: true } } },
+    });
+
+    if (!exec || exec.flow.tenantId !== tenantId) {
+      throw new NotFoundException('Execution not found');
+    }
+
+    if (exec.state !== 'INPROGRESS') {
+      throw new BadRequestException(
+        `Execution is in state '${exec.state}', expected INPROGRESS`,
+      );
+    }
+
+    const engineStream = this.engineClient.resumeStream(execId, approval);
+    yield* this.relayAndPersist(engineStream, execId, tenantId);
   }
 
   private async *relayAndPersist(
@@ -175,6 +206,12 @@ export class FlowExecService {
         return { type: 'node_error', node_id: ev.node_id, error: ev.error };
       case 'error':
         return { type: 'error', message: ev.message };
+      case 'tool_call':
+        return { type: 'tool_call', node_id: ev.node_id, data: ev.data };
+      case 'tool_result':
+        return { type: 'tool_result', node_id: ev.node_id, data: ev.data };
+      case 'human_input_required':
+        return { type: 'human_input_required', node_id: ev.node_id, data: ev.data };
       default:
         return { type: ev.type, node_id: ev.node_id };
     }

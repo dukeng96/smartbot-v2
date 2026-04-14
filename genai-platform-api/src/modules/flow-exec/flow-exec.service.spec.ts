@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FlowExecService } from './flow-exec.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CredentialsService } from '../credentials/credentials.service';
@@ -63,6 +63,7 @@ describe('FlowExecService', () => {
 
     engineClient = {
       executeStream: jest.fn(),
+      resumeStream: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -196,5 +197,77 @@ describe('FlowExecService', () => {
     const awaitEv = events.find((e) => e.type === 'awaiting_input');
     expect(awaitEv).toBeDefined();
     expect(awaitEv?.node_id).toBe('human-1');
+  });
+
+  it('forwards tool_call and tool_result events', async () => {
+    async function* mockStream() {
+      yield { type: 'tool_call' as const, node_id: 'agent-1', data: { tool: 'search' } };
+      yield { type: 'tool_result' as const, node_id: 'agent-1', data: { result: 'found' } };
+      yield { type: 'done' as const, data: {} };
+    }
+    (engineClient.executeStream as jest.Mock).mockReturnValue(mockStream());
+
+    const events = await collect(service.runFlow(MOCK_FLOW_PARAMS));
+    expect(events.find((e) => e.type === 'tool_call')).toBeDefined();
+    expect(events.find((e) => e.type === 'tool_result')).toBeDefined();
+  });
+
+  // --- resumeExecution ---
+
+  describe('resumeExecution', () => {
+    it('throws NotFoundException when execId does not exist', async () => {
+      prisma.flowExecution.findUnique = jest.fn().mockResolvedValue(null);
+
+      await expect(
+        collect(service.resumeExecution('nonexistent', 'tenant-1', 'yes')),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('throws NotFoundException when execution belongs to different tenant', async () => {
+      prisma.flowExecution.findUnique = jest.fn().mockResolvedValue({
+        id: 'exec-1',
+        state: 'INPROGRESS',
+        flow: { tenantId: 'other-tenant' },
+      });
+
+      await expect(
+        collect(service.resumeExecution('exec-1', 'tenant-1', 'yes')),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('throws BadRequestException when execution is not INPROGRESS', async () => {
+      prisma.flowExecution.findUnique = jest.fn().mockResolvedValue({
+        id: 'exec-1',
+        state: 'FINISHED',
+        flow: { tenantId: 'tenant-1' },
+      });
+
+      await expect(
+        collect(service.resumeExecution('exec-1', 'tenant-1', 'yes')),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('streams SSE events from engine on valid resume', async () => {
+      prisma.flowExecution.findUnique = jest.fn().mockResolvedValue({
+        id: 'exec-1',
+        state: 'INPROGRESS',
+        flow: { tenantId: 'tenant-1' },
+      });
+
+      async function* mockResumeStream() {
+        yield { type: 'token' as const, data: { content: 'continued' } };
+        yield { type: 'done' as const, data: {} };
+      }
+      (engineClient.resumeStream as jest.Mock).mockReturnValue(mockResumeStream());
+
+      const events = await collect(service.resumeExecution('exec-1', 'tenant-1', 'approved'));
+
+      expect(engineClient.resumeStream).toHaveBeenCalledWith('exec-1', 'approved');
+      expect(events.some((e) => e.type === 'token')).toBe(true);
+      expect(events.some((e) => e.type === 'done')).toBe(true);
+      expect(prisma.flowExecution.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ state: 'FINISHED' }) }),
+      );
+    });
   });
 });
