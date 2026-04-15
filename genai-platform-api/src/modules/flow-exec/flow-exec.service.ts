@@ -70,13 +70,31 @@ function patchKbNodes(
       }
     }
 
-    // Patch 3: inject prompt for LLM nodes downstream of KB if prompt is missing
-    if (n.type === 'llm' && llmDownstreamOfKb.has(n.id) && !data.prompt) {
+    // Patch 3: inject KB context into LLM nodes downstream of a KB node.
+    // The engine has two message-building paths:
+    //   a) messages[] array (frontend canvas format) — ignores prompt/system_prompt
+    //   b) prompt + system_prompt scalars
+    // If prompt is absent, inject it. If messages[] is present but contains no KB
+    // context reference, drop it so the scalar path is used instead.
+    if (n.type === 'llm' && llmDownstreamOfKb.has(n.id)) {
       const kbSrcId = llmToKbSource[n.id];
-      data = {
-        ...data,
-        prompt: `Context:\n{{${kbSrcId}.context}}\n\nQuestion: {{chat_input}}`,
-      };
+      const kbContextRef = `{{${kbSrcId}.context}}`;
+      const hasContextInMessages =
+        Array.isArray(data.messages) &&
+        data.messages.some(
+          (m: any) => typeof m.content === 'string' && m.content.includes(kbContextRef),
+        );
+
+      if (!data.prompt && !hasContextInMessages) {
+        const sysPrompt = data.system_prompt || data.systemPrompt || '';
+        data = {
+          ...data,
+          // Remove messages[] so engine uses scalar path where context is included
+          messages: undefined,
+          system_prompt: sysPrompt || 'You are a helpful assistant. Use the retrieved context to answer questions accurately.',
+          prompt: `Context:\n${kbContextRef}\n\nQuestion: {{chat_input}}`,
+        };
+      }
     }
 
     // Patch 4: fix {{start.message}} → {{chat_input}} in all string data fields
