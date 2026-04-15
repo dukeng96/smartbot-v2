@@ -25,7 +25,9 @@ class StartNode(BaseNode):
 
     async def execute(self, ctx: NodeExecutionContext) -> dict[str, Any]:
         user_message = ctx.resolve(ctx.inputs.get("user_message", ""))
-        # Also pick up user_message from top-level flow inputs if provided there
+        # Also pick up from top-level flow inputs (chat_input key from backend)
         if not user_message:
-            user_message = ctx.state.get("user_message", "")
-        return {"user_message": user_message}
+            user_message = ctx.state.get("chat_input", "") or ctx.state.get("user_message", "")
+        # Output as both 'message' (frontend template convention: {{start.message}})
+        # and 'user_message' for backward compat
+        return {"message": user_message, "user_message": user_message}

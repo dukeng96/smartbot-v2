@@ -1,10 +1,10 @@
-"""AgentNode — tool-calling agent loop via langchain.agents.create_agent."""
+"""AgentNode — tool-calling agent loop via LangChain tool-calling agent."""
 from __future__ import annotations
 
 import asyncio
 from typing import Any
 
-from langchain.agents import create_agent
+from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
@@ -196,10 +196,10 @@ class AgentNode(BaseNode):
             streaming=True,
         )
 
-        agent_graph = create_agent(
+        agent_graph = create_react_agent(
             model=llm,
             tools=lc_tools,
-            system_prompt=system_prompt,
+            prompt=system_prompt,
         )
 
         # recursion_limit maps max_iterations; each agent step = 2 graph nodes (agent + tool)

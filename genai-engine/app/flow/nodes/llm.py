@@ -18,11 +18,21 @@ _DEFAULT_MODEL = "llm-large-v4"
 
 
 def _resolve_credential(credentials: dict[str, dict], credential_id: str) -> dict[str, str]:
-    cred = credentials.get(credential_id)
+    """Resolve LLM credential. Falls back to engine env vars (LLM_API_KEY / LLM_BASE_URL)
+    when no credential_id is provided, so flows without a configured credential still work."""
+    from app.config import settings  # lazy import to avoid circular
+
+    cred = credentials.get(credential_id) if credential_id else None
     if not cred:
-        raise NodeExecutionError(f"LlmNode: credential '{credential_id}' not found")
-    # Accept both camelCase (NestJS backend sends apiKey/baseUrl) and
-    # snake_case (direct Python callers / tests). camelCase takes lower priority.
+        # Fall back to engine-level env vars
+        env_key = settings.LLM_API_KEY
+        env_url = settings.LLM_BASE_URL
+        if env_key:
+            return {"api_key": env_key, "base_url": env_url or _VNPT_BASE_URL, "model": ""}
+        if credential_id:
+            raise NodeExecutionError(f"LlmNode: credential '{credential_id}' not found")
+        raise NodeExecutionError("LlmNode: no credential configured and LLM_API_KEY env var not set")
+    # Accept both camelCase (NestJS backend sends apiKey/baseUrl) and snake_case
     normalized: dict[str, str] = {
         "api_key": cred.get("api_key") or cred.get("apiKey") or "",
         "base_url": cred.get("base_url") or cred.get("baseUrl") or "",
@@ -60,11 +70,12 @@ class LlmNode(BaseNode):
     )
 
     async def execute(self, ctx: NodeExecutionContext) -> dict[str, Any]:
-        credential_id = ctx.resolve(ctx.inputs.get("credential_id", ""))
+        # Accept both 'credential' (frontend key) and 'credential_id' (engine key)
+        credential_id = ctx.resolve(
+            ctx.inputs.get("credential_id", "") or ctx.inputs.get("credential", "")
+        )
         cred = _resolve_credential(ctx.credentials, credential_id)
 
-        prompt = ctx.resolve(ctx.inputs.get("prompt", ""))
-        system_prompt = ctx.resolve(ctx.inputs.get("system_prompt", ""))
         model = ctx.resolve(ctx.inputs.get("model", "")) or cred["model"] or _DEFAULT_MODEL
         base_url = cred["base_url"] or _VNPT_BASE_URL
         temperature = float(ctx.inputs.get("temperature") or 0.7)
@@ -79,10 +90,24 @@ class LlmNode(BaseNode):
             streaming=True,
         )
 
+        # Build messages: support both messages[] array (frontend format) and
+        # legacy prompt/system_prompt scalar fields.
+        raw_messages = ctx.inputs.get("messages")
         messages = []
-        if system_prompt:
-            messages.append(SystemMessage(content=system_prompt))
-        messages.append(HumanMessage(content=prompt))
+        if raw_messages and isinstance(raw_messages, list):
+            for msg in raw_messages:
+                role = msg.get("role", "user")
+                content = ctx.resolve(msg.get("content", ""))
+                if role == "system":
+                    messages.append(SystemMessage(content=content))
+                else:
+                    messages.append(HumanMessage(content=content))
+        else:
+            prompt = ctx.resolve(ctx.inputs.get("prompt", ""))
+            system_prompt = ctx.resolve(ctx.inputs.get("system_prompt", ""))
+            if system_prompt:
+                messages.append(SystemMessage(content=system_prompt))
+            messages.append(HumanMessage(content=prompt))
 
         full_text = ""
         input_tokens = 0

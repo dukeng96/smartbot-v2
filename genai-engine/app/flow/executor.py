@@ -206,8 +206,9 @@ class FlowExecutor:
                 ))
                 raise NodeExecutionError(f"Node '{node.id}' failed: {exc}") from exc
 
-            # Merge node output into state under its node_id key
-            next_state = {**state, node.id: result}
+            # Merge node output into state under both node_id and node_type keys
+            # so templates like {{start.message}} (type) and {{start-1.message}} (id) both work
+            next_state = {**state, node.id: result, node.type: result}
 
             # Apply update_flow_state side-effects
             updates = node.data.get("update_flow_state") or []

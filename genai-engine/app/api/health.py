@@ -5,8 +5,6 @@ Triton calls are offloaded to asyncio.to_thread() to avoid
 gevent-greenlet / asyncio thread-mismatch errors.
 """
 
-import asyncio
-
 import structlog
 from fastapi import APIRouter, Depends
 
@@ -27,7 +25,10 @@ async def health_check(
     qdrant_status = "unknown"
 
     try:
-        ready = await asyncio.to_thread(triton.triton_client.is_server_ready)
+        # Direct call — avoids binding gevent connection pool to a worker thread.
+        # asyncio.to_thread() would cause "cannot switch to a different thread" errors
+        # when the KB flow node later calls triton from the event loop thread.
+        ready = triton.triton_client.is_server_ready()
         triton_status = "connected" if ready else "not_ready"
     except Exception as e:
         triton_status = f"error: {e}"

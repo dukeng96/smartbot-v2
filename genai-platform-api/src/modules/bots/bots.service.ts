@@ -104,9 +104,21 @@ export class BotsService {
   async findActiveWithFlow(botId: string) {
     const bot = await this.prisma.bot.findFirst({
       where: { id: botId, status: 'active', deletedAt: null },
-      include: { flow: true },
+      include: { flow: true, knowledgeBases: { select: { knowledgeBaseId: true } } },
     });
     if (!bot) throw new NotFoundException('Bot not found or inactive');
+    return bot;
+  }
+
+  // Test-mode lookup for the flow editor: skips status='active' check so
+  // owners can chat against draft/paused bots from the Test Panel.
+  // Caller MUST verify tenant ownership before invoking.
+  async findWithFlowForTenant(botId: string, tenantId: string) {
+    const bot = await this.prisma.bot.findFirst({
+      where: { id: botId, tenantId, deletedAt: null },
+      include: { flow: true, knowledgeBases: { select: { knowledgeBaseId: true } } },
+    });
+    if (!bot) throw new NotFoundException('Bot not found');
     return bot;
   }
 

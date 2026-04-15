@@ -40,6 +40,12 @@ class KnowledgeBaseNode(BaseNode):
         query = ctx.resolve(ctx.inputs.get("query", ""))
         top_k = int(ctx.inputs.get("top_k") or _DEFAULT_TOP_K)
 
+        # Auto-resolve: if no kb_id configured in canvas, use first bot-attached KB
+        if not kb_id:
+            bot_kb_ids = ctx.state.get("bot_knowledge_base_ids") or []
+            if bot_kb_ids:
+                kb_id = bot_kb_ids[0]
+
         if not kb_id:
             raise NodeExecutionError("KnowledgeBaseNode: 'kb_id' input is required")
         if not query:
@@ -52,9 +58,10 @@ class KnowledgeBaseNode(BaseNode):
         collection_name = f"kb_{kb_id}"
 
         try:
-            import asyncio
-            raw_chunks = await asyncio.to_thread(
-                embedding_service.hybrid_search,
+            # Direct call — tritonclient.http uses gevent-patched httplib which
+            # cooperatively yields. asyncio.to_thread() would spawn a new OS thread
+            # causing a greenlet-thread conflict (gevent hub is bound to main thread).
+            raw_chunks = embedding_service.hybrid_search(
                 query=query,
                 collection_names=[collection_name],
                 top_k=top_k,

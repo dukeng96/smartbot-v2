@@ -40,4 +40,7 @@ export interface RunFlowParams {
   message: string;
   conversationId: string;
   history: Array<{ role: string; content: string }>;
+  // KB IDs attached to the bot — injected into engine state so KB nodes can
+  // auto-resolve without requiring manual kb_id config in the canvas.
+  knowledgeBaseIds?: string[];
 }

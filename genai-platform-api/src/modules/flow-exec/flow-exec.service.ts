@@ -25,6 +25,46 @@ const CLIENT_FORWARD_TYPES = new Set([
   'tool_call', 'tool_result', 'human_input_required',
 ]);
 
+// Patch flow nodes before sending to engine:
+// 1. Fill empty kb_id in knowledge_base nodes with first bot-attached KB ID.
+// 2. Replace {{start.message}} template with {{chat_input}} so current engine
+//    (which stores state by node ID, not type) resolves the user message correctly.
+//    This is a compatibility shim until the engine is restarted with updated start.py.
+function patchKbNodes(
+  flowDef: { nodes: any[]; edges: any[] },
+  kbIds: string[],
+): { nodes: any[]; edges: any[] } {
+  const nodes = flowDef.nodes.map((n) => {
+    let data = n.data ? { ...n.data } : {};
+
+    // Patch 1: fill empty kb_id
+    if (n.type === 'knowledge_base') {
+      const kb_id = data.kb_id ?? data.config?.kb_id ?? '';
+      if (!kb_id && kbIds.length) {
+        data = { ...data, kb_id: kbIds[0] };
+      }
+    }
+
+    // Patch 2: fix {{start.message}} → {{chat_input}} in all string data fields
+    // Works recursively on strings and arrays of objects (e.g. messages array)
+    data = deepReplaceTemplate(data, '{{start.message}}', '{{chat_input}}');
+
+    return { ...n, data };
+  });
+  return { ...flowDef, nodes };
+}
+
+function deepReplaceTemplate(obj: any, search: string, replace: string): any {
+  if (typeof obj === 'string') return obj === search ? replace : obj.replace(new RegExp(search.replace(/[{}]/g, '\\$&'), 'g'), replace);
+  if (Array.isArray(obj)) return obj.map((item) => deepReplaceTemplate(item, search, replace));
+  if (obj && typeof obj === 'object') {
+    const result: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) result[k] = deepReplaceTemplate(v, search, replace);
+    return result;
+  }
+  return obj;
+}
+
 function extractCredentialRefs(flowData: FlowData): string[] {
   const ids = new Set<string>();
   for (const node of flowData.nodes) {
@@ -74,8 +114,15 @@ export class FlowExecService {
       credentials[credId] = await this.credentialsService.decryptById(credId, params.tenantId);
     }
 
+    // Patch knowledge_base nodes: fill empty kb_id with first bot-attached KB ID
+    // so the engine doesn't need reloading to pick up the fallback logic.
+    const flowDef = patchKbNodes(
+      params.flow.flowData as { nodes: any[]; edges: any[] },
+      params.knowledgeBaseIds ?? [],
+    );
+
     const engineStream = this.engineClient.executeStream({
-      flow_def: params.flow.flowData as { nodes: any[]; edges: any[] },
+      flow_def: flowDef,
       credentials,
       inputs: {
         chat_input: params.message,
@@ -83,6 +130,7 @@ export class FlowExecService {
         conversation_id: params.conversationId,
         execution_id: exec.id,
         history: params.history.length > 0 ? params.history : undefined,
+        bot_knowledge_base_ids: params.knowledgeBaseIds ?? [],
       },
     });
 

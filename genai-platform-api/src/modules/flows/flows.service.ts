@@ -16,8 +16,6 @@ const VALID_NODE_TYPES = new Set([
   'agent', 'custom_tool', 'human_input',
 ]);
 
-const TERMINAL_NODE_TYPES = new Set(['end']);
-
 // Minimal simple-rag flow provisioned for every new bot.
 // Phase 10 replaces this with full template set.
 export function buildSimpleRagFlowData(): FlowData {
@@ -238,13 +236,9 @@ export class FlowsService {
       );
     }
 
-    // At least one terminal node
-    const hasTerminal = nodes.some((n) => TERMINAL_NODE_TYPES.has(n.type));
-    if (!hasTerminal) {
-      throw new BadRequestException(
-        `Flow must have at least one terminal node (end)`,
-      );
-    }
+    // No explicit terminal node required: LangGraph auto-terminates at any
+    // leaf node (no outgoing edges). The 'end' type stays valid for flows that
+    // want to capture an explicit output_text but is no longer mandatory.
 
     // Edge references valid node IDs
     for (const edge of edges) {

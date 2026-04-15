@@ -10,6 +10,7 @@ export interface ExecuteFlowRequest {
     conversation_id: string;
     execution_id: string;
     history?: Array<{ role: string; content: string }>;
+    [key: string]: unknown;
   };
 }
 
@@ -41,7 +42,7 @@ export class EngineClient {
   async *executeStream(body: ExecuteFlowRequest): AsyncIterable<SseEvent> {
     let response: Response;
     try {
-      response = await fetch(`${this.engineUrl}/v1/flows/execute`, {
+      response = await fetch(`${this.engineUrl}/engine/v1/flows/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +71,7 @@ export class EngineClient {
   async *resumeStream(execId: string, approval: string): AsyncIterable<SseEvent> {
     let response: Response;
     try {
-      response = await fetch(`${this.engineUrl}/v1/flows/resume/${execId}`, {
+      response = await fetch(`${this.engineUrl}/engine/v1/flows/resume/${execId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

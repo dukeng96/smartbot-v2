@@ -3,6 +3,7 @@ from fastapi import FastAPI
 
 from app.api.router import api_router
 from app.config import settings
+import app.flow.nodes  # noqa: F401  # registers all node types at startup
 
 structlog.configure(
     processors=[

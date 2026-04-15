@@ -11,6 +11,9 @@ interface ChatRequest {
   conversationId?: string;
   endUserId?: string;
   endUserName?: string;
+  // When set, bypass status='active' gating and scope lookup to this tenant
+  // (used by the Test Panel so owners can chat against draft bots).
+  testTenantId?: string;
 }
 
 interface SseEvent {
@@ -51,8 +54,11 @@ export class ChatProxyService {
   }
 
   async *processChat(req: ChatRequest): AsyncGenerator<SseEvent> {
-    // 1. Validate bot + load flow (flowId is always set — guaranteed by schema)
-    const botWithFlow = await this.botsService.findActiveWithFlow(req.botId);
+    // 1. Validate bot + load flow (flowId is always set — guaranteed by schema).
+    // Test mode: tenant-scoped lookup, ignores status='active' gate.
+    const botWithFlow = req.testTenantId
+      ? await this.botsService.findWithFlowForTenant(req.botId, req.testTenantId)
+      : await this.botsService.findActiveWithFlow(req.botId);
     const flow = botWithFlow.flow!;
 
     // 2. Get or create conversation
@@ -66,7 +72,7 @@ export class ChatProxyService {
 
     yield {
       event: 'conversation',
-      data: JSON.stringify({ conversationId: conv.id }),
+      data: JSON.stringify({ type: 'conversation', data: { conversationId: conv.id } }),
     };
 
     // 3. Save user message
@@ -99,6 +105,7 @@ export class ChatProxyService {
         message: req.message,
         conversationId: conv.id,
         history,
+        knowledgeBaseIds: botWithFlow.knowledgeBases?.map((kb: any) => kb.knowledgeBaseId) ?? [],
       })) {
         // Accumulate token content for persisting assistant message
         if (ev.type === 'token') {
@@ -107,16 +114,19 @@ export class ChatProxyService {
         if (ev.type === 'done') {
           done = true;
         }
+        // Send full lean envelope so client can dispatch by ev.type
+        // (named SSE event field kept for spec-compliance / debugging).
         yield {
           event: ev.type,
-          data: JSON.stringify(
-            ev.type === 'token' ? { content: ev.content ?? '' } : (ev.data ?? {}),
-          ),
+          data: JSON.stringify(ev),
         };
       }
     } catch (err: any) {
       this.logger.error(`processChat failed: ${err.message}`, err.stack);
-      yield { event: 'error', data: JSON.stringify({ error: err.message }) };
+      yield {
+        event: 'error',
+        data: JSON.stringify({ type: 'error', message: err.message }),
+      };
     }
 
     // 6. Persist assistant message
@@ -133,7 +143,10 @@ export class ChatProxyService {
     }
 
     if (!done) {
-      yield { event: 'done', data: JSON.stringify({ conversationId: conv.id }) };
+      yield {
+        event: 'done',
+        data: JSON.stringify({ type: 'done', data: { conversationId: conv.id } }),
+      };
     }
   }
 }

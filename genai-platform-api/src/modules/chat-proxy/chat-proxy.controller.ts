@@ -8,10 +8,12 @@ import {
   ParseUUIDPipe,
   Post,
   Res,
+  SetMetadata,
 } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { Public } from '../../common/decorators/public.decorator';
+import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { IS_PUBLIC_KEY, Public } from '../../common/decorators/public.decorator';
 import { ChatProxyService } from './chat-proxy.service';
 import { ChatDto } from './dto/chat.dto';
 
@@ -72,7 +74,51 @@ export class ChatProxyController {
         error.stack,
       );
       res.write(
-        `event: error\ndata: ${JSON.stringify({ error: error.message })}\n\n`,
+        `event: error\ndata: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`,
+      );
+    } finally {
+      res.end();
+    }
+  }
+
+  // Authenticated owner-only test channel: chats against the bot's flow without
+  // requiring status='active'. Used by the Flow Canvas Test Panel.
+  @Post(':botId/test/messages')
+  @SetMetadata(IS_PUBLIC_KEY, false)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Owner test chat — bypasses bot active check' })
+  async testChat(
+    @Param('botId', ParseUUIDPipe) botId: string,
+    @Body() dto: ChatDto,
+    @CurrentTenant() tenantId: string,
+    @Res() res: Response,
+  ) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    try {
+      const stream = this.chatProxyService.processChat({
+        botId,
+        message: dto.message,
+        conversationId: dto.conversationId,
+        endUserId: dto.endUserId,
+        endUserName: dto.endUserName,
+        testTenantId: tenantId,
+      });
+
+      for await (const event of stream) {
+        res.write(`event: ${event.event}\ndata: ${event.data}\n\n`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Test chat error for bot ${botId}: ${error.message}`,
+        error.stack,
+      );
+      res.write(
+        `event: error\ndata: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`,
       );
     } finally {
       res.end();
