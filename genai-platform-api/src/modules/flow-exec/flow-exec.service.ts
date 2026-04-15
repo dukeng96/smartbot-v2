@@ -27,26 +27,59 @@ const CLIENT_FORWARD_TYPES = new Set([
 
 // Patch flow nodes before sending to engine:
 // 1. Fill empty kb_id in knowledge_base nodes with first bot-attached KB ID.
-// 2. Replace {{start.message}} template with {{chat_input}} so current engine
-//    (which stores state by node ID, not type) resolves the user message correctly.
-//    This is a compatibility shim until the engine is restarted with updated start.py.
+// 2. Fill missing query in knowledge_base nodes with {{chat_input}}.
+// 3. For llm nodes downstream of a knowledge_base node, inject prompt template
+//    wiring KB context + user question if prompt is missing.
+// 4. Replace {{start.message}} template with {{chat_input}} (legacy compat).
 function patchKbNodes(
   flowDef: { nodes: any[]; edges: any[] },
   kbIds: string[],
 ): { nodes: any[]; edges: any[] } {
+  // Build a set of knowledge_base node IDs so we can find downstream LLM nodes
+  const kbNodeIds = new Set(
+    flowDef.nodes.filter((n) => n.type === 'knowledge_base').map((n) => n.id),
+  );
+
+  // Find LLM node IDs that are directly downstream of a KB node
+  const llmDownstreamOfKb = new Set(
+    flowDef.edges
+      .filter((e) => kbNodeIds.has(e.source))
+      .map((e) => e.target),
+  );
+
+  // Find the KB node ID that feeds each downstream LLM node
+  const llmToKbSource: Record<string, string> = {};
+  for (const edge of flowDef.edges) {
+    if (kbNodeIds.has(edge.source) && llmDownstreamOfKb.has(edge.target)) {
+      llmToKbSource[edge.target] = edge.source;
+    }
+  }
+
   const nodes = flowDef.nodes.map((n) => {
     let data = n.data ? { ...n.data } : {};
 
-    // Patch 1: fill empty kb_id
     if (n.type === 'knowledge_base') {
+      // Patch 1: fill empty kb_id
       const kb_id = data.kb_id ?? data.config?.kb_id ?? '';
       if (!kb_id && kbIds.length) {
         data = { ...data, kb_id: kbIds[0] };
       }
+      // Patch 2: fill missing query
+      if (!data.query) {
+        data = { ...data, query: '{{chat_input}}' };
+      }
     }
 
-    // Patch 2: fix {{start.message}} → {{chat_input}} in all string data fields
-    // Works recursively on strings and arrays of objects (e.g. messages array)
+    // Patch 3: inject prompt for LLM nodes downstream of KB if prompt is missing
+    if (n.type === 'llm' && llmDownstreamOfKb.has(n.id) && !data.prompt) {
+      const kbSrcId = llmToKbSource[n.id];
+      data = {
+        ...data,
+        prompt: `Context:\n{{${kbSrcId}.context}}\n\nQuestion: {{chat_input}}`,
+      };
+    }
+
+    // Patch 4: fix {{start.message}} → {{chat_input}} in all string data fields
     data = deepReplaceTemplate(data, '{{start.message}}', '{{chat_input}}');
 
     return { ...n, data };

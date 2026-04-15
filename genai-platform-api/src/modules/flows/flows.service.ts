@@ -31,7 +31,7 @@ export function buildSimpleRagFlowData(): FlowData {
         id: 'kb-1',
         type: 'knowledge_base',
         position: { x: 350, y: 200 },
-        data: { kb_id: '', top_k: 5 },
+        data: { kb_id: '', top_k: 5, query: '{{chat_input}}' },
       },
       {
         id: 'llm-1',
@@ -39,7 +39,8 @@ export function buildSimpleRagFlowData(): FlowData {
         position: { x: 600, y: 200 },
         data: {
           model: 'llm-medium-v4',
-          systemPrompt: 'You are a helpful assistant. Use the retrieved context to answer questions accurately.',
+          system_prompt: 'You are a helpful assistant. Use the retrieved context to answer questions accurately.',
+          prompt: 'Context:\n{{kb-1.context}}\n\nQuestion: {{chat_input}}',
           temperature: 0.7,
         },
       },
