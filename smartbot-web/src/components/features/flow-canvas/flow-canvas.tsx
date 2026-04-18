@@ -21,6 +21,7 @@ import { NODE_COMPONENT_MAP } from "./nodes/node-types"
 import { CustomEdge } from "./edges/custom-edge"
 import { CanvasToolbar } from "./toolbar/canvas-toolbar"
 import { NodePalette } from "./node-palette/node-palette"
+import { NodeSidebar } from "./node-palette/node-sidebar"
 import { ConfigDrawer } from "./config-drawer/config-drawer"
 import { TestPanel } from "./test-panel/test-panel"
 import { canConnect } from "./utils/connection-rules"
@@ -84,6 +85,7 @@ export function FlowCanvas({ flowId, botId }: FlowCanvasProps) {
   return (
     <div className="flex h-[calc(100vh-56px)] w-full relative">
       <NodePalette ref={paletteRef} />
+      <NodeSidebar />
 
       <div className="flex-1 relative">
         <CanvasToolbar flowId={flowId} botId={botId} dirty={dirty} />

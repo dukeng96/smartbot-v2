@@ -10,16 +10,25 @@ import { KbPicker } from "./kb-picker"
 import { MessagesArrayEditor } from "./messages-array-editor"
 import { MonacoCodeEditor } from "./monaco-code-editor"
 import { CustomToolPicker } from "./custom-tool-picker"
-import type { NodeInputDefinition, MessageEntry } from "@/lib/types/flow"
+import { FlowStateInitEditor } from "./flow-state-init-editor"
+import type { NodeInputDefinition, MessageEntry, StateUpdate } from "@/lib/types/flow"
 
 interface InputEditorProps {
   input: NodeInputDefinition
   value: unknown
   nodeId: string
   onChange: (value: unknown) => void
+  allConfig?: Record<string, unknown>
 }
 
-export function InputEditor({ input, value, nodeId, onChange }: InputEditorProps) {
+export function InputEditor({ input, value, nodeId, onChange, allConfig }: InputEditorProps) {
+  if (input.showWhen && allConfig) {
+    const { field, value: expectedValue } = input.showWhen
+    if (allConfig[field] !== expectedValue) {
+      return null
+    }
+  }
+
   return (
     <div className="space-y-1">
       <Label className="text-[12px] font-medium">
@@ -105,6 +114,13 @@ export function InputEditor({ input, value, nodeId, onChange }: InputEditorProps
           value={input.name === "tool_id" ? (value as string) ?? "" : (value as string[]) ?? []}
           onChange={onChange}
           mode={input.name === "tool_id" ? "single" : "multi"}
+        />
+      )}
+
+      {input.type === "flow_state_init_editor" && (
+        <FlowStateInitEditor
+          value={(value as StateUpdate[]) ?? []}
+          onChange={onChange}
         />
       )}
 

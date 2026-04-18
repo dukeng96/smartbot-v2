@@ -83,9 +83,6 @@ export function ConfigDrawer() {
                 <TabsTrigger value="state" className="flex-1 text-[12px]">
                   Update State
                 </TabsTrigger>
-                <TabsTrigger value="advanced" className="flex-1 text-[12px]">
-                  Advanced
-                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="inputs" className="space-y-4 mt-3">
@@ -101,6 +98,7 @@ export function ConfigDrawer() {
                       value={node.data.config?.[input.name]}
                       nodeId={node.id}
                       onChange={(v) => updateNodeConfig(node.id, input.name, v)}
+                      allConfig={node.data.config}
                     />
                   ))
                 )}
@@ -110,24 +108,6 @@ export function ConfigDrawer() {
                 <UpdateFlowStateEditor nodeId={node.id} />
               </TabsContent>
 
-              <TabsContent value="advanced" className="space-y-3 mt-3">
-                <div className="space-y-1">
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                    Node ID
-                  </p>
-                  <code className="text-[11px] font-mono bg-muted px-2 py-1 rounded block break-all">
-                    {node.id}
-                  </code>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-                    Vị trí
-                  </p>
-                  <code className="text-[11px] font-mono bg-muted px-2 py-1 rounded block">
-                    x: {Math.round(node.position.x)}, y: {Math.round(node.position.y)}
-                  </code>
-                </div>
-              </TabsContent>
             </Tabs>
           </>
         )}

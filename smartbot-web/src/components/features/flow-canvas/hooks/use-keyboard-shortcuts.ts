@@ -16,12 +16,32 @@ export function useKeyboardShortcuts({ flowId, paletteOpen }: UseKeyboardShortcu
 
   useEffect(() => {
     function handler(e: KeyboardEvent) {
-      // All shortcuts suppressed while any dialog/drawer is open
-      if (store.dialogDepth > 0) return
-
       const isMac = navigator.platform.toUpperCase().includes("MAC")
       const mod = isMac ? e.metaKey : e.ctrlKey
       const key = e.key.toLowerCase()
+      const inInput = isInputFocused()
+
+      // Delete / Backspace — allowed even when drawer is open (dialogDepth > 0),
+      // as long as focus is not in a text input inside the drawer.
+      if ((key === "delete" || key === "backspace") && !inInput) {
+        e.preventDefault()
+        if (store.selectedNodeId) {
+          store.deleteNode(store.selectedNodeId)
+        }
+        return
+      }
+
+      // Cmd+D — duplicate selected — allowed even when drawer is open.
+      if (mod && key === "d" && !inInput) {
+        e.preventDefault()
+        if (store.selectedNodeId) {
+          store.duplicate(store.selectedNodeId)
+        }
+        return
+      }
+
+      // All remaining shortcuts suppressed while any dialog/drawer is open
+      if (store.dialogDepth > 0) return
 
       // Cmd+K — open palette
       if (mod && key === "k") {
@@ -44,30 +64,12 @@ export function useKeyboardShortcuts({ flowId, paletteOpen }: UseKeyboardShortcu
         return
       }
 
-      // Cmd+D — duplicate selected
-      if (mod && key === "d") {
-        e.preventDefault()
-        if (store.selectedNodeId) {
-          store.duplicate(store.selectedNodeId)
-        }
-        return
-      }
-
       // Cmd+A — select all (let React Flow handle natively via its own keyhandler)
       // We don't preventDefault here; RF v12 handles selectAll internally
 
       // Escape — clear selection
       if (key === "escape") {
         store.setSelected(null)
-        return
-      }
-
-      // Delete / Backspace — delete selected node (only when not in input)
-      if ((key === "delete" || key === "backspace") && !isInputFocused()) {
-        e.preventDefault()
-        if (store.selectedNodeId) {
-          store.deleteNode(store.selectedNodeId)
-        }
         return
       }
 

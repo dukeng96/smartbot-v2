@@ -14,6 +14,7 @@ export interface NodeInputDefinition {
     | "messages_array"
     | "code"
     | "custom_tool_list"
+    | "flow_state_init_editor"
     | "any"
   description?: string
   required?: boolean
@@ -22,12 +23,17 @@ export interface NodeInputDefinition {
   placeholder?: string
   // Whether this input shows as a connectable handle (vs config-only in drawer)
   connectableHandle?: boolean
+  // Conditional visibility: only show this field when another field has a specific value
+  showWhen?: { field: string; value: unknown }
 }
 
 export interface NodeOutputDefinition {
   name: string
   label: string
   type: string
+  // If true, this output is a branch (condition node true/false paths).
+  // Branch outputs each get their own handle; data outputs share a single handle.
+  isBranch?: boolean
 }
 
 // Node type registry entry
@@ -40,6 +46,9 @@ export interface NodeDefinition {
   inputs: NodeInputDefinition[]
   outputs: NodeOutputDefinition[]
   version?: number
+  // Hide from sidebar palette / Cmd+K picker. Engine still recognises the type
+  // and existing instances loaded from a saved flow continue to render.
+  hiddenInPalette?: boolean
 }
 
 export type NodeCategory =

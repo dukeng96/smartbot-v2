@@ -1,11 +1,12 @@
 "use client"
 
-import { memo } from "react"
+import { memo, useState } from "react"
 import { Handle, Position } from "@xyflow/react"
 import type { NodeProps } from "@xyflow/react"
 import {
   Play, Sparkles, Search, Bot, Wrench, Code, GitBranch,
   MessageSquare, Globe, User, StickyNote, LucideIcon,
+  Copy, Trash2, Info,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -35,7 +36,10 @@ export const GenericNode = memo(function GenericNode({
   data,
   selected,
 }: NodeProps & { data: NodeData }) {
+  const [hovered, setHovered] = useState(false)
   const setSelected = useFlowStore((s) => s.setSelected)
+  const deleteNode = useFlowStore((s) => s.deleteNode)
+  const duplicate = useFlowStore((s) => s.duplicate)
   const traceMap = useFlowStore((s) => (s as unknown as { traceMap?: Record<string, InlineTrace> }).traceMap)
   const trace: InlineTrace | undefined = traceMap?.[id]
 
@@ -48,7 +52,7 @@ export const GenericNode = memo(function GenericNode({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card shadow-sm min-w-[220px] cursor-pointer select-none",
+        "rounded-lg border bg-card shadow-sm min-w-[220px] cursor-pointer select-none relative",
         CATEGORY_BORDER[category],
         selected && "ring-2 ring-primary",
         trace?.error && "ring-2 ring-destructive",
@@ -56,7 +60,44 @@ export const GenericNode = memo(function GenericNode({
         trace?.running && !trace.awaitingInput && "animate-pulse"
       )}
       onClick={() => setSelected(id)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
+      {/* Node toolbar — visible on select */}
+      {selected && (
+        <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-popover border rounded-md shadow-md px-1 py-0.5 z-10">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              duplicate(id)
+            }}
+            className="p-1.5 rounded hover:bg-muted transition-colors"
+            title="Nhân bản"
+          >
+            <Copy size={14} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              deleteNode(id)
+            }}
+            className="p-1.5 rounded hover:bg-muted transition-colors text-destructive"
+            title="Xóa"
+          >
+            <Trash2 size={14} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setSelected(id)
+            }}
+            className="p-1.5 rounded hover:bg-muted transition-colors"
+            title="Chi tiết"
+          >
+            <Info size={14} />
+          </button>
+        </div>
+      )}
       {/* Input handles */}
       {inputAnchors.map((a, i) => (
         <Handle
@@ -115,7 +156,7 @@ export const GenericNode = memo(function GenericNode({
         </div>
       )}
 
-      {/* Output handles */}
+      {/* Output handles with hover highlight */}
       {outputAnchors.map((a, i) => (
         <Handle
           key={a.id}
@@ -123,7 +164,10 @@ export const GenericNode = memo(function GenericNode({
           position={Position.Right}
           id={a.id}
           style={{ top: 44 + i * 22 }}
-          className="!w-3 !h-3 !bg-primary"
+          className={cn(
+            "!w-3 !h-3 !bg-primary transition-all",
+            hovered && "!w-4 !h-4 !bg-primary ring-2 ring-primary/30"
+          )}
         />
       ))}
     </div>

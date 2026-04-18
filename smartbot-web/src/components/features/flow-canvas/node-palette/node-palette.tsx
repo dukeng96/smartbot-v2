@@ -63,7 +63,7 @@ export const NodePalette = forwardRef<NodePaletteHandle>(function NodePalette(_p
     [addNode, handleClose]
   )
 
-  const groups = groupByCategory(NODE_DEFINITIONS)
+  const groups = groupByCategory(NODE_DEFINITIONS.filter((d) => !d.hiddenInPalette))
 
   return (
     <CommandDialog open={open} onOpenChange={(o) => { if (!o) handleClose() }}>

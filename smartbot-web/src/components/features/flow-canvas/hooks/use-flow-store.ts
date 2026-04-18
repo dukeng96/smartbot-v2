@@ -4,11 +4,61 @@ import { current } from "immer"
 import type { Connection, Edge, NodeChange, EdgeChange, OnNodesChange, OnEdgesChange, XYPosition } from "@xyflow/react"
 import { applyNodeChanges, applyEdgeChanges } from "@xyflow/react"
 import type { NodeData, StateUpdate, FlowData, NodeDefinition, NodeTrace } from "@/lib/types/flow"
-import { createNode } from "../utils/node-factory"
+import { createNode, buildNodeData } from "../utils/node-factory"
 import { duplicateNode } from "../utils/duplicate-node"
+import { NODE_DEFINITION_MAP } from "../utils/node-definitions"
 
 interface FlowNode extends Omit<import("@xyflow/react").Node, "data"> {
   data: NodeData
+}
+
+// Backend persists nodes as { id, type: '<engine-type>', position, data: <config> }.
+// ReactFlow + GenericNode needs { type: 'genericNode', data: NodeData }.
+// Hydrate on load; inverse transform happens when saving (save-flow).
+function hydrateNode(
+  raw: { id: string; type?: string; position?: XYPosition; data?: Record<string, unknown> }
+): FlowNode {
+  const engineType = raw.type ?? ""
+  // If already hydrated (type === 'genericNode'), keep data as-is.
+  if (engineType === "genericNode" && raw.data && "definition" in raw.data) {
+    return {
+      id: raw.id,
+      type: "genericNode",
+      position: raw.position ?? { x: 0, y: 0 },
+      data: raw.data as unknown as NodeData,
+    }
+  }
+  const definition = NODE_DEFINITION_MAP[engineType]
+  if (!definition) {
+    // Unknown engine type — fallback to sticky_note so it still renders rather than vanish.
+    const fallback = NODE_DEFINITION_MAP["sticky_note"]
+    return {
+      id: raw.id,
+      type: "genericNode",
+      position: raw.position ?? { x: 0, y: 0 },
+      data: buildNodeData(raw.id, fallback, { _unknownType: engineType, ...(raw.data ?? {}) }),
+    }
+  }
+  const config = (raw.data ?? {}) as Record<string, unknown>
+  const stateWrites = Array.isArray((config as { _stateWrites?: unknown })._stateWrites)
+    ? ((config as { _stateWrites: StateUpdate[] })._stateWrites)
+    : []
+  const cleanConfig = { ...config }
+  delete (cleanConfig as { _stateWrites?: unknown })._stateWrites
+  return {
+    id: raw.id,
+    type: "genericNode",
+    position: raw.position ?? { x: 0, y: 0 },
+    data: buildNodeData(raw.id, definition, cleanConfig, stateWrites),
+  }
+}
+
+// Ensure edges have "custom" type so CustomEdge renders (backend may omit).
+function hydrateEdge(raw: Edge): Edge {
+  return {
+    ...raw,
+    type: raw.type ?? "custom",
+  }
 }
 
 export interface FlowStore {
@@ -60,8 +110,11 @@ export const useFlowStore = create<FlowStore>()(
       set((state) => {
         state.flowId = flow.id
         state.name = flow.name
-        state.nodes = (flow.flowData?.nodes ?? flow.nodes ?? []) as FlowNode[]
-        state.edges = flow.flowData?.edges ?? flow.edges ?? []
+        const rawNodes = (flow.flowData?.nodes ?? flow.nodes ?? []) as Array<
+          { id: string; type?: string; position?: XYPosition; data?: Record<string, unknown> }
+        >
+        state.nodes = rawNodes.map((n) => hydrateNode(n)) as FlowNode[]
+        state.edges = (flow.flowData?.edges ?? flow.edges ?? []).map(hydrateEdge)
         state.selectedNodeId = null
         state.dirty = false
       }),

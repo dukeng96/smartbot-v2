@@ -3,11 +3,13 @@
 import { useState } from "react"
 import { ArrowLeft, Save, CheckCircle, Undo2, Redo2, AlertCircle, X } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useFlowStore } from "../hooks/use-flow-store"
 import { useSaveFlow, useValidateFlow } from "@/lib/hooks/use-flow"
 import type { FlowData } from "@/lib/types/flow"
+import { serializeNode } from "../utils/node-factory"
 
 interface CanvasToolbarProps {
   flowId: string
@@ -23,15 +25,17 @@ export function CanvasToolbar({ flowId, botId, dirty }: CanvasToolbarProps) {
 
   function handleSave() {
     const { nodes, edges, name } = store
-    saveFlow({ name, flowData: { nodes, edges } as FlowData })
+    const serializedNodes = nodes.map(serializeNode)
+    saveFlow({ name, flowData: { nodes: serializedNodes, edges } as unknown as FlowData })
   }
 
   function handleValidate() {
     setValidationErrors([])
     validateFlow(undefined, {
       onSuccess: (result) => {
-        if (result.ok) {
+        if (result.valid) {
           setValidationErrors([])
+          toast.success("Flow hợp lệ", { description: "Không có lỗi nào được phát hiện." })
         } else {
           setValidationErrors(result.errors)
         }

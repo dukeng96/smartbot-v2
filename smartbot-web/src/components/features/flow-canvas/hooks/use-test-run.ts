@@ -180,7 +180,7 @@ export function useTestRun(): UseTestRunReturn {
       try {
         const token = getAccessToken()
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/chat/${botId}/messages`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/chat/${botId}/test/messages`,
           {
             method: "POST",
             headers: {
