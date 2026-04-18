@@ -22,15 +22,14 @@ Database: PostgreSQL 16 (Prisma ORM)
 
 ## Key Docs
 
-Read before working on a service:
-
-| Service | Required reading |
-|---------|-----------------|
-| Backend | @docs/backend-api-reference.md, @docs/backend-codebase-summary.md |
-| Engine | @docs/PHASE2-AI-ENGINE-PLAN.md, @docs/API-LLM-VNPT.md |
-| Frontend | @docs/frontend-architecture.md, @docs/frontend-ui-rules.md, @docs/frontend-design-system.md |
-| Widget | @docs/widget-architecture.md, @docs/widget-design-system.md |
-| Cross-cutting | @docs/system-architecture.md, @docs/figma-screen-spec.md |
+| Topic | File |
+|-------|------|
+| Overview | [docs/README.md](docs/README.md) |
+| Architecture | [docs/architecture.md](docs/architecture.md) |
+| API Endpoints | [docs/api-reference.md](docs/api-reference.md) |
+| Database | [docs/database-schema.md](docs/database-schema.md) |
+| Deployment | [docs/deployment.md](docs/deployment.md) |
+| VNPT LLM | [docs/vnpt-llm.md](docs/vnpt-llm.md) |
 
 ## Coding Rules
 
@@ -81,6 +80,5 @@ Read before working on a service:
 
 ## Workflow
 
-- Work in phases. Track progress in `PROJECT-STATUS.md`.
-- After each module commit, update progress in `PROJECT-STATUS.md`.
+- Work in phases. Track progress in plan files under `plans/`.
 - Commit messages: conventional format (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`)

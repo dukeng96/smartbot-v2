@@ -1,0 +1,22 @@
+# Root gitignore — monorepo-level ignores
+
+# Archived docs (kept locally for reference, not tracked)
+docs/archive/
+docs/frontend-implemetation-logs/
+
+# Old doc files (superseded by new structure)
+docs/deployment-guide.md
+docs/API-LLM-VNPT.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
