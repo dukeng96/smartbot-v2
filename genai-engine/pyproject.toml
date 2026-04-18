@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Node unit tests — no external dependencies, fast",
+    "integration: Flow tests hitting real local services (VNPT, Qdrant, NestJS)",
+]

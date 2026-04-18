@@ -214,7 +214,7 @@ def test_agent_no_tools_returns_response() -> None:
     ctx = _make_agent_ctx()
     mock_graph = _build_mock_agent_graph("Hello back!")
 
-    with patch("app.flow.nodes.agent.create_agent", return_value=mock_graph), \
+    with patch("app.flow.nodes.agent.create_react_agent", return_value=mock_graph), \
          patch("app.flow.nodes.agent.ChatOpenAI"):
         result = asyncio.run(AgentNode().execute(ctx))
 
@@ -273,7 +273,7 @@ def test_agent_emits_tool_call_and_tool_result_events() -> None:
     mock_graph = MagicMock()
     mock_graph.astream = _fake_astream
 
-    with patch("app.flow.nodes.agent.create_agent", return_value=mock_graph), \
+    with patch("app.flow.nodes.agent.create_react_agent", return_value=mock_graph), \
          patch("app.flow.nodes.agent.ChatOpenAI"), \
          patch("app.flow.nodes.agent._fetch_tool_def", new=AsyncMock(return_value=tool_def)):
         result = asyncio.run(AgentNode().execute(ctx))
@@ -292,7 +292,7 @@ def test_agent_return_as_assistant_message_emits_tokens_and_halts() -> None:
     ctx = _make_agent_ctx(return_as="assistant_message", events=events)
     mock_graph = _build_mock_agent_graph("Hello!")
 
-    with patch("app.flow.nodes.agent.create_agent", return_value=mock_graph), \
+    with patch("app.flow.nodes.agent.create_react_agent", return_value=mock_graph), \
          patch("app.flow.nodes.agent.ChatOpenAI"):
         result = asyncio.run(AgentNode().execute(ctx))
 
@@ -323,7 +323,7 @@ def test_agent_max_iterations_clamped_at_15() -> None:
 
     mock_graph.astream = _fake_astream
 
-    with patch("app.flow.nodes.agent.create_agent", return_value=mock_graph), \
+    with patch("app.flow.nodes.agent.create_react_agent", return_value=mock_graph), \
          patch("app.flow.nodes.agent.ChatOpenAI"):
         asyncio.run(AgentNode().execute(ctx))
 
