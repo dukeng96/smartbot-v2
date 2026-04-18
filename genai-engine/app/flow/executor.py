@@ -113,11 +113,17 @@ class FlowExecutor:
         self._tenant_id = tenant_id
         self._halt = False
 
-    def build_graph(self) -> Any:
-        """Compile a LangGraph StateGraph from the flow definition."""
-        graph = StateGraph(dict)
+    # ------------------------------------------------------------------
+    # Graph construction helpers (shared by both build methods)
+    # ------------------------------------------------------------------
 
-        # Nodes — skip sticky_note (canvas annotation, no execution)
+    def _is_sticky(self, node_id: str) -> bool:
+        """Check if a node id belongs to a sticky_note."""
+        node = next((n for n in self._flow.nodes if n.id == node_id), None)
+        return node is not None and node.type == "sticky_note"
+
+    def _add_nodes_to_graph(self, graph: StateGraph) -> None:
+        """Register all non-sticky nodes with the graph."""
         for node in self._flow.nodes:
             if node.type == "sticky_note":
                 continue
@@ -125,54 +131,106 @@ class FlowExecutor:
             instance = node_cls()
             graph.add_node(node.id, self._wrap_node(node, instance))
 
-        # Entry edge: START → first start-typed node
+    def _add_entry_edge(self, graph: StateGraph) -> None:
+        """Wire START → first start-typed node."""
         start_nodes = [n for n in self._flow.nodes if n.type == "start"]
         if not start_nodes:
             raise FlowValidationError("Flow must contain a 'start' node")
         graph.add_edge(START, start_nodes[0].id)
 
-        # Flow edges
+    def _build_conditional_edge_map(self, condition_node_id: str) -> dict[str, str]:
+        """
+        Return {branch_key: target_node_id} for a condition node.
+        Reads edge.source_handle ("true"/"false") to determine mapping.
+        Falls back to positional order if source_handle is absent.
+        """
+        outgoing = [
+            e for e in self._flow.edges
+            if e.source == condition_node_id
+            and not self._is_sticky(e.target)
+        ]
+        mapping: dict[str, str] = {}
+        for i, edge in enumerate(outgoing):
+            key = edge.source_handle or ("true" if i == 0 else "false")
+            mapping[key] = edge.target
+        return mapping
+
+    def _make_condition_router(self, node_id: str) -> Callable[[dict], str]:
+        """
+        Returns a router function that reads state[node_id]["branch"].
+        Defaults to "false" if key absent.
+        """
+        def _router(state: dict[str, Any]) -> str:
+            node_out = state.get(node_id, {})
+            if isinstance(node_out, dict):
+                return str(node_out.get("branch", "false"))
+            return "false"
+        return _router
+
+    def _add_edges_to_graph(self, graph: StateGraph) -> None:
+        """Wire all edges: static for regular nodes, conditional for condition nodes."""
+        condition_node_ids: set[str] = {
+            n.id for n in self._flow.nodes if n.type == "condition"
+        }
+
         for edge in self._flow.edges:
             source = edge.source
             target = edge.target
             # Skip edges involving sticky_note
-            source_node = next((n for n in self._flow.nodes if n.id == source), None)
-            target_node = next((n for n in self._flow.nodes if n.id == target), None)
-            if source_node and source_node.type == "sticky_note":
+            if self._is_sticky(source) or self._is_sticky(target):
                 continue
-            if target_node and target_node.type == "sticky_note":
+            # Condition node edges handled via add_conditional_edges below
+            if source in condition_node_ids:
                 continue
             graph.add_edge(source, target)
 
+        # Wire conditional edges
+        for cond_id in condition_node_ids:
+            mapping = self._build_conditional_edge_map(cond_id)
+            if not mapping:
+                continue  # condition node with no outgoing edges — skip gracefully
+            router = self._make_condition_router(cond_id)
+            graph.add_conditional_edges(cond_id, router, mapping)
+
+    def _build_state_init_defaults(self) -> dict[str, Any]:
+        """
+        Read flow_state_init from the Start node config and return
+        a dict of {key: value} defaults to pre-populate before graph runs.
+        Returns empty dict if no start node or no flow_state_init configured.
+        """
+        start_node = next(
+            (n for n in self._flow.nodes if n.type == "start"), None
+        )
+        if start_node is None:
+            return {}
+
+        raw: list[dict[str, Any]] = start_node.data.get("flow_state_init") or []
+        defaults: dict[str, Any] = {}
+        for row in raw:
+            key = row.get("key", "").strip()
+            value = row.get("value", "")
+            if key:
+                defaults[key] = value
+        return defaults
+
+    # ------------------------------------------------------------------
+    # Public build methods
+    # ------------------------------------------------------------------
+
+    def build_graph(self) -> Any:
+        """Compile a LangGraph StateGraph from the flow definition."""
+        graph = StateGraph(dict)
+        self._add_nodes_to_graph(graph)
+        self._add_entry_edge(graph)
+        self._add_edges_to_graph(graph)
         return graph.compile()
 
     def build_graph_with_checkpointer(self, checkpointer: MemorySaver) -> Any:
         """Compile graph with a MemorySaver checkpointer — required for human_input interrupt()."""
         graph = StateGraph(dict)
-
-        for node in self._flow.nodes:
-            if node.type == "sticky_note":
-                continue
-            node_cls = NodeRegistry.get(node.type)
-            instance = node_cls()
-            graph.add_node(node.id, self._wrap_node(node, instance))
-
-        start_nodes = [n for n in self._flow.nodes if n.type == "start"]
-        if not start_nodes:
-            raise FlowValidationError("Flow must contain a 'start' node")
-        graph.add_edge(START, start_nodes[0].id)
-
-        for edge in self._flow.edges:
-            source = edge.source
-            target = edge.target
-            source_node = next((n for n in self._flow.nodes if n.id == source), None)
-            target_node = next((n for n in self._flow.nodes if n.id == target), None)
-            if source_node and source_node.type == "sticky_note":
-                continue
-            if target_node and target_node.type == "sticky_note":
-                continue
-            graph.add_edge(source, target)
-
+        self._add_nodes_to_graph(graph)
+        self._add_entry_edge(graph)
+        self._add_edges_to_graph(graph)
         return graph.compile(checkpointer=checkpointer)
 
     def _wrap_node(self, node: FlowNode, instance: Any) -> Callable:
@@ -198,6 +256,8 @@ class FlowExecutor:
 
             try:
                 result = await instance.execute(ctx)
+            except GraphInterrupt:
+                raise  # Let GraphInterrupt propagate for human_input suspension
             except Exception as exc:
                 self._emit(ExecutionEvent(
                     type=ExecutionEventType.NODE_ERROR,
@@ -239,6 +299,12 @@ class FlowExecutor:
 
     async def stream(self, inputs: dict[str, Any]) -> AsyncIterator[ExecutionEvent]:
         """Run the graph and yield events. Caller drains into SSE."""
+        # Pre-populate state from Start node flow_state_init config.
+        # Caller-supplied inputs win over defaults (merge order: defaults first).
+        state_defaults = self._build_state_init_defaults()
+        if state_defaults:
+            inputs = {**state_defaults, **inputs}
+
         has_human_input = any(n.type == "human_input" for n in self._flow.nodes)
 
         if has_human_input:
@@ -257,14 +323,15 @@ class FlowExecutor:
         if has_human_input and self._execution_id:
             astream_config["configurable"] = {"thread_id": self._execution_id}
 
+        was_interrupted = False
         try:
-            async for _ in graph.astream(inputs, config=astream_config or None, stream_mode="updates"):
-                pass  # events already emitted via self._emit callback
+            async for update in graph.astream(inputs, config=astream_config or None, stream_mode="updates"):
+                # LangGraph 1.1+ emits __interrupt__ update instead of raising GraphInterrupt
+                if "__interrupt__" in update:
+                    was_interrupted = True
         except GraphInterrupt:
-            # Flow suspended at a human_input node — store graph for resume
-            if self._execution_id and saver is not None:
-                _SUSPENDED_GRAPHS[self._execution_id] = (graph, saver, time.monotonic())
-            return
+            # Fallback for older LangGraph versions that raise GraphInterrupt
+            was_interrupted = True
         except NodeExecutionError:
             raise
         except Exception as exc:
@@ -272,6 +339,12 @@ class FlowExecutor:
                 type=ExecutionEventType.ERROR,
                 message=str(exc),
             ))
+            return
+
+        if was_interrupted:
+            # Flow suspended at a human_input node — store graph for resume
+            if self._execution_id and saver is not None:
+                _SUSPENDED_GRAPHS[self._execution_id] = (graph, saver, time.monotonic())
             return
 
         self._emit(ExecutionEvent(type=ExecutionEventType.DONE, data={}))
@@ -290,17 +363,19 @@ class FlowExecutor:
         graph, _saver, _ts = entry
         config = {"configurable": {"thread_id": self._execution_id}}
 
+        was_interrupted = False
         try:
-            async for _ in graph.astream(
+            async for update in graph.astream(
                 Command(resume={"approval": approval}),
                 config=config,
                 stream_mode="updates",
             ):
-                pass
+                # LangGraph 1.1+ emits __interrupt__ update instead of raising GraphInterrupt
+                if "__interrupt__" in update:
+                    was_interrupted = True
         except GraphInterrupt:
-            # Re-suspended (chained human_input nodes) — store again
-            _SUSPENDED_GRAPHS[self._execution_id] = (graph, _saver, time.monotonic())
-            return
+            # Fallback for older LangGraph versions that raise GraphInterrupt
+            was_interrupted = True
         except NodeExecutionError:
             raise
         except Exception as exc:
@@ -308,6 +383,11 @@ class FlowExecutor:
                 type=ExecutionEventType.ERROR,
                 message=str(exc),
             ))
+            return
+
+        if was_interrupted:
+            # Re-suspended (chained human_input nodes) — store again
+            _SUSPENDED_GRAPHS[self._execution_id] = (graph, _saver, time.monotonic())
             return
 
         self._emit(ExecutionEvent(type=ExecutionEventType.DONE, data={}))

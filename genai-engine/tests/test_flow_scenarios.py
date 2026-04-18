@@ -109,7 +109,7 @@ def test_flow_simple_chat(vnpt_api_key: str) -> None:
             _node("s1", "start"),
             _node("llm1", "llm", {
                 "credential_id": "cred-vnpt",
-                "model": "llm-large-v4",
+                "model": "llm-medium-v4",
                 "prompt": "{{start.message}}",
                 "system_prompt": "Reply in one sentence.",
                 "max_tokens": 100,
@@ -154,6 +154,7 @@ def test_flow_simple_rag(vnpt_api_key: str, test_kb_id: str) -> None:
             }),
             _node("llm1", "llm", {
                 "credential_id": "cred-vnpt",
+                "model": "llm-medium-v4",
                 "prompt": "Context:\n{{knowledge_base.context}}\n\nQuestion: {{start.message}}",
                 "max_tokens": 150,
             }),
@@ -232,6 +233,7 @@ def test_flow_condition_true_branch(vnpt_api_key: str) -> None:
             }),
             _node("llm_true", "llm", {
                 "credential_id": "cred-vnpt",
+                "model": "llm-medium-v4",
                 "prompt": "Say 'high' in one word.",
                 "max_tokens": 10,
             }),
@@ -273,6 +275,7 @@ def test_flow_condition_false_branch() -> None:
             }),
             _node("llm_true", "llm", {
                 "credential_id": "cred-vnpt",
+                "model": "llm-medium-v4",
                 "prompt": "Say 'high'.",
                 "max_tokens": 10,
             }),
@@ -349,6 +352,7 @@ def test_flow_human_input_lifecycle(vnpt_api_key: str) -> None:
             _node("hi1", "human_input", {"prompt": "Do you approve?", "timeout_seconds": 60}),
             _node("llm1", "llm", {
                 "credential_id": "cred-vnpt",
+                "model": "llm-medium-v4",
                 "prompt": "Say 'approved' in one word.",
                 "max_tokens": 10,
             }),
@@ -358,12 +362,14 @@ def test_flow_human_input_lifecycle(vnpt_api_key: str) -> None:
 
     exec_id = "test-human-1"
 
+    # Use shared events list since stored graph captures emit callback from phase A
+    all_events: list[ExecutionEvent] = []
+
     # Phase A: stream — expect suspension at human_input
-    phase_a_events: list[ExecutionEvent] = []
     executor = FlowExecutor(
         flow=flow,
         credentials=_make_cred(vnpt_api_key),
-        emit=phase_a_events.append,
+        emit=all_events.append,
         session_id="sess-human",
         tenant_id="test-tenant",
         execution_id=exec_id,
@@ -372,25 +378,19 @@ def test_flow_human_input_lifecycle(vnpt_api_key: str) -> None:
 
     # Should have emitted HUMAN_INPUT_REQUIRED
     required_events = [
-        e for e in phase_a_events
+        e for e in all_events
         if e.type == ExecutionEventType.HUMAN_INPUT_REQUIRED
     ]
     assert len(required_events) == 1
     assert exec_id in _SUSPENDED_GRAPHS
 
-    # Phase B: resume with approval
-    resume_events: list[ExecutionEvent] = []
-    resume_executor = FlowExecutor(
-        flow=flow,
-        credentials=_make_cred(vnpt_api_key),
-        emit=resume_events.append,
-        session_id="sess-human",
-        tenant_id="test-tenant",
-        execution_id=exec_id,
-    )
-    asyncio.run(resume_executor.resume("approved"))
+    phase_a_count = len(all_events)
 
-    # LLM should have run after resume
+    # Phase B: resume with approval — reuse same executor so emit callback is captured
+    asyncio.run(executor.resume("approved"))
+
+    # Events after resume should include LLM tokens
+    resume_events = all_events[phase_a_count:]
     token_events = [e for e in resume_events if e.type == ExecutionEventType.TOKEN]
     assert len(token_events) > 0
     assert ExecutionEventType.DONE in {e.type for e in resume_events}

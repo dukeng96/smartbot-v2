@@ -4,8 +4,14 @@ Test configuration and shared fixtures.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
+from dotenv import load_dotenv
+
+# Load .env from genai-engine root (parent of tests/)
+_env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(_env_path)
 
 
 @pytest.fixture
