@@ -1,5 +1,9 @@
 # Root gitignore — monorepo-level ignores
 
+# Plans and journals (local only, not tracked)
+plans/
+journals/
+
 # Archived docs (kept locally for reference, not tracked)
 docs/archive/
 docs/frontend-implemetation-logs/
