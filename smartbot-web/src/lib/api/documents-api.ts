@@ -60,3 +60,15 @@ export function deleteDocument(kbId: string, docId: string) {
 export function reprocessDocument(kbId: string, docId: string) {
   return apiPost<void>(`${base(kbId)}/${docId}/reprocess`)
 }
+
+/** Get document chunks with pagination. */
+export function getDocumentChunks(
+  kbId: string,
+  docId: string,
+  options: { page: number; limit: number },
+) {
+  return apiGet<{
+    data: Array<{ id: string; content: string; position: number; metadata?: Record<string, unknown> }>
+    meta: { total: number; page: number; limit: number }
+  }>(`${base(kbId)}/${docId}/chunks`, { page: options.page, limit: options.limit })
+}

@@ -313,4 +313,54 @@ export class DocumentsService {
     if (!doc) throw new NotFoundException('Document not found');
     return doc;
   }
+
+  async getChunks(
+    tenantId: string,
+    kbId: string,
+    docId: string,
+    query: PaginationDto,
+  ) {
+    await this.ensureDocExists(tenantId, kbId, docId);
+
+    const aiEngineUrl = this.configService.get<string>('aiEngine.url');
+    const internalKey = this.configService.get<string>(
+      'aiEngine.internalApiKey',
+    );
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+
+    try {
+      const response = await fetch(
+        `${aiEngineUrl}/engine/v1/documents/${docId}/chunks?knowledge_base_id=${kbId}&page=${page}&limit=${limit}`,
+        {
+          headers: {
+            'X-Internal-Key': internalKey || '',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        this.logger.warn(`Failed to fetch chunks: ${response.status}`);
+        return { data: [], meta: { total: 0, page, limit } };
+      }
+
+      const result = await response.json();
+      return {
+        data: (result.chunks || []).map((c: any) => ({
+          id: c.id || `${docId}-pos-${c.position}`,
+          content: c.content,
+          position: c.position,
+          charCount: c.char_count,
+        })),
+        meta: {
+          total: result.total || 0,
+          page: result.page || page,
+          limit,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error fetching chunks from AI Engine', error);
+      return { data: [], meta: { total: 0, page, limit } };
+    }
+  }
 }

@@ -17,9 +17,13 @@ export function formatDateTime(date: string | Date): string {
 
 /**
  * Relative time in Vietnamese: "5 phút trước", "2 ngày trước"
+ * Returns "—" for null, undefined, or invalid dates
  */
-export function formatRelativeTime(date: string | Date): string {
-  return formatDistanceToNow(new Date(date), {
+export function formatRelativeTime(date: string | Date | null | undefined): string {
+  if (!date) return "—"
+  const d = new Date(date)
+  if (isNaN(d.getTime()) || d.getFullYear() < 2000) return "—"
+  return formatDistanceToNow(d, {
     addSuffix: true,
     locale: vi,
   })

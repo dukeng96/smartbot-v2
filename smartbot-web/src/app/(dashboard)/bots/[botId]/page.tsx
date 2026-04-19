@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 
 /**
- * C2 — Bot detail index. Redirects to /config tab.
+ * Bot detail index. Redirects to Flow Canvas as default tab.
  */
 export default async function BotDetailPage({
   params,
@@ -9,5 +9,5 @@ export default async function BotDetailPage({
   params: Promise<{ botId: string }>
 }) {
   const { botId } = await params
-  redirect(`/bots/${botId}/config`)
+  redirect(`/bots/${botId}/flow`)
 }

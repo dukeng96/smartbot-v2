@@ -15,6 +15,7 @@ import {
   updateDocument,
   deleteDocument,
   reprocessDocument,
+  getDocumentChunks,
 } from "@/lib/api/documents-api"
 
 /** Polling interval when documents are being processed (5s) */
@@ -121,5 +122,17 @@ export function useReprocessDocument(kbId: string) {
       toast.success("Đã bắt đầu reprocess tài liệu")
     },
     onError: () => toast.error("Không thể reprocess tài liệu"),
+  })
+}
+
+export function useDocumentChunks(
+  kbId: string,
+  docId: string,
+  options: { page: number; limit: number },
+) {
+  return useQuery({
+    queryKey: [...KEYS.detail(kbId, docId), "chunks", options],
+    queryFn: () => getDocumentChunks(kbId, docId, options),
+    enabled: !!kbId && !!docId,
   })
 }

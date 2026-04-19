@@ -11,8 +11,6 @@ export const updateBotSchema = z.object({
   name: z.string().min(1, "Tên không được để trống").max(100).optional(),
   description: z.string().max(500).nullable().optional(),
   status: z.enum(["draft", "active", "paused"]).optional(),
-  topK: z.number().int().min(1).max(20).optional(),
-  memoryTurns: z.number().int().min(1).max(20).optional(),
 })
 
 export type UpdateBotInput = z.infer<typeof updateBotSchema>

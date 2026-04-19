@@ -29,8 +29,6 @@ export function BotConfigForm({ bot, onDuplicate, onDelete }: BotConfigFormProps
       name: bot.name,
       description: bot.description ?? "",
       status: bot.status === "archived" ? "draft" : bot.status,
-      topK: bot.topK,
-      memoryTurns: bot.memoryTurns,
     },
   })
 
@@ -40,8 +38,6 @@ export function BotConfigForm({ bot, onDuplicate, onDelete }: BotConfigFormProps
       name: bot.name,
       description: bot.description ?? "",
       status: bot.status === "archived" ? "draft" : bot.status,
-      topK: bot.topK,
-      memoryTurns: bot.memoryTurns,
     })
   }, [bot, form])
 
@@ -83,23 +79,6 @@ export function BotConfigForm({ bot, onDuplicate, onDelete }: BotConfigFormProps
               </Select>
             )}
           />
-        </div>
-      </section>
-
-      {/* RAG Config */}
-      <section className="space-y-4">
-        <h3 className="text-[14px] font-semibold text-foreground">Cấu hình RAG</h3>
-        <div className="grid max-w-md grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-[13px] font-medium">Top K</label>
-            <Input type="number" {...form.register("topK", { valueAsNumber: true })} min={1} max={20} className="text-[13px]" />
-            <p className="text-[12px] text-text-muted">Số đoạn văn bản truy xuất (1-20)</p>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[13px] font-medium">Memory Turns</label>
-            <Input type="number" {...form.register("memoryTurns", { valueAsNumber: true })} min={1} max={20} className="text-[13px]" />
-            <p className="text-[12px] text-text-muted">Số lượt hội thoại ghi nhớ (1-20)</p>
-          </div>
         </div>
       </section>
 

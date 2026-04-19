@@ -1,13 +1,21 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { MoreVertical } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
+import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { updateKbSchema, type UpdateKbFormValues } from "@/lib/validations/kb-schemas"
 import { useUpdateKnowledgeBase, useReprocessAllDocuments } from "@/lib/hooks/use-knowledge-bases"
 import type { KnowledgeBase } from "@/lib/types/knowledge-base"
@@ -18,6 +26,7 @@ interface KbDetailFormProps {
 }
 
 export function KbDetailForm({ kb, onDelete }: KbDetailFormProps) {
+  const [showReprocessConfirm, setShowReprocessConfirm] = useState(false)
   const updateMutation = useUpdateKnowledgeBase(kb.id)
   const reprocessMutation = useReprocessAllDocuments()
 
@@ -95,17 +104,19 @@ export function KbDetailForm({ kb, onDelete }: KbDetailFormProps) {
               <Button type="submit" disabled={!isDirty || updateMutation.isPending}>
                 {updateMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={reprocessMutation.isPending}
-                onClick={() => reprocessMutation.mutate(kb.id)}
-              >
-                {reprocessMutation.isPending ? "Đang xử lý..." : "Reprocess tất cả"}
-              </Button>
               <Button type="button" variant="destructive" onClick={onDelete}>
                 Xóa KB
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon" />}>
+                  <MoreVertical className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowReprocessConfirm(true)}>
+                    Reprocess tất cả tài liệu
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </form>
         </CardContent>
@@ -129,6 +140,19 @@ export function KbDetailForm({ kb, onDelete }: KbDetailFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={showReprocessConfirm}
+        onOpenChange={setShowReprocessConfirm}
+        title="Reprocess tất cả tài liệu?"
+        message="Việc này sẽ trích xuất và vector hóa lại toàn bộ tài liệu. Thường chỉ cần thực hiện khi thay đổi Chunk Size hoặc Chunk Overlap."
+        confirmLabel="Reprocess"
+        onConfirm={() => {
+          reprocessMutation.mutate(kb.id)
+          setShowReprocessConfirm(false)
+        }}
+        loading={reprocessMutation.isPending}
+      />
     </div>
   )
 }

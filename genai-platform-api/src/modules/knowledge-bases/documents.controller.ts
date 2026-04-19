@@ -125,4 +125,15 @@ export class DocumentsController {
   ) {
     return this.documentsService.reprocess(tenantId, kbId, docId);
   }
+
+  @Get(':docId/chunks')
+  @ApiOperation({ summary: 'Get document chunks from vector store' })
+  getChunks(
+    @CurrentTenant() tenantId: string,
+    @Param('kbId', ParseUUIDPipe) kbId: string,
+    @Param('docId', ParseUUIDPipe) docId: string,
+    @Query() query: PaginationDto,
+  ) {
+    return this.documentsService.getChunks(tenantId, kbId, docId, query);
+  }
 }
