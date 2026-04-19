@@ -267,3 +267,43 @@ class QdrantHandler:
         )
         points, next_offset = result
         return points, next_offset
+
+    def get_all_by_document_id(self, collection: str, document_id: str) -> list:
+        """Fetch all points for a document using scroll pagination."""
+        all_points = []
+        offset = None
+        while True:
+            points, next_offset = self.qdrant.scroll(
+                collection_name=collection,
+                scroll_filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key="document_id", match=MatchValue(value=document_id)
+                        )
+                    ]
+                ),
+                limit=100,
+                offset=offset,
+                with_payload=True,
+                with_vectors=False,
+            )
+            all_points.extend(points)
+            if next_offset is None:
+                break
+            offset = next_offset
+        return all_points
+
+    def count_by_document_id(self, collection: str, document_id: str) -> int:
+        """Count points filtered by document_id."""
+        result = self.qdrant.count(
+            collection_name=collection,
+            count_filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="document_id", match=MatchValue(value=document_id)
+                    )
+                ]
+            ),
+            exact=True,
+        )
+        return result.count

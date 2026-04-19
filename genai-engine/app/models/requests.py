@@ -10,15 +10,11 @@ class ProcessDocumentRequest(BaseModel):
     source_type: str  # file_upload | url_crawl | text_input
     source_url: str | None = None
     raw_text: str | None = None
-    chunk_size: int = Field(default=500, ge=100, le=5000)
-    chunk_overlap: int = Field(default=50, ge=0, le=500)
 
 
 class ReprocessDocumentRequest(BaseModel):
     knowledge_base_id: str = Field(..., min_length=1)
     markdown_storage_path: str = Field(..., min_length=1)
-    chunk_size: int = Field(default=500, ge=100, le=5000)
-    chunk_overlap: int = Field(default=50, ge=0, le=500)
 
 
 class ChatRequest(BaseModel):

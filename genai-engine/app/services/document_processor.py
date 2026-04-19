@@ -47,8 +47,7 @@ class DocumentProcessor:
         source_type: str = "file_upload",
         source_url: str | None = None,
         raw_text: str | None = None,
-        chunk_size: int = 500,
-        chunk_overlap: int = 50,
+        **_kwargs,  # ignore legacy chunk_size/chunk_overlap from old jobs
     ) -> None:
         """Full pipeline called by Celery worker."""
         collection_name = f"kb_{knowledge_base_id}"
@@ -77,8 +76,8 @@ class DocumentProcessor:
                 extra={"markdown_storage_path": markdown_path},
             )
 
-            # Step 2: Chunk
-            chunks = self.chunker.chunk(markdown_text, chunk_size, chunk_overlap)
+            # Step 2: Chunk (word-based, fixed 800/100)
+            chunks = self.chunker.chunk(markdown_text)
 
             if not chunks:
                 await self._update_status(
@@ -93,6 +92,9 @@ class DocumentProcessor:
 
             # Step 3: Ensure Qdrant collection exists
             self.embedding.ensure_collection(collection_name)
+
+            # Step 3.5: Delete any existing vectors for this document (idempotent re-processing)
+            self.embedding.delete_document_vectors(collection_name, document_id)
 
             # Step 4: Embed + upsert
             chunk_count = self.embedding.embed_and_upsert(
@@ -140,8 +142,7 @@ class DocumentProcessor:
         document_id: str,
         knowledge_base_id: str,
         markdown_storage_path: str,
-        chunk_size: int = 500,
-        chunk_overlap: int = 50,
+        **_kwargs,  # ignore legacy chunk_size/chunk_overlap from old jobs
     ) -> None:
         """Re-chunk from saved markdown. Skips Marker API call."""
         collection_name = f"kb_{knowledge_base_id}"
@@ -155,8 +156,8 @@ class DocumentProcessor:
                 markdown_storage_path
             )
 
-            # 3. Re-chunk
-            chunks = self.chunker.chunk(markdown_text, chunk_size, chunk_overlap)
+            # 3. Re-chunk (word-based, fixed 800/100)
+            chunks = self.chunker.chunk(markdown_text)
 
             # 4. Re-embed + upsert
             chunk_count = self.embedding.embed_and_upsert(
