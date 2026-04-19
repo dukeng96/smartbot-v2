@@ -16,6 +16,7 @@ import {
   deleteDocument,
   reprocessDocument,
   getDocumentChunks,
+  getDocumentDownloadUrl,
 } from "@/lib/api/documents-api"
 
 /** Polling interval when documents are being processed (5s) */
@@ -134,5 +135,14 @@ export function useDocumentChunks(
     queryKey: [...KEYS.detail(kbId, docId), "chunks", options],
     queryFn: () => getDocumentChunks(kbId, docId, options),
     enabled: !!kbId && !!docId,
+  })
+}
+
+export function useDocumentDownloadUrl(kbId: string, docId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...KEYS.detail(kbId, docId), "downloadUrl"],
+    queryFn: () => getDocumentDownloadUrl(kbId, docId),
+    enabled: enabled && !!kbId && !!docId,
+    staleTime: 30 * 60 * 1000, // 30 minutes (URL valid for 1 hour)
   })
 }

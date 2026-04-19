@@ -68,7 +68,14 @@ export function getDocumentChunks(
   options: { page: number; limit: number },
 ) {
   return apiGet<{
-    data: Array<{ id: string; content: string; position: number; metadata?: Record<string, unknown> }>
-    meta: { total: number; page: number; limit: number }
+    chunks: Array<{ id: string; content: string; position: number; charCount?: number }>
+    total: number
+    page: number
+    limit: number
   }>(`${base(kbId)}/${docId}/chunks`, { page: options.page, limit: options.limit })
+}
+
+/** Get signed download URL for document. */
+export function getDocumentDownloadUrl(kbId: string, docId: string) {
+  return apiGet<{ url: string }>(`${base(kbId)}/${docId}/download`)
 }

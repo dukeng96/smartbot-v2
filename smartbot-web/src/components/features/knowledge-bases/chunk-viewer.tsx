@@ -29,7 +29,7 @@ export function ChunkViewer({ kbId, docId }: ChunkViewerProps) {
     )
   }
 
-  if (!data?.data?.length) {
+  if (!data?.chunks?.length) {
     return (
       <div className="text-center py-8 text-text-muted">
         Chưa có chunks nào
@@ -41,7 +41,7 @@ export function ChunkViewer({ kbId, docId }: ChunkViewerProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-text-muted">
-          Hiển thị {data.data.length} / {data.meta?.total || 0} chunks
+          Hiển thị {data.chunks.length} / {data.total || 0} chunks
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -57,7 +57,7 @@ export function ChunkViewer({ kbId, docId }: ChunkViewerProps) {
             size="sm"
             variant="outline"
             onClick={() => setPage((p) => p + 1)}
-            disabled={!data.meta?.total || page * limit >= data.meta.total}
+            disabled={!data.total || page * limit >= data.total}
           >
             <ChevronRight className="size-4" />
           </Button>
@@ -65,7 +65,7 @@ export function ChunkViewer({ kbId, docId }: ChunkViewerProps) {
       </div>
 
       <div className="space-y-3">
-        {data.data.map((chunk, i) => (
+        {data.chunks.map((chunk, i) => (
           <Card key={chunk.id} size="sm">
             <CardContent>
               <div className="flex items-center justify-between mb-2">
@@ -73,7 +73,7 @@ export function ChunkViewer({ kbId, docId }: ChunkViewerProps) {
                   Chunk #{(page - 1) * limit + i + 1}
                 </span>
                 <span className="text-[11px] text-text-muted">
-                  {chunk.content.length} ký tự
+                  {chunk.charCount || chunk.content.length} ký tự
                 </span>
               </div>
               <p className="text-[13px] whitespace-pre-wrap line-clamp-6">

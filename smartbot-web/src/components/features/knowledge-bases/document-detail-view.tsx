@@ -15,6 +15,7 @@ import {
   useToggleDocument,
   useReprocessDocument,
   useDeleteDocument,
+  useDocumentDownloadUrl,
 } from "@/lib/hooks/use-documents"
 
 const PdfViewer = lazy(() =>
@@ -34,12 +35,17 @@ export function DocumentDetailView({ kbId, doc, onDeleted }: DocumentDetailViewP
   const reprocessMutation = useReprocessDocument(kbId)
   const deleteMutation = useDeleteDocument(kbId)
 
+  const isPdf = doc.mimeType === "application/pdf"
+  const hasStoragePath = !!doc.storagePath
+  const { data: downloadData, isLoading: downloadLoading } = useDocumentDownloadUrl(
+    kbId,
+    doc.id,
+    isPdf && hasStoragePath,
+  )
+
   function handleDelete() {
     deleteMutation.mutate(doc.id, { onSuccess: onDeleted })
   }
-
-  const isPdf = doc.mimeType === "application/pdf"
-  const hasDownloadUrl = !!doc.storagePath
 
   return (
     <div className="space-y-6">
@@ -52,10 +58,20 @@ export function DocumentDetailView({ kbId, doc, onDeleted }: DocumentDetailViewP
         </TabsList>
 
         <TabsContent value="preview">
-          {isPdf && hasDownloadUrl ? (
-            <Suspense fallback={<LoadingSkeleton variant="cards" />}>
-              <PdfViewer url={`/api/v1/knowledge-bases/${kbId}/documents/${doc.id}/download`} />
-            </Suspense>
+          {isPdf && hasStoragePath ? (
+            downloadLoading ? (
+              <LoadingSkeleton variant="cards" />
+            ) : downloadData?.url ? (
+              <Suspense fallback={<LoadingSkeleton variant="cards" />}>
+                <PdfViewer url={downloadData.url} />
+              </Suspense>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-8 text-text-muted">
+                  Không thể tải URL của tệp
+                </CardContent>
+              </Card>
+            )
           ) : doc.sourceType === "text_input" || doc.sourceType === "url_crawl" ? (
             <Card>
               <CardContent>

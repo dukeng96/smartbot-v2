@@ -314,6 +314,15 @@ export class DocumentsService {
     return doc;
   }
 
+  async getDownloadUrl(tenantId: string, kbId: string, docId: string) {
+    const doc = await this.ensureDocExists(tenantId, kbId, docId);
+    if (!doc.storagePath) {
+      throw new NotFoundException('Document has no file');
+    }
+    const url = await this.storageService.getSignedUrl(doc.storagePath, 3600);
+    return { url };
+  }
+
   async getChunks(
     tenantId: string,
     kbId: string,
@@ -341,26 +350,24 @@ export class DocumentsService {
 
       if (!response.ok) {
         this.logger.warn(`Failed to fetch chunks: ${response.status}`);
-        return { data: [], meta: { total: 0, page, limit } };
+        return { chunks: [], total: 0, page, limit };
       }
 
       const result = await response.json();
       return {
-        data: (result.chunks || []).map((c: any) => ({
+        chunks: (result.chunks || []).map((c: any) => ({
           id: c.id || `${docId}-pos-${c.position}`,
           content: c.content,
           position: c.position,
           charCount: c.char_count,
         })),
-        meta: {
-          total: result.total || 0,
-          page: result.page || page,
-          limit,
-        },
+        total: result.total || 0,
+        page: result.page || page,
+        limit,
       };
     } catch (error) {
       this.logger.error('Error fetching chunks from AI Engine', error);
-      return { data: [], meta: { total: 0, page, limit } };
+      return { chunks: [], total: 0, page, limit };
     }
   }
 }

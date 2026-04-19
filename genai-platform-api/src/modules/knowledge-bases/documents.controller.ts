@@ -136,4 +136,14 @@ export class DocumentsController {
   ) {
     return this.documentsService.getChunks(tenantId, kbId, docId, query);
   }
+
+  @Get(':docId/download')
+  @ApiOperation({ summary: 'Get signed URL for document download' })
+  async getDownloadUrl(
+    @CurrentTenant() tenantId: string,
+    @Param('kbId', ParseUUIDPipe) kbId: string,
+    @Param('docId', ParseUUIDPipe) docId: string,
+  ) {
+    return this.documentsService.getDownloadUrl(tenantId, kbId, docId);
+  }
 }
