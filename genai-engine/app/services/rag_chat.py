@@ -79,12 +79,23 @@ class RAGChat:
         context_parts = []
         retrieval_context = []
         for i, chunk in enumerate(retrieved_chunks):
-            context_parts.append(f"[{i + 1}] {chunk['content']}")
+            # Include breadcrumb in context if available
+            breadcrumb = chunk.get("breadcrumb")
+            if breadcrumb:
+                context_parts.append(f"[{i + 1}] [{breadcrumb}]\n{chunk['content']}")
+            else:
+                context_parts.append(f"[{i + 1}] {chunk['content']}")
+
             retrieval_context.append(
                 {
                     "document_id": chunk.get("document_id"),
                     "score": round(chunk.get("score_ranking", 0), 4),
                     "text_preview": chunk["content"][:200],
+                    # New fields for UI display
+                    "breadcrumb": breadcrumb,
+                    "h1": chunk.get("h1"),
+                    "h2": chunk.get("h2"),
+                    "h3": chunk.get("h3"),
                 }
             )
 

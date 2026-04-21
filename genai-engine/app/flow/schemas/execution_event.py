@@ -1,10 +1,18 @@
 """SSE execution event types — shared contract between engine and NestJS relay."""
 from __future__ import annotations
 
-from enum import StrEnum
+import sys
 from typing import Any
 
 from pydantic import BaseModel
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):  # type: ignore[no-redef]
+        """Backport of StrEnum for Python < 3.11."""
 
 
 class ExecutionEventType(StrEnum):

@@ -43,6 +43,10 @@ class EmbeddingService:
         for i, chunk in enumerate(chunks):
             indices = [int(k) for k in sparse_vecs[i].keys()]
             values = [float(v) for v in sparse_vecs[i].values()]
+
+            # Extract metadata (may be None for fallback mode)
+            metadata = chunk.get("metadata")
+
             entries.append(
                 {
                     "id": str(uuid.uuid4()),
@@ -51,6 +55,11 @@ class EmbeddingService:
                     "content": chunk["content"],
                     "document_id": document_id,
                     "position": chunk["position"],
+                    # New metadata fields (None if fallback mode)
+                    "h1": metadata.get("H1") if metadata else None,
+                    "h2": metadata.get("H2") if metadata else None,
+                    "h3": metadata.get("H3") if metadata else None,
+                    "breadcrumb": metadata.get("breadcrumb") if metadata else None,
                 }
             )
 

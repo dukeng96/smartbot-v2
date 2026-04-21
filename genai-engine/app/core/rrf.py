@@ -33,6 +33,10 @@ def compute_rrf_scores(
                     "score_ranking": 0,
                     "content": payload.get("content", ""),
                     "document_id": payload.get("document_id", ""),
+                    "breadcrumb": payload.get("breadcrumb"),
+                    "h1": payload.get("h1"),
+                    "h2": payload.get("h2"),
+                    "h3": payload.get("h3"),
                 }
             rank = idx + 1
             rrf_scores[_id]["score_ranking"] += 1 / (k + rank)

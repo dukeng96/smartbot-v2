@@ -139,7 +139,8 @@ class QdrantHandler:
     ) -> int:
         """
         Upsert entries into Qdrant collection.
-        Each entry: {id, dense_vec, sparse_vec, content, document_id, position}
+        Each entry: {id, dense_vec, sparse_vec, content, document_id, position,
+                     h1, h2, h3, breadcrumb}
         sparse_vec format: {indices: list[int], values: list[float]}
         """
         points = []
@@ -148,6 +149,11 @@ class QdrantHandler:
                 "content": entry.get("content", ""),
                 "document_id": entry.get("document_id", ""),
                 "position": entry.get("position", 0),
+                # New metadata fields (nullable)
+                "h1": entry.get("h1"),
+                "h2": entry.get("h2"),
+                "h3": entry.get("h3"),
+                "breadcrumb": entry.get("breadcrumb"),
             }
             point = PointStruct(
                 id=entry["id"],
