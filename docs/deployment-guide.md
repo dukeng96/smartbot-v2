@@ -1,8 +1,8 @@
 # Local Deployment Guide
 
 Deploy the GenAI Assistant Platform locally with a **hybrid approach**:
-- **genai-platform-api** (NestJS) — Docker (docker-compose)
-- **genai-engine** (Python/FastAPI) — Native (conda), because Docker containers cannot reach VNPT internal services (Triton, Qdrant, LLM) that require VPN on the host machine
+- **smartbot-be** (NestJS) — Docker (docker-compose)
+- **smartbot-ai-engine** (Python/FastAPI) — Native (conda), because Docker containers cannot reach VNPT internal services (Triton, Qdrant, LLM) that require VPN on the host machine
 - **MinIO** — Local Docker on `localhost:9000`, accessible from both Docker network and native processes
 
 ---
@@ -148,12 +148,12 @@ docker run --rm --net=host --entrypoint sh minio/mc:latest -c "
 
 ---
 
-## Step 4: Build smartbot-widget
+## Step 4: Build smartbot-fe-widget
 
-The widget must be built **before** starting the Platform API, because the API serves widget assets from `smartbot-widget/dist/` via `ServeStaticModule` at `/widget/`.
+The widget must be built **before** starting the Platform API, because the API serves widget assets from `smartbot-fe-widget/dist/` via `ServeStaticModule` at `/widget/`.
 
 ```bash
-cd smartbot-widget
+cd smartbot-fe-widget
 npm install
 npm run build
 ```
@@ -162,19 +162,19 @@ Verify output:
 
 ```bash
 ls dist/
-# smartbot-widget.iife.js       (~25KB, main bundle)
-# smartbot-widget-loader.iife.js (~1KB, async loader)
+# smartbot-fe-widget.iife.js       (~25KB, main bundle)
+# smartbot-fe-widget-loader.iife.js (~1KB, async loader)
 # iframe.html                    (iframe embed page)
 ```
 
 ---
 
-## Step 5: Deploy genai-platform-api (NestJS)
+## Step 5: Deploy smartbot-be (NestJS)
 
 ### 5.1 Install Dependencies
 
 ```bash
-cd genai-platform-api
+cd smartbot-be
 npm install
 ```
 
@@ -208,7 +208,7 @@ MINIO_FOLDER_NAME=smartbot-v2
 AI_ENGINE_URL=http://localhost:8000
 
 # Internal API Key (shared secret with AI Engine)
-# ⚠ MUST match WEB_BACKEND_INTERNAL_KEY in genai-engine/.env
+# ⚠ MUST match WEB_BACKEND_INTERNAL_KEY in smartbot-ai-engine/.env
 INTERNAL_API_KEY=internal-secret-key-change-in-production
 
 # App
@@ -259,14 +259,14 @@ Verify:
 
 ```bash
 curl http://localhost:3000/
-# {"status":"ok","service":"genai-platform-api","timestamp":"..."}
+# {"status":"ok","service":"smartbot-be","timestamp":"..."}
 ```
 
 Swagger docs: http://localhost:3000/docs
 
 ---
 
-## Step 6: Deploy genai-engine (Python/FastAPI)
+## Step 6: Deploy smartbot-ai-engine (Python/FastAPI)
 
 ### 6.1 Create/Activate Conda Environment
 
@@ -279,7 +279,7 @@ conda activate env311
 ### 6.2 Install Dependencies
 
 ```bash
-cd genai-engine
+cd smartbot-ai-engine
 # On Windows PowerShell, avoid chaining with &&. Run separately:
 conda activate env311
 pip install -r requirements.txt
@@ -288,14 +288,14 @@ pip install -r requirements.txt
 > **Troubleshooting Pip:** If you encounter a dependency conflict between `datalab-python-sdk` and `pydantic-settings`, relax the version requirements in `requirements.txt`. Change `pydantic==2.10.4` and `pydantic-settings>=2.10.1` to just `pydantic` and `pydantic-settings`.
 
 ### 6.3 Configure Environment
-Use the existing `.env` file in the `genai-engine` folder. You must update the following sections:
+Use the existing `.env` file in the `smartbot-ai-engine` folder. You must update the following sections:
 
 > **Important:** By default, the `.env` might point to production VNPT storage. `MINIO_SERVICE_URL` and `MINIO_PUBLIC_HOST` MUST point to `http://localhost:9000` (local MinIO). Also, update `MINIO_ACCESS_KEY` to `minioadmin` and `MINIO_SECRET_KEY` to `minioadmin123`.
 
-> **CRITICAL — Internal API Key:** `WEB_BACKEND_INTERNAL_KEY` in `genai-engine/.env` **MUST be identical** to `INTERNAL_API_KEY` in `genai-platform-api/.env`. If these values differ, the AI Engine callback to update document status will receive `401 Unauthorized` and documents will stay stuck in "Pending" forever. Example:
+> **CRITICAL — Internal API Key:** `WEB_BACKEND_INTERNAL_KEY` in `smartbot-ai-engine/.env` **MUST be identical** to `INTERNAL_API_KEY` in `smartbot-be/.env`. If these values differ, the AI Engine callback to update document status will receive `401 Unauthorized` and documents will stay stuck in "Pending" forever. Example:
 >
 > ```env
-> # In genai-engine/.env — must match INTERNAL_API_KEY in platform-api
+> # In smartbot-ai-engine/.env — must match INTERNAL_API_KEY in platform-api
 > WEB_BACKEND_INTERNAL_KEY=internal-secret-key-change-in-production
 > ```
 
@@ -319,7 +319,7 @@ Open a **second terminal**:
 
 ```bash
 conda activate env311
-cd genai-engine
+cd smartbot-ai-engine
 celery -A app.worker.celery_app worker --loglevel=info --concurrency=2 --pool=solo
 ```
 
@@ -332,12 +332,12 @@ Verify Celery is running by checking the worker logs for:
 
 ---
 
-## Step 7: Deploy smartbot-web (Frontend)
+## Step 7: Deploy smartbot-fe-web (Frontend)
 
 ### 7.1 Install Dependencies
 
 ```bash
-cd smartbot-web
+cd smartbot-fe-web
 npm install
 ```
 
@@ -379,10 +379,10 @@ curl http://localhost:8000/health
 After starting the Platform API, verify widget assets are served:
 
 ```bash
-curl -I http://localhost:3000/widget/smartbot-widget.iife.js
+curl -I http://localhost:3000/widget/smartbot-fe-widget.iife.js
 # Should return 200 with Content-Type: application/javascript
 
-curl -I http://localhost:3000/widget/smartbot-widget-loader.iife.js
+curl -I http://localhost:3000/widget/smartbot-fe-widget-loader.iife.js
 # Should return 200
 
 curl -I http://localhost:3000/widget/iframe.html
@@ -451,8 +451,8 @@ curl -X POST http://localhost:8000/engine/v1/chat/test \
 
 ### Documents stuck in "Pending" after upload (401 callback)
 - Celery log shows `401 Unauthorized` on `PATCH .../internal/documents/.../status`
-- Root cause: `WEB_BACKEND_INTERNAL_KEY` in `genai-engine/.env` does not match `INTERNAL_API_KEY` in `genai-platform-api/.env`
-- Fix: copy the exact value from `genai-platform-api/.env` `INTERNAL_API_KEY` into `genai-engine/.env` `WEB_BACKEND_INTERNAL_KEY`, then restart Celery worker
+- Root cause: `WEB_BACKEND_INTERNAL_KEY` in `smartbot-ai-engine/.env` does not match `INTERNAL_API_KEY` in `smartbot-be/.env`
+- Fix: copy the exact value from `smartbot-be/.env` `INTERNAL_API_KEY` into `smartbot-ai-engine/.env` `WEB_BACKEND_INTERNAL_KEY`, then restart Celery worker
 
 ### MinIO upload fails (500 error)
 - Verify MinIO is running: `curl http://localhost:9000/minio/health/live`
