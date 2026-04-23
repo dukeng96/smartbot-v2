@@ -7,13 +7,13 @@ Multi-tenant AI assistant SaaS. Three services + external dependencies.
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         CLIENT                                  │
-│  Browser → smartbot-web (Next.js 16, :3001)                    │
+│  Browser → smartbot-fe-web (Next.js 16, :3001)                 │
 │  Widget  → iframe embed served by backend                       │
 └─────────────────────────────────────────────────────────────────┘
                               │ REST API (JWT)
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    genai-platform-api                           │
+│                        smartbot-be                              │
 │  NestJS 11 | :3000 | Prisma 7 ORM                              │
 │                                                                 │
 │  Modules: auth, users, tenants, bots, knowledge-bases,         │
@@ -26,15 +26,16 @@ Multi-tenant AI assistant SaaS. Three services + external dependencies.
            │ HTTP + X-Internal-Key          │ SSE relay
            ▼                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      genai-engine                               │
+│                    smartbot-ai-engine                           │
 │  FastAPI | :8000 | Python 3.11                                 │
 │                                                                 │
 │  Services: chat, knowledge_base, document_processor,           │
 │            embedding, storage, flow_executor                    │
 │                                                                 │
-│  Flow nodes: start, end, llm, condition, set_variable,         │
-│              http_request, knowledge_base, code, text_formatter,│
-│              sticky_note, memory, agent, custom_tool, human_input│
+│  Flow nodes: start, end, llm, condition, condition_agent,      │
+│              set_variable, http_request, knowledge_base, code,  │
+│              text_formatter, sticky_note, memory, agent,        │
+│              custom_tool, human_input                           │
 │                                                                 │
 │  Workers: Celery (document processing)                          │
 └─────────────────────────────────────────────────────────────────┘
@@ -52,9 +53,9 @@ Multi-tenant AI assistant SaaS. Three services + external dependencies.
 
 | Service | Port | Protocol |
 |---------|------|----------|
-| smartbot-web | 3001 | HTTP |
-| genai-platform-api | 3000 | HTTP |
-| genai-engine | 8000 | HTTP |
+| smartbot-fe-web | 3001 | HTTP |
+| smartbot-be | 3000 | HTTP |
+| smartbot-ai-engine | 8000 | HTTP |
 | PostgreSQL | 5432 | TCP |
 | Redis | 6379 | TCP |
 | MinIO | 9000/9001 | HTTP |
@@ -100,14 +101,14 @@ Multi-tenant AI assistant SaaS. Three services + external dependencies.
 
 ```
 smartbot-v2/
-├── smartbot-web/          # Next.js frontend
+├── smartbot-fe-web/       # Next.js frontend
 │   └── src/app/           # App Router pages
-├── genai-platform-api/    # NestJS backend
+├── smartbot-be/           # NestJS backend
 │   ├── src/modules/       # Feature modules
 │   └── prisma/            # Schema + migrations
-├── genai-engine/          # FastAPI + Celery
+├── smartbot-ai-engine/    # FastAPI + Celery
 │   └── app/
 │       ├── flow/          # Flow executor + nodes
 │       └── services/      # Chat, KB, embedding
-└── smartbot-widget/       # Embeddable widget
+└── smartbot-fe-widget/    # Embeddable widget
 ```
