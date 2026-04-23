@@ -1,6 +1,19 @@
 import type { Node, Edge, XYPosition } from "@xyflow/react"
 
 // Input/output schema for a node (mirrors Python Pydantic field)
+// Condition rule for Condition Node
+export interface ConditionRule {
+  type: "string" | "number" | "boolean"
+  value1: string
+  operation: string
+  value2: string
+}
+
+// Intent for Smart Router Node
+export interface Intent {
+  description: string
+}
+
 export interface NodeInputDefinition {
   name: string
   label: string
@@ -15,6 +28,8 @@ export interface NodeInputDefinition {
     | "code"
     | "custom_tool_list"
     | "flow_state_init_editor"
+    | "conditions_array"
+    | "intents_array"
     | "any"
   description?: string
   required?: boolean
@@ -49,6 +64,10 @@ export interface NodeDefinition {
   // Hide from sidebar palette / Cmd+K picker. Engine still recognises the type
   // and existing instances loaded from a saved flow continue to render.
   hiddenInPalette?: boolean
+  // Dynamic outputs: indicates output count comes from config array
+  // "conditions" = outputs based on conditions array length
+  // "intents" = outputs based on intents array length
+  dynamicOutputs?: "conditions" | "intents"
 }
 
 export type NodeCategory =

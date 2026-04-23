@@ -7,6 +7,7 @@ from app.flow.nodes import set_variable  # noqa: F401
 from app.flow.nodes import text_formatter  # noqa: F401
 from app.flow.nodes import code  # noqa: F401
 from app.flow.nodes import condition  # noqa: F401
+from app.flow.nodes import smart_router  # noqa: F401
 from app.flow.nodes import memory  # noqa: F401
 from app.flow.nodes import http_request  # noqa: F401
 from app.flow.nodes import llm  # noqa: F401

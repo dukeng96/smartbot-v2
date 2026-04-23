@@ -141,8 +141,9 @@ class FlowExecutor:
     def _build_conditional_edge_map(self, condition_node_id: str) -> dict[str, str]:
         """
         Return {branch_key: target_node_id} for a condition node.
-        Reads edge.source_handle ("true"/"false") to determine mapping.
-        Falls back to positional order if source_handle is absent.
+        Reads edge.source_handle to determine mapping.
+        For condition/condition_agent: handles are numeric ("0", "1", "2"...).
+        Falls back to positional index if source_handle is absent.
         """
         outgoing = [
             e for e in self._flow.edges
@@ -151,7 +152,8 @@ class FlowExecutor:
         ]
         mapping: dict[str, str] = {}
         for i, edge in enumerate(outgoing):
-            key = edge.source_handle or ("true" if i == 0 else "false")
+            # Use source_handle if present, else fallback to index string
+            key = edge.source_handle or str(i)
             mapping[key] = edge.target
         return mapping
 
@@ -170,7 +172,7 @@ class FlowExecutor:
     def _add_edges_to_graph(self, graph: StateGraph) -> None:
         """Wire all edges: static for regular nodes, conditional for condition nodes."""
         condition_node_ids: set[str] = {
-            n.id for n in self._flow.nodes if n.type == "condition"
+            n.id for n in self._flow.nodes if n.type in ("condition", "smart_router")
         }
 
         for edge in self._flow.edges:
