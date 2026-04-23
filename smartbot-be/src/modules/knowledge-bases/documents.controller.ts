@@ -146,4 +146,25 @@ export class DocumentsController {
   ) {
     return this.documentsService.getDownloadUrl(tenantId, kbId, docId);
   }
+
+  @Get(':docId/markdown')
+  @ApiOperation({ summary: 'Get signed URL for markdown content' })
+  async getMarkdownUrl(
+    @CurrentTenant() tenantId: string,
+    @Param('kbId', ParseUUIDPipe) kbId: string,
+    @Param('docId', ParseUUIDPipe) docId: string,
+  ) {
+    return this.documentsService.getMarkdownUrl(tenantId, kbId, docId);
+  }
+
+  @Get(':docId/images/:filename')
+  @ApiOperation({ summary: 'Get signed URL for document image' })
+  async getImageUrl(
+    @CurrentTenant() tenantId: string,
+    @Param('kbId', ParseUUIDPipe) kbId: string,
+    @Param('docId', ParseUUIDPipe) docId: string,
+    @Param('filename') filename: string,
+  ) {
+    return this.documentsService.getImageUrl(tenantId, kbId, docId, filename);
+  }
 }

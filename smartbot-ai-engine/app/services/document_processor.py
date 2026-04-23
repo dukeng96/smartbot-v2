@@ -64,9 +64,12 @@ class DocumentProcessor:
                 mime_type=mime_type,
             )
 
-            # Save markdown to MinIO for re-chunking later
+            # Extract images from metadata (if Marker Cloud provided them)
+            images = metadata.pop("images", None)
+
+            # Save markdown to MinIO (with images if present)
             markdown_path = self.extractor.save_markdown_to_s3(
-                document_id, markdown_text
+                document_id, markdown_text, images=images
             )
 
             await self._update_status(

@@ -16,7 +16,7 @@ describe('AppController', () => {
     it('should return status ok', () => {
       const result = appController.health();
       expect(result.status).toBe('ok');
-      expect(result.service).toBe('genai-platform-api');
+      expect(result.service).toBe('smartbot-be');
     });
   });
 });

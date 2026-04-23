@@ -22,7 +22,7 @@ const VNPT_CREDIT_MAP: Record<string, number> = {
 const CLIENT_FORWARD_TYPES = new Set([
   'flow_start', 'node_start', 'node_end', 'node_error',
   'token', 'state_updated', 'awaiting_input', 'done', 'error',
-  'tool_call', 'tool_result', 'human_input_required',
+  'tool_call', 'tool_result', 'human_input_required', 'retrieval',
 ]);
 
 // Patch flow nodes before sending to engine:
@@ -182,6 +182,7 @@ export class FlowExecService {
         execution_id: exec.id,
         history: params.history.length > 0 ? params.history : undefined,
         bot_knowledge_base_ids: params.knowledgeBaseIds ?? [],
+        bot_citation_enabled: params.citationEnabled ?? true,
       },
     });
 
@@ -311,6 +312,8 @@ export class FlowExecService {
         return { type: 'tool_result', node_id: ev.node_id, data: ev.data };
       case 'human_input_required':
         return { type: 'human_input_required', node_id: ev.node_id, data: ev.data };
+      case 'retrieval':
+        return { type: 'retrieval', node_id: ev.node_id, data: ev.data };
       default:
         return { type: ev.type, node_id: ev.node_id };
     }

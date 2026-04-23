@@ -111,15 +111,56 @@ class TextExtractor:
             markdown = result.markdown or ""
 
             metadata = {"extraction_method": "marker_cloud"}
+            # Include extracted images for later upload
+            if result.images:
+                metadata["images"] = result.images
             return markdown, metadata
         finally:
             if os.path.exists(tmp_path):
                 os.unlink(tmp_path)
 
-    def save_markdown_to_s3(self, document_id: str, markdown: str) -> str:
-        """Save extracted markdown to S3 for re-chunking later."""
+    def save_markdown_to_s3(
+        self, document_id: str, markdown: str, images: dict[str, str] | None = None
+    ) -> str:
+        """Save extracted markdown to S3 for re-chunking later.
+
+        If images dict provided (filename -> base64_data), uploads images
+        and rewrites markdown paths to S3 keys.
+        """
+        processed_markdown = markdown
+
+        if images:
+            import base64
+            import re
+
+            for filename, b64_data in images.items():
+                # Upload image to S3
+                image_key = f"markdown/{document_id}/images/{filename}"
+                image_bytes = base64.b64decode(b64_data)
+
+                # Determine content type from extension
+                ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "bin"
+                content_type = {
+                    "jpg": "image/jpeg",
+                    "jpeg": "image/jpeg",
+                    "png": "image/png",
+                    "gif": "image/gif",
+                    "webp": "image/webp",
+                }.get(ext, "application/octet-stream")
+
+                self.storage.upload_bytes(image_key, image_bytes, content_type)
+                logger.info("image_uploaded", key=image_key, size=len(image_bytes))
+
+                # Rewrite markdown: ![alt](filename) -> ![alt](markdown/{doc_id}/images/filename)
+                escaped_filename = re.escape(filename)
+                processed_markdown = re.sub(
+                    rf"!\[([^\]]*)\]\({escaped_filename}\)",
+                    rf"![\1]({image_key})",
+                    processed_markdown,
+                )
+
         key = f"markdown/{document_id}.md"
-        self.storage.upload_bytes(key, markdown.encode("utf-8"), "text/markdown")
+        self.storage.upload_bytes(key, processed_markdown.encode("utf-8"), "text/markdown")
         return key
 
     def load_markdown_from_s3(self, markdown_path: str) -> str:

@@ -11,7 +11,7 @@ export class AppController {
   health() {
     return {
       status: 'ok',
-      service: 'genai-platform-api',
+      service: 'smartbot-be',
       timestamp: new Date().toISOString(),
     };
   }

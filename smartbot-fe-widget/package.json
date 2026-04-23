@@ -1,0 +1,29 @@
+{
+  "name": "smartbot-fe-widget",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Embeddable chat widget for Smartbot platform",
+  "type": "module",
+  "main": "dist/smartbot-widget.iife.js",
+  "exports": {
+    ".": "./dist/smartbot-widget.iife.js"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vite build --mode loader",
+    "build:widget": "vite build",
+    "build:loader": "vite build --mode loader",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^6.0.0",
+    "terser": "^5.32.0"
+  },
+  "browserslist": [
+    "defaults",
+    "not dead",
+    "not IE 11"
+  ]
+}

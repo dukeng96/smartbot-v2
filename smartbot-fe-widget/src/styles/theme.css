@@ -1,0 +1,33 @@
+/* ===== Light Theme (Default) ===== */
+:host {
+  --sb-primary: #6D28D9;
+  --sb-bg: #FFFFFF;
+  --sb-font-color: #111827;
+  --sb-user-msg: #6D28D9;
+  --sb-bot-msg: #F3F4F6;
+  --sb-font-family: system-ui, -apple-system, sans-serif;
+  --sb-font-size: 14px;
+}
+
+/* ===== Dark Theme ===== */
+:host(.dark-theme) {
+  --sb-bg: #1F2937;
+  --sb-font-color: #F3F4F6;
+  --sb-bot-msg: #374151;
+  --sb-user-msg: #8B5CF6;
+}
+
+:host(.dark-theme) .sb-chat-textarea {
+  background-color: #374151;
+  border-color: #4B5563;
+  color: #F3F4F6;
+}
+
+:host(.dark-theme) .sb-chat-input-area {
+  border-top-color: #374151;
+}
+
+:host(.dark-theme) .sb-powered-by {
+  border-top-color: #374151;
+  color: #9CA3AF;
+}

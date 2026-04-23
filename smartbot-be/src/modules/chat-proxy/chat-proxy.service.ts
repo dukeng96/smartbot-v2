@@ -106,6 +106,7 @@ export class ChatProxyService {
         conversationId: conv.id,
         history,
         knowledgeBaseIds: botWithFlow.knowledgeBases?.map((kb: any) => kb.knowledgeBaseId) ?? [],
+        citationEnabled: botWithFlow.citationEnabled ?? true,
       })) {
         // Accumulate token content for persisting assistant message
         if (ev.type === 'token') {

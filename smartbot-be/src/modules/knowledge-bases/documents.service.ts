@@ -323,6 +323,30 @@ export class DocumentsService {
     return { url };
   }
 
+  async getMarkdownUrl(tenantId: string, kbId: string, docId: string) {
+    const doc = await this.ensureDocExists(tenantId, kbId, docId);
+    if (!doc.markdownStoragePath) {
+      throw new NotFoundException('Document has no markdown');
+    }
+    const url = await this.storageService.getSignedUrl(
+      doc.markdownStoragePath,
+      3600,
+    );
+    return { url };
+  }
+
+  async getImageUrl(
+    tenantId: string,
+    kbId: string,
+    docId: string,
+    filename: string,
+  ) {
+    await this.ensureDocExists(tenantId, kbId, docId);
+    const imagePath = `markdown/${docId}/images/${filename}`;
+    const url = await this.storageService.getSignedUrl(imagePath, 3600);
+    return { url };
+  }
+
   async getChunks(
     tenantId: string,
     kbId: string,

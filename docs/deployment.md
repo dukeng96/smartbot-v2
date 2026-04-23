@@ -34,12 +34,12 @@ docker compose -f docker-compose.dev.yml up -d
 
 ### 2. Widget (build first — API serves assets)
 ```bash
-cd smartbot-widget && npm install && npm run build
+cd smartbot-fe-widget && npm install && npm run build
 ```
 
 ### 3. Backend API
 ```bash
-cd genai-platform-api
+cd smartbot-be
 npm install
 cp .env.example .env  # Edit DATABASE_URL, etc.
 npx prisma migrate deploy
@@ -49,7 +49,7 @@ npm run start:dev
 ### 4. AI Engine (requires VPN)
 ```bash
 conda activate env311
-cd genai-engine
+cd smartbot-ai-engine
 pip install -r requirements.txt
 # Edit .env: MINIO_SERVICE_URL=http://localhost:9000
 uvicorn app.main:app --port 8000 --reload
@@ -57,13 +57,13 @@ uvicorn app.main:app --port 8000 --reload
 
 ### 5. Celery Worker (separate terminal)
 ```bash
-conda activate env311 && cd genai-engine
+conda activate env311 && cd smartbot-ai-engine
 celery -A app.worker.celery_app worker --pool=solo --loglevel=info
 ```
 
 ### 6. Frontend
 ```bash
-cd smartbot-web
+cd smartbot-fe-web
 npm install
 cp .env.local.example .env.local
 npm run dev
