@@ -121,6 +121,7 @@ model Bot {
   currentKnowledgeChars BigInt    @default(0) @map("current_knowledge_chars")
   apiKeyHash            String?   @map("api_key_hash") @db.VarChar(255)
   apiKeyPrefix          String?   @map("api_key_prefix") @db.VarChar(10)
+  citationEnabled       Boolean   @default(true) @map("citation_enabled")
   flowId                String    @unique @map("flow_id") @db.Uuid
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")

@@ -16,6 +16,14 @@ from app.flow.schemas.execution_event import ExecutionEvent, ExecutionEventType
 _VNPT_BASE_URL = "https://assistant-stream.vnpt.vn/v1/"
 _DEFAULT_MODEL = "llm-large-v4"
 
+_CITATION_INSTRUCTION = """
+Bắt buộc khi sử dụng chunk nào để trả lời câu hỏi thì hãy thêm "<cite chunk_id="CHUNK_ID"/>" vào sau phần trả lời tương ứng. Không gom tất cả citation ở cuối câu trả lời.
+Chỉ trích dẫn những chunk thực sự được sử dụng để tạo ra câu trả lời; không cite dư thừa.
+Không cite nhiều chunk nếu chúng có nội dung trùng lặp hoặc tương đương nhau, chỉ chọn 1 chunk đại diện.
+Chỉ sử dụng format trích dẫn <cite chunk_id="CHUNK_ID"/>, tuyệt đối không được sử dụng các cách format trích dẫn hoặc sử dụng thẻ HTML nào khác.
+Nếu câu trả lời không sử dụng bất kỳ chunk nào (ví dụ: chào hỏi, hội thoại chung, kiến thức phổ thông), thì KHÔNG được thêm citation.
+""".strip()
+
 
 def _resolve_credential(credentials: dict[str, dict], credential_id: str) -> dict[str, str]:
     """Resolve LLM credential. Falls back to engine env vars (LLM_API_KEY / LLM_BASE_URL)
@@ -94,17 +102,32 @@ class LlmNode(BaseNode):
         # legacy prompt/system_prompt scalar fields.
         raw_messages = ctx.inputs.get("messages")
         messages = []
+
+        # Check if KB context exists and citation is enabled
+        kb_output = ctx.state.get("knowledge_base", {})
+        has_kb_context = bool(kb_output.get("context"))
+        citation_enabled = ctx.state.get("bot_citation_enabled", True)
+        should_add_citation = has_kb_context and citation_enabled
+
         if raw_messages and isinstance(raw_messages, list):
             for msg in raw_messages:
                 role = msg.get("role", "user")
                 content = ctx.resolve(msg.get("content", ""))
                 if role == "system":
+                    # Append citation instruction to system message if applicable
+                    if should_add_citation:
+                        content = f"{content}\n\n{_CITATION_INSTRUCTION}"
                     messages.append(SystemMessage(content=content))
                 else:
                     messages.append(HumanMessage(content=content))
         else:
             prompt = ctx.resolve(ctx.inputs.get("prompt", ""))
             system_prompt = ctx.resolve(ctx.inputs.get("system_prompt", ""))
+            # Append citation instruction to system prompt if applicable
+            if should_add_citation and system_prompt:
+                system_prompt = f"{system_prompt}\n\n{_CITATION_INSTRUCTION}"
+            elif should_add_citation:
+                system_prompt = _CITATION_INSTRUCTION
             if system_prompt:
                 messages.append(SystemMessage(content=system_prompt))
             messages.append(HumanMessage(content=prompt))

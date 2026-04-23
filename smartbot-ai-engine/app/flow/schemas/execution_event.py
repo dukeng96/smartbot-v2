@@ -27,6 +27,7 @@ class ExecutionEventType(StrEnum):
     TOOL_CALL = "tool_call"
     TOOL_RESULT = "tool_result"
     HUMAN_INPUT_REQUIRED = "human_input_required"
+    RETRIEVAL = "retrieval"
     HALTED = "halted"
     DONE = "done"
     ERROR = "error"

@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsInt,
   IsOptional,
   IsString,
@@ -43,4 +44,9 @@ export class UpdateBotDto {
   @Min(1)
   @Max(20)
   memoryTurns?: number;
+
+  @ApiPropertyOptional({ description: 'Enable citation in RAG responses', default: true })
+  @IsOptional()
+  @IsBoolean()
+  citationEnabled?: boolean;
 }

@@ -8,8 +8,18 @@ from app.flow.context import NodeExecutionContext
 from app.flow.exceptions import NodeExecutionError
 from app.flow.node_types import NodeCategory
 from app.flow.registry import NodeRegistry
+from app.flow.schemas.execution_event import ExecutionEvent, ExecutionEventType
 
 _DEFAULT_TOP_K = 5
+
+
+def _format_chunks_with_citation_tags(chunks: list[dict[str, Any]]) -> str:
+    """Format chunks with XML-like tags for citation tracking by LLM."""
+    parts = []
+    for i, chunk in enumerate(chunks):
+        content = chunk.get("text") or chunk.get("content", "")
+        parts.append(f'<chunk_id="ref{i}">\n{content}\n</chunk_id>')
+    return "\n\n".join(parts)
 
 
 @NodeRegistry.register
@@ -74,9 +84,31 @@ class KnowledgeBaseNode(BaseNode):
                 "text": c.get("content", ""),
                 "score": round(c.get("score_ranking", 0.0), 4),
                 "source": c.get("document_id", ""),
+                "document_name": c.get("document_name", ""),
+                "breadcrumb": c.get("breadcrumb", ""),
             }
             for c in (raw_chunks or [])
         ]
-        context = "\n\n".join(c["text"] for c in chunks if c["text"])
 
-        return {"chunks": chunks, "context": context}
+        # Format context with citation tags for LLM
+        context = _format_chunks_with_citation_tags(chunks)
+
+        # Build retrieval_chunks metadata for frontend citation rendering
+        retrieval_chunks = [
+            {
+                "ref_index": i,
+                "content": chunk["text"],
+                "document_name": chunk["document_name"],
+                "breadcrumb": chunk["breadcrumb"],
+            }
+            for i, chunk in enumerate(chunks)
+        ]
+
+        # Emit retrieval event for frontend to capture chunks
+        ctx.emit(ExecutionEvent(
+            type=ExecutionEventType.RETRIEVAL,
+            node_id=ctx.node_id,
+            data={"chunks": retrieval_chunks},
+        ))
+
+        return {"chunks": chunks, "context": context, "retrieval_chunks": retrieval_chunks}

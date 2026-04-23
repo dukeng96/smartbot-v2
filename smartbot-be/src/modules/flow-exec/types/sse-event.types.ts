@@ -10,6 +10,7 @@ export type SseEventType =
   | 'tool_call'
   | 'tool_result'
   | 'human_input_required'
+  | 'retrieval'
   | 'done'
   | 'error';
 
@@ -43,4 +44,6 @@ export interface RunFlowParams {
   // KB IDs attached to the bot — injected into engine state so KB nodes can
   // auto-resolve without requiring manual kb_id config in the canvas.
   knowledgeBaseIds?: string[];
+  // Enable citation in RAG responses (default true)
+  citationEnabled?: boolean;
 }
